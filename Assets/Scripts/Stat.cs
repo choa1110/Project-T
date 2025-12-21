@@ -1,22 +1,20 @@
 using System.Collections.Generic;
-using UnityEngine;
 
-[System.Serializable]
 public class Stat
 {
-    [SerializeField] float _baseValue;
-
+    float _baseValue;
     float _totalValue;
 
-    readonly List<StatModifier> _modifiers;
+    public readonly List<StatModifier> _modifiers;
 
-    public float BaseValue { get => _baseValue; set { _baseValue = value; _totalValue = CalculateFinalValue(); } }
+    public float BaseValue { get => _baseValue; set { _baseValue = value; CalculateFinalValue(); } }
     public float Value { get => _totalValue; }
 
     // 생성자
     public Stat(float baseValue)
     {
         _baseValue = baseValue;
+        _totalValue = baseValue;
         _modifiers = new List<StatModifier>();
     }
 
@@ -24,14 +22,14 @@ public class Stat
     public void AddModifier(StatModifier mod)
     {
         _modifiers.Add(mod);
-        _totalValue = CalculateFinalValue();
+        CalculateFinalValue();
     }
 
     // 버프 제거
     public void RemoveModifier(StatModifier mod)
     {
         _modifiers.Remove(mod);
-        _totalValue = CalculateFinalValue();
+        CalculateFinalValue();
     }
 
     // 특정 출처의 모든 버프 제거
@@ -43,13 +41,12 @@ public class Stat
                 _modifiers.RemoveAt(i);
         }
 
-        _totalValue = CalculateFinalValue();
+        CalculateFinalValue();
     }
 
     // 연산 순서: 곱연산 -> %합연산(기본값 기반) -> 합연산
-    private float CalculateFinalValue()
+    void CalculateFinalValue()
     {
-        float finalValue = _baseValue;
         float sumPercentAdd = 0;
         float sumFlatAdd = 0;
         float totalMultiplier = 1;
@@ -78,7 +75,7 @@ public class Stat
         float valueFromPercent = _baseValue * sumPercentAdd;
 
         // 최종 공식: (기본값 * 곱연산) + (기본값 * %합연산) + 합연산
-        return valueAfterMult + valueFromPercent + sumFlatAdd;
+        _totalValue = valueAfterMult + valueFromPercent + sumFlatAdd;
     }
 }
 

@@ -15,22 +15,51 @@ public enum StatType
     Weight
 }
 
+[System.Serializable]
 public class PlayerStats
 {
-    [SerializeField] private Stat _maxHP;
-    [SerializeField] private Stat _powDam;
-    [SerializeField] private Stat _powKnock;
-    [SerializeField] private Stat _atkSpeed;
-    [SerializeField] private Stat _atkRange;
-    [SerializeField] private Stat _speedMove;
-    [SerializeField] private Stat _speedSprint;
-    [SerializeField] private Stat _staDrainRate; // 스태미나 소모율
-    [SerializeField] private Stat _jumpHeight;
-    [SerializeField] private Stat _weight; // 넉백 저항
+    [Header("Base Stats")]
+    [SerializeField] float maxHP;
+    [SerializeField] float powDam;
+    [SerializeField] float powKnock;
+    [SerializeField] float atkSpeed;
+    [SerializeField] float atkRange;
+    [SerializeField] float speedMove;
+    [SerializeField] float speedSprint;
+    [SerializeField] float staDrainRate; // 스태미나 소모율
+    [SerializeField] float jumpHeight;
+    [SerializeField] float weight; // 넉백 저항
+
+    private Stat _maxHP;
+    private Stat _powDam;
+    private Stat _powKnock;
+    private Stat _atkSpeed;
+    private Stat _atkRange;
+    private Stat _speedMove;
+    private Stat _speedSprint;
+    private Stat _staDrainRate;
+    private Stat _jumpHeight;
+    private Stat _weight;
 
     Dictionary<StatType, Stat> _statDictionary;
 
-    private void InitializeStatDictionary()
+    public void InitalizeStats()
+    {
+        _maxHP = new Stat(maxHP);
+        _powDam = new Stat(powDam);
+        _powKnock = new Stat(powKnock);
+        _atkSpeed = new Stat(atkSpeed);
+        _atkRange = new Stat(atkRange);
+        _speedMove = new Stat(speedMove);
+        _speedSprint = new Stat(speedSprint);
+        _staDrainRate = new Stat(staDrainRate);
+        _jumpHeight = new Stat(jumpHeight);
+        _weight = new Stat(weight);
+
+        InitializeStatDictionary();
+    }
+
+    public void InitializeStatDictionary()
     {
         _statDictionary = new Dictionary<StatType, Stat>()
         {
