@@ -84,4 +84,13 @@ public class PlayerStats
         Debug.LogError($"StatType {type}을 찾을 수 없습니다.");
         return null;
     }
+
+    public float GetStatRate(StatType type)
+    {
+        if (_statDictionary.TryGetValue(type, out Stat stat))
+            return stat.Value / stat.BaseValue;
+
+        Debug.LogError($"StatType {type}을 찾을 수 없습니다.");
+        return 0;
+    }
 }

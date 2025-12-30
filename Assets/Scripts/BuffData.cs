@@ -1,33 +1,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum StatModType
-{
-    Flat,       // 깡 스탯 (예: +10)
-    PercentAdd, // %합연산 (예: +10% -> +0.1 * base)
-    Multiplicative // 곱연산 (예: 2배 -> 2.0 * base)
-}
-
-[CreateAssetMenu(fileName = "Buff Data", menuName = "Buff Data")]
+[CreateAssetMenu(fileName = "Buff Data", menuName = "Buff Data/Default")]
 public class BuffData : ScriptableObject
 {
-    public string trigger;
     public string buffName;
-    public float duration; // 지속 시간 (0 이하면 영구 지속)
+    public float buffDuration; // 지속 시간 (0 이하면 영구 지속)
+    public BuffCondition condition = BuffCondition.Always;
 
-    GameObject buffTarget;
+    protected Player buffTarget;
 
     public void Tick(float delta)
     {
-        duration = Mathf.Max(0, duration - delta);
+        buffDuration = Mathf.Max(0, buffDuration - delta);
     }
 
-    public void ApplyAllEffects(GameObject target)
+    public void ApplyAllEffects(Player target)
     {
         buffTarget = target;
 
         foreach (var effect in effects)
-            effect.Apply(target);
+            effect.Apply(buffTarget);
     }
 
     public void ClearAllEffects()
@@ -42,6 +35,6 @@ public class BuffData : ScriptableObject
 
 public abstract class BuffEffect : ScriptableObject
 {
-    public abstract void Apply(GameObject target);
+    public abstract void Apply(Player target);
     public abstract void Remove();
 }

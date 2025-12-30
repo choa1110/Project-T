@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Haste
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   buffName: Haste
-  duration: 5
+  buffDuration: 5
+  condition: 0
   effects:
   - {fileID: 11400000, guid: fb4578a096433054caee7502b74f9d17, type: 2}

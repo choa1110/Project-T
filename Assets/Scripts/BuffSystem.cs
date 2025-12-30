@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class BuffSystem : MonoBehaviour
 {
+    Player _player;
     PlayerStats _playerStats;
 
     List<BuffData> _permanentBuffs = new List<BuffData>();
@@ -10,7 +11,8 @@ public class BuffSystem : MonoBehaviour
 
     void Awake()
     {
-        _playerStats = GetComponent<Player>().stats;
+        _player = GetComponent<Player>();
+        _playerStats = _player.stats;
     }
 
     void Update()
@@ -19,7 +21,7 @@ public class BuffSystem : MonoBehaviour
         {
             _activeBuffs[i].Tick(Time.deltaTime);
 
-            if (Mathf.Approximately(_activeBuffs[i].duration, 0))
+            if (Mathf.Approximately(_activeBuffs[i].buffDuration, 0))
                 RemoveBuff(_activeBuffs[i]);
         }
     }
@@ -28,12 +30,20 @@ public class BuffSystem : MonoBehaviour
     {
         BuffData buff = Instantiate(buffData);
 
-        if (buffData.duration > 0)
+        if (buffData.buffDuration > 0)
             _activeBuffs.Add(buff);
         else
             _permanentBuffs.Add(buff);
 
-        buff.ApplyAllEffects(gameObject);
+        switch (buffData.condition) {
+            case BuffCondition.Always:
+                buff.ApplyAllEffects(_player);
+                break;
+            case BuffCondition.OnHit:
+                ConditionalBuffData conditBuffData = (ConditionalBuffData)buffData;
+                conditBuffData.SetCondition(this, _player.onHit);
+                break;
+        }
     }
 
     private void RemoveBuff(BuffData buff)
