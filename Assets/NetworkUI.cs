@@ -1,26 +1,25 @@
-using UnityEngine;
 using TMPro;
-using UnityEngine.UI;
 using Fusion;
+using Fusion.Sockets;
 using System.Collections.Generic;
 using System;
-using Fusion.Sockets;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
 {
-    [Header("UI ø¨∞·")]
     public TMP_InputField inputField;
     public TextMeshProUGUI chatContent;
     public ScrollRect scrollRect;
 
-    [Header("∏≈¥œ¿˙ ø¨∞·")]
     public ChatManager chatManager;
-
-    [Header("∑Œ±◊¿Œ UI")]
     public GameObject loginPanel;
     public TMP_InputField idInput;
 
     private NetworkRunner _runner;
+
+    public NetworkPrefabRef playerPrefab;
 
     private void Start()
     {
@@ -63,19 +62,18 @@ public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
 
         _runner = gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
-
         _runner.AddCallbacks(this);
 
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,
             SessionName = "Room_1",
+
+            Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
             // Scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene(),
             PlayerCount = 4,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
-
-        Debug.Log($"Fusion ∞‘¿” Ω√¿€! ∏µÂ: {mode}");
     }
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
@@ -101,7 +99,6 @@ public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
 
     public void ReceiveMessage(string senderName, string message)
     {
-        // »≠∏Èø° ≈ÿΩ∫∆Æ √ﬂ∞°
         string formattedText = $"<color=yellow>[{senderName}]</color>: {message}";
         chatContent.text += formattedText + "\n";
         Invoke("ScrollToBottom", 0.1f);
@@ -112,10 +109,18 @@ public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
         if (scrollRect != null) scrollRect.verticalNormalizedPosition = 0f;
     }
 
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        if (runner.IsServer)
+        {
+            int uniqueId = player.RawEncoded;
+            float xPos = (uniqueId % 10) * 2f;
+            Vector3 spawnPosition = new Vector3(xPos, 2f, 0);
+            runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
 
-
-
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+            Debug.Log($"{player}Î≤à ÌîåÎ†àÏù¥Ïñ¥ ÏÉùÏÑ±Îê®!");
+        }
+    }
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }

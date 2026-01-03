@@ -6,12 +6,12 @@ using Fusion;
 
 public class ChatManager : MonoBehaviour, IChatClientListener
 {
-    [Header("¼³Á¤")]
-    public string chatAppId; // ´ë½Ãº¸µå¿¡¼­ º¹»çÇÑ App ID
-    public string currentChannel = "Lobby"; // ÀÔÀåÇÒ Ã¤³Î ÀÌ¸§
+    [Header("ï¿½ï¿½ï¿½ï¿½")]
+    public string chatAppId; // ï¿½ï¿½Ãºï¿½ï¿½å¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ App ID
+    public string currentChannel = "Lobby"; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½ ï¿½Ì¸ï¿½
 
-    [Header("UI ½ºÅ©¸³Æ® ¿¬°á")]
-    public NetworkUI networkUI; // UI¿¡°Ô "È­¸é¿¡ ¶ç¿ö"¶ó°í ½ÃÅ°±â À§ÇØ ÇÊ¿ä
+    [Header("UI ï¿½ï¿½Å©ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½")]
+    public NetworkUI networkUI; // UIï¿½ï¿½ï¿½ï¿½ "È­ï¿½é¿¡ ï¿½ï¿½ï¿½"ï¿½ï¿½ï¿½ ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½
 
     private ChatClient chatClient;
     private string myNickName;
@@ -22,14 +22,12 @@ public class ChatManager : MonoBehaviour, IChatClientListener
 
         if (string.IsNullOrEmpty(myNickName))
         {
-            Debug.LogError("´Ð³×ÀÓÀÌ ¾ø½À´Ï´Ù. DataManagerÀ» ¸ÕÀú ¼¼ÆÃÇÏ¼¼¿ä");
             return;
         }
         chatClient = new ChatClient(this);
 
-        // ¿¬°áÇÏ±â
         chatClient.Connect(chatAppId, "1.0", new AuthenticationValues(myNickName));
-        Debug.Log("Ã¤ÆÃ ¼­¹ö ¿¬°á ½Ãµµ...");
+        Debug.Log("Ã¤ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½...");
     }
 
     public void EnterRoomChannel(string roomName)
@@ -43,7 +41,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
 
         chatClient.Subscribe(new string[] { currentChannel });
 
-        networkUI.ReceiveMessage("System", $"[{currentChannel}] Ã¤³Î·Î ÀÌµ¿");
+        networkUI.ReceiveMessage("System", $"[{currentChannel}] Ã¤ï¿½Î·ï¿½ ï¿½Ìµï¿½");
     }
 
     void Update()
@@ -56,7 +54,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
 
     public void SendChatMessage(string message)
     {
-        if (chatClient.CanChat) // ¿¬°á »óÅÂ È®ÀÎ
+        if (chatClient.CanChat) // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         {
             chatClient.PublishMessage(currentChannel, message);
         }
@@ -66,7 +64,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
     {
         currentChannel = "Lobby";
         chatClient.Subscribe(new string[] { currentChannel });
-        networkUI.ReceiveMessage("System", $"{myNickName}´Ô Ã¤ÆÃ ¼­¹ö¿¡ ¿¬°áµÇ¾ú½À´Ï´Ù.");
+        networkUI.ReceiveMessage("System", $"{myNickName}ï¿½ï¿½ Ã¤ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
     }
 
     public void OnGetMessages(string channelName, string[] senders, object[] messages)
@@ -85,7 +83,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
             reason = chatClient.DisconnectedCause.ToString();
         }
 
-        networkUI.ReceiveMessage("System", $"¿¬°áÀÌ ²÷¾îÁ³½À´Ï´Ù. (ÀÌÀ¯: {reason})");
+        networkUI.ReceiveMessage("System", $"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½. (ï¿½ï¿½ï¿½ï¿½: {reason})");
         Debug.LogError($"[Chat Error] Disconnect Cause: {reason}");
     }
 

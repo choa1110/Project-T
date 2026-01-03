@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class DataManager : MonoBehaviour
 {
@@ -15,7 +15,7 @@ public class DataManager : MonoBehaviour
     public void SetNickName(string name)
     {
         UserNickName = name;
-        PlayerPrefs.SetString("MyNickName", name); //¿ì¼± ÄÄÇ»ÅÍ¿¡ ÀÌÈÄ µ¥º£
+        PlayerPrefs.SetString("MyNickName", name); //ìš°ì„  ì»´í“¨í„°ì— ì´í›„ ë°ë² 
         PlayerPrefs.Save();
     }
 
