@@ -12,7 +12,15 @@ public class FollowCamera : MonoBehaviour
     Vector3 _movePos;
     Vector3 _offset = new Vector3(0, 0, 0);
 
-    void Update()
+    void Start()
+    {
+        Vector3 followPos = target.transform.position;
+        followPos.y += 1.2f;
+
+        transform.forward = followPos - transform.position;
+    }
+
+    void LateUpdate()
     {
         Vector3 followPos = target.transform.position;
         followPos.y += 1.2f;
@@ -29,7 +37,6 @@ public class FollowCamera : MonoBehaviour
 
         _movePos = target.transform.position + dir * camDis;
 
-        transform.forward = followPos - transform.position;
         transform.position = _movePos + _offset;
     }
 

@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: Haste
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   buffName: Haste
-  buffDuration: 5
-  condition: 0
+  isInfinite: 1
+  isConditional: 1
+  duration: 0
+  conditions:
+  - {fileID: 11400000, guid: 98d1da41991099e4b810d29bfadda7eb, type: 2}
   effects:
   - {fileID: 11400000, guid: fb4578a096433054caee7502b74f9d17, type: 2}

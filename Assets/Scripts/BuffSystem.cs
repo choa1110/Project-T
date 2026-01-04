@@ -6,8 +6,7 @@ public class BuffSystem : MonoBehaviour
     Player _player;
     PlayerStats _playerStats;
 
-    List<BuffData> _permanentBuffs = new List<BuffData>();
-    List<BuffData> _activeBuffs = new List<BuffData>();
+    List<Buff> _activeBuffs = new List<Buff>();
 
     void Awake()
     {
@@ -19,36 +18,23 @@ public class BuffSystem : MonoBehaviour
     {
         for (int i = _activeBuffs.Count - 1; i >= 0; i--)
         {
-            _activeBuffs[i].Tick(Time.deltaTime);
+            _activeBuffs[i].UpdateTick(Time.deltaTime);
 
-            if (Mathf.Approximately(_activeBuffs[i].buffDuration, 0))
+            if (_activeBuffs[i].expired)
                 RemoveBuff(_activeBuffs[i]);
         }
     }
 
-    public void ApplyBuff(BuffData buffData)
+    public void ApplyBuff(BuffData data)
     {
-        BuffData buff = Instantiate(buffData);
+        Buff buff = new Buff(data, _player);
 
-        if (buffData.buffDuration > 0)
-            _activeBuffs.Add(buff);
-        else
-            _permanentBuffs.Add(buff);
-
-        switch (buffData.condition) {
-            case BuffCondition.Always:
-                buff.ApplyAllEffects(_player);
-                break;
-            case BuffCondition.OnHit:
-                ConditionalBuffData conditBuffData = (ConditionalBuffData)buffData;
-                conditBuffData.SetCondition(this, _player.onHit);
-                break;
-        }
+        _activeBuffs.Add(buff);
     }
 
-    private void RemoveBuff(BuffData buff)
+    private void RemoveBuff(Buff buff)
     {
-        buff.ClearAllEffects();
+        buff.Remove();
         _activeBuffs.Remove(buff);
     }
 }

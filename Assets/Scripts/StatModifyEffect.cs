@@ -1,12 +1,5 @@
 using UnityEngine;
 
-public enum StatModType
-{
-    Flat,       // ±ø ½ºÅÈ (¿¹: +10)
-    PercentAdd, // %ÇÕ¿¬»ê (¿¹: +10% -> +0.1 * base)
-    Multiplicative // °ö¿¬»ê (¿¹: 2¹è -> 2.0 * base)
-}
-
 [System.Serializable]
 [CreateAssetMenu(fileName = "Stat Modify Effect", menuName = "Effect Datas/Stat Modify")]
 public class StatModifyEffect : BuffEffect

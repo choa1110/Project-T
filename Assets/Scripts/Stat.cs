@@ -1,5 +1,12 @@
 using System.Collections.Generic;
 
+public enum StatModType
+{
+    Flat,       // ±ø ½ºÅÈ (¿¹: +10)
+    PercentAdd, // %ÇÕ¿¬»ê (¿¹: +10% -> +0.1 * base)
+    Multiplicative // °ö¿¬»ê (¿¹: 2¹è -> 2.0 * base)
+}
+
 public class Stat
 {
     float _baseValue;

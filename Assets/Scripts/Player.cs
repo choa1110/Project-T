@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -30,8 +29,8 @@ public class Player : MonoBehaviour
     bool isDead;
     bool isGrounded = true;
     bool isMoveable = true;
-    bool _groundedThisFrame = true;
     bool _jumpedThisFrame = false;
+    float _jumpStartTimer;
 
     int jumpCount;
 
@@ -41,6 +40,38 @@ public class Player : MonoBehaviour
     const float SticktoGround = -2f;
     const float GroundTurnLerp = 5f;
     const float AirTurnLerp = 1.5f;
+
+    const float sphereRadius = 0.3f;
+    const float castDistance = 0.3f;
+    const float rayOffsetY = 0.3f;
+
+    void OnDrawGizmos()
+    {
+        Vector3 origin = transform.position + Vector3.up * rayOffsetY;
+        Vector3 direction = Vector3.down;
+
+        Ray groundRay = new Ray(origin, direction);
+
+        bool hit = Physics.SphereCast(
+            groundRay,
+            sphereRadius,
+            castDistance,
+            groundLayer
+        );
+
+        // 히트 여부에 따라 색상 변경
+        Gizmos.color = hit ? Color.green : Color.red;
+
+        // 시작 Sphere
+        Gizmos.DrawWireSphere(origin, sphereRadius);
+
+        // 끝 Sphere
+        Vector3 endPos = origin + direction * castDistance;
+        Gizmos.DrawWireSphere(endPos, sphereRadius);
+
+        // 중심 Ray
+        Gizmos.DrawLine(origin, endPos);
+    }
 
     void Awake()
     {
@@ -61,6 +92,7 @@ public class Player : MonoBehaviour
     {
         _anim.SetFloat("MoveSpeedRate", stats.GetStatRate(StatType.SpeedMove));
         _anim.SetFloat("AtkSpeedRate", stats.GetStatRate(StatType.AtkSpeed));
+        _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Time.deltaTime);
 
         GroundCheck();
         ApplyGravity();
@@ -91,23 +123,27 @@ public class Player : MonoBehaviour
     {
         Ray groundRay = new Ray(transform.position + Vector3.up * 0.3f, Vector3.down);
 
-        if (Physics.SphereCast(groundRay, 0.3f, 0.1f, groundLayer))
+        if (Physics.SphereCast(groundRay, 0.3f, 0.3f, groundLayer) && _verVelocity <= 0)
         {
             isGrounded = true;
             jumpCount = jumpAbiliy;
         }
         else
             isGrounded = false;
+
+        _anim.SetBool("Airborne", !isGrounded);
+        //if (!isGrounded)
+        //{
+        //    Debug.LogError(isGrounded);
+        //}
     }
 
     void ApplyGravity()
     {
         if (!isGrounded)
             _verVelocity += Gravity * Time.deltaTime;
-        else if (!_groundedThisFrame)
+        else if (_jumpStartTimer <= 0)
             _verVelocity = SticktoGround;
-
-        _groundedThisFrame = isGrounded;
     }
 
     void Movement()
@@ -122,8 +158,11 @@ public class Player : MonoBehaviour
 
         if (_input.jump && !_jumpedThisFrame && jumpCount > 0)
         {
+            _jumpStartTimer = 0.15f;
             jumpCount--;
             _verVelocity = Mathf.Sqrt(2f * -Gravity * stats.GetStat(StatType.JumpHeight).Value);
+
+            _anim.SetTrigger("Jump");
         }
 
         if (isGrounded)
