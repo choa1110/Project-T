@@ -70,7 +70,7 @@ public class Stat
             else if (mod.type == StatModType.PercentAdd)
             {
                 // %합연산들을 모두 더함
-                sumPercentAdd += mod.amount;
+                sumPercentAdd += mod.amount / 100;
             }
             else if (mod.type == StatModType.Flat)
             {

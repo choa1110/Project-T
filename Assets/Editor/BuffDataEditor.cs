@@ -8,6 +8,8 @@ public class BuffDataEditor : Editor
         serializedObject.Update();
 
         SerializedProperty buffName = serializedObject.FindProperty("buffName");
+        SerializedProperty rank = serializedObject.FindProperty("rank");
+        SerializedProperty discription = serializedObject.FindProperty("discription");
         SerializedProperty isInfinite = serializedObject.FindProperty("isInfinite");
         SerializedProperty duration = serializedObject.FindProperty("duration");
         SerializedProperty isConditional = serializedObject.FindProperty("isConditional");
@@ -15,6 +17,8 @@ public class BuffDataEditor : Editor
         SerializedProperty effects = serializedObject.FindProperty("effects");
 
         EditorGUILayout.PropertyField(buffName);
+        EditorGUILayout.PropertyField(rank);
+        EditorGUILayout.PropertyField(discription);
         EditorGUILayout.PropertyField(isInfinite);
         EditorGUILayout.PropertyField(isConditional);
 

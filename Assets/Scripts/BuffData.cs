@@ -6,6 +6,11 @@ using UnityEngine;
 public class BuffData : ScriptableObject
 {
     public string buffName;
+    public int rank;
+
+    [TextAreaAttribute]
+    public string discription;
+
     public bool isInfinite;
     public bool isConditional;
     public float duration;
