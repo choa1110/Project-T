@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class AttackArea : MonoBehaviour
 {
-    Player _owner;
+    GameObject _owner;
     AttackParameter _param;
 
     [SerializeField] LayerMask _attackLayer;
@@ -24,9 +24,9 @@ public class AttackArea : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, areaRadius);
     }
 
-    public void SetOwner(Player player)
+    public void SetOwner(GameObject obj)
     {
-        _owner = player;
+        _owner = obj;
     }
 
     public void SetAttackStatus(AttackParameter input, float damage, float knock)
@@ -53,16 +53,7 @@ public class AttackArea : MonoBehaviour
             {
                 Player target = collider.transform.GetComponentInParent<Player>();
 
-                if (target && target != _owner && _owner.team != target.team && !_hit_objs.Contains(target))
-                {
-                    _hit_objs.Add(target);
-
-                    Vector3 tmpz = _owner.transform.forward * _param.KnockbackDir.z;
-                    Vector3 tmpx = _owner.transform.right * _param.KnockbackDir.x;
-                    Vector3 tmpy = _owner.transform.up * _param.KnockbackDir.y;
-
-                    target.ApplyHit(_owner, _damPow, tmpz + tmpz + tmpy, _knockPow, _param.CameraShake);
-                }
+                CheckCollides(target);
             }
         }
 
@@ -70,16 +61,7 @@ public class AttackArea : MonoBehaviour
         {
             Player target = hit.transform.GetComponentInParent<Player>();
 
-            if (target && target != _owner && _owner.team != target.team && !_hit_objs.Contains(target))
-            {
-                _hit_objs.Add(target);
-
-                Vector3 tmpz = _owner.transform.forward * _param.KnockbackDir.z;
-                Vector3 tmpx = _owner.transform.right * _param.KnockbackDir.x;
-                Vector3 tmpy = _owner.transform.up * _param.KnockbackDir.y;
-
-                target.ApplyHit(_owner, _damPow, tmpz + tmpz + tmpy, _knockPow, _param.CameraShake);
-            }
+            CheckCollides(target);
         }
 
         _prevPoint = _curPoint;
@@ -96,5 +78,25 @@ public class AttackArea : MonoBehaviour
     public void AttackEnd()
     {
         _inAttack = false;
+    }
+
+    void CheckCollides(Player target)
+    {
+        if (target && target != _owner && !_hit_objs.Contains(target))
+        {
+            if (_owner.TryGetComponent<Player>(out Player pl))
+            {
+                if (pl.team == target.team)
+                    return;
+            }
+
+            _hit_objs.Add(target);
+
+            Vector3 tmpz = _owner.transform.forward * _param.KnockbackDir.z;
+            Vector3 tmpx = _owner.transform.right * _param.KnockbackDir.x;
+            Vector3 tmpy = _owner.transform.up * _param.KnockbackDir.y;
+
+            target.ApplyHit(_owner.transform.position, _damPow, tmpz + tmpz + tmpy, _knockPow, _param.CameraShake);
+        }
     }
 }

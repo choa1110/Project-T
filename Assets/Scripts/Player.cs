@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -13,7 +12,7 @@ public class Player : MonoBehaviour
     CharacterInfo _info;
 
     public FollowCamera POV;
-    public AttackParameters parameters;
+    public AttackParameters paramlist;
 
     [SerializeField] int _modelNum;
     public int team;
@@ -99,7 +98,7 @@ public class Player : MonoBehaviour
         foreach (AttackArea area in _info.fists)
         {
             attackAreas.Add(area);
-            area.SetOwner(this);
+            area.SetOwner(gameObject);
         }
 
         stats.InitalizeStats();
@@ -129,7 +128,13 @@ public class Player : MonoBehaviour
                 Rotation();
             }
             else
+            {
                 _horVelocity = Vector3.zero;
+                _blendSpeedY = 0;
+                _blendSpeedX = 0;
+                _anim.SetFloat("SpeedX", _blendSpeedX);
+                _anim.SetFloat("SpeedY", _blendSpeedY);
+            }
 
             Combo();
         }
@@ -137,7 +142,7 @@ public class Player : MonoBehaviour
         if (Keyboard.current.hKey.wasPressedThisFrame)
         {
             // 테스트용
-            ApplyHit(this, 1, new Vector3(1, 0.5f, 1), 20, 10);
+            ApplyHit(transform.position, 1, new Vector3(1, 0f, 1), 20, 10);
         }
 
         _controller.Move((_horVelocity + Vector3.up * _verVelocity) * Time.deltaTime);
@@ -215,7 +220,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void ApplyHit(Player causer, float damage, Vector3 knockDir, float knockPow, float camShake)
+    public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (_isDead) return;
 
@@ -231,7 +236,7 @@ public class Player : MonoBehaviour
 
         Knockback(initialVel);
 
-        SetHit(causer.transform.position, knockDis);
+        SetHit(pos, knockDis);
 
         POV.CameraShake(camShake);
     }
@@ -243,28 +248,6 @@ public class Player : MonoBehaviour
             StopCoroutine(_knockbackCor);
 
         _knockbackCor = StartCoroutine(KnockbackRoutine(initialVel));
-    }
-
-    IEnumerator KnockbackRoutine(Vector3 initialVel)
-    {
-        Vector3 vel = initialVel;
-        Vector3 minVel = initialVel * 0.1f;
-        float time = 0f;
-
-        while (time < 0.75f || !_isGrounded)
-        {
-            vel = Vector3.Lerp(vel, minVel, 5f * Time.deltaTime);
-
-            Vector3 delta = vel * Time.deltaTime;
-
-            _controller.Move(delta);
-
-            time += Time.deltaTime;
-
-            yield return null;
-        }
-
-        _knockbackCor = null;
     }
 
     static float Sign(float v)
@@ -288,6 +271,15 @@ public class Player : MonoBehaviour
         attackAreas[num].AttackEnd();
     }
 
+    public void SetAttackStats(int num)
+    {
+        float dam = stats.GetStat(StatType.PowDam).Value;
+        float knock = stats.GetStat(StatType.PowKnock).Value;
+
+        foreach (AttackArea area in attackAreas)
+            area.SetAttackStatus(paramlist.parameters[num], dam, knock);
+    }
+
     public void ResetCombo()
     {
         _anim.SetBool("Combo", false);
@@ -295,24 +287,74 @@ public class Player : MonoBehaviour
 
     void SetHit(Vector3 hitPoint, float hitDis)
     {
+        Vector3 velocity = _controller.velocity;
+        velocity.y = 0;
+
         if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
         {
-            if (hitDis > 15f)
+            if (hitDis > 20f)
                 _anim.SetInteger("Hit", 4);
             else
                 _anim.SetInteger("Hit", 2);
         }
         else
         {
-            if (hitDis > 15f)
+            if (hitDis > 20f)
                 _anim.SetInteger("Hit", 3);
             else
                 _anim.SetInteger("Hit", 1);
+
+            velocity *= -1;
         }
+
+        if (velocity.sqrMagnitude > 0.001f)
+            StartCoroutine(RotateByVelocity(velocity));
     }
 
     public void ResetHit()
     {
         _anim.SetInteger("Hit", 0);
+    }
+
+    public void SetKnockedHit()
+    {
+        _anim.SetInteger("Hit", 5);
+    }
+
+    // Coroutines
+    IEnumerator KnockbackRoutine(Vector3 initialVel)
+    {
+        Vector3 vel = initialVel;
+        Vector3 minVel = initialVel * 0.2f;
+        float time = 0f;
+
+        while (time < 0.7f || !_isGrounded)
+        {
+            vel = Vector3.Lerp(vel, minVel, 5f * Time.deltaTime);
+
+            Vector3 delta = vel * Time.deltaTime;
+
+            _controller.Move(delta);
+
+            time += Time.deltaTime;
+
+            yield return null;
+        }
+
+        _knockbackCor = null;
+    }
+
+    IEnumerator RotateByVelocity(Vector3 tarVel)
+    {
+        Quaternion targetRotation = Quaternion.LookRotation(tarVel);
+        float time = 0f;
+
+        while (time <= 0.3f)
+        {
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, time * 3.3f);
+            time += Time.deltaTime;
+
+            yield return null;
+        }
     }
 }
