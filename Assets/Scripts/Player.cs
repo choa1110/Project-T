@@ -69,18 +69,18 @@ public class Player : MonoBehaviour
             _groundLayer
         );
 
-        // ½ÃÀÛ Sphere
+        // ï¿½ï¿½ï¿½ï¿½ Sphere
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(origin, sphereRadius);
 
-        // È÷Æ® ¿©ºÎ¿¡ µû¶ó »ö»ó º¯°æ
+        // ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         Gizmos.color = hit ? Color.green : Color.red;
 
-        // ³¡ Sphere
+        // ï¿½ï¿½ Sphere
         Vector3 endPos = origin + direction * castDistance;
         Gizmos.DrawWireSphere(endPos, sphereRadius);
 
-        // Áß½É Ray
+        // ï¿½ß½ï¿½ Ray
         Gizmos.DrawLine(origin, endPos);
     }
 
@@ -141,7 +141,7 @@ public class Player : MonoBehaviour
 
         if (Keyboard.current.hKey.wasPressedThisFrame)
         {
-            // Å×½ºÆ®¿ë
+            // ï¿½×½ï¿½Æ®ï¿½ï¿½
             ApplyHit(transform.position, 1, new Vector3(1, 0f, 1), 20, 10);
         }
 
