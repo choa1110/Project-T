@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
+// using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -80,7 +80,7 @@ public class Player : MonoBehaviour
 
         if (Keyboard.current.hKey.wasPressedThisFrame)
         {
-            // ев╫╨ф╝©К
+            // О©╫в╫О©╫ф╝О©╫О©╫
             onHit.Invoke();
         }
 

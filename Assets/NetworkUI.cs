@@ -9,72 +9,27 @@ using UnityEngine.SceneManagement;
 
 public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
 {
+    [Header("채팅 UI 연결")]
     public TMP_InputField inputField;
     public TextMeshProUGUI chatContent;
     public ScrollRect scrollRect;
-
     public ChatManager chatManager;
-    public GameObject loginPanel;
-    public TMP_InputField idInput;
+
+    [Header("게임 캐릭터 (SampleScene용)")]
+    public NetworkPrefabRef playerPrefab;
 
     private NetworkRunner _runner;
 
-    public NetworkPrefabRef playerPrefab;
-
     private void Start()
     {
-        string savedName = DataManager.Instance.LoadNickName();
-
-        if (!string.IsNullOrEmpty(savedName))
+        // 이미 Lobby에서 생성된 Runner를 찾아서 연결
+        _runner = FindObjectOfType<NetworkRunner>();
+        if (_runner != null)
         {
-            idInput.text = savedName;
+            _runner.AddCallbacks(this);
         }
     }
 
-    public void OnLoginButtonClicked()
-    {
-        string inputName = idInput.text;
-        if (string.IsNullOrEmpty(inputName)) return;
-
-        DataManager.Instance.SetNickName(inputName);
-
-        chatManager.ConnectWithNickName();
-
-        loginPanel.SetActive(false);
-    }
-
-    public async void OnHostButtonClicked()
-    {
-        StartGame(GameMode.Host);
-        string roomName = "Room_1";
-        chatManager.EnterRoomChannel(roomName);
-    }
-    public async void OnJoinButtonClicked()
-    {
-        StartGame(GameMode.Client);
-        string roomName = "Room_1";
-        chatManager.EnterRoomChannel(roomName);
-    }
-
-    async void StartGame(GameMode mode)
-    {
-        if (_runner != null) return;
-
-        _runner = gameObject.AddComponent<NetworkRunner>();
-        _runner.ProvideInput = true;
-        _runner.AddCallbacks(this);
-
-        await _runner.StartGame(new StartGameArgs()
-        {
-            GameMode = mode,
-            SessionName = "Room_1",
-
-            Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
-            // Scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene(),
-            PlayerCount = 4,
-            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
-        });
-    }
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         var data = new NetworkInputData();
@@ -86,13 +41,13 @@ public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
 
         input.Set(data);
     }
-
     public void OnSendButtonClicked()
     {
         string msg = inputField.text;
         if (string.IsNullOrEmpty(msg)) return;
 
-        chatManager.SendChatMessage(msg);
+        if(chatManager != null) chatManager.SendChatMessage(msg);
+        
         inputField.text = "";
         inputField.ActivateInputField();
     }
@@ -113,14 +68,18 @@ public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer)
         {
-            int uniqueId = player.RawEncoded;
-            float xPos = (uniqueId % 10) * 2f;
-            Vector3 spawnPosition = new Vector3(xPos, 2f, 0);
-            runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
-
-            Debug.Log($"{player}번 플레이어 생성됨!");
+            if (SceneManager.GetActiveScene().buildIndex == 2) 
+            {
+                int uniqueId = player.RawEncoded;
+                float xPos = (uniqueId % 10) * 2f;
+                Vector3 spawnPosition = new Vector3(xPos, 2f, 0);
+                
+                runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
+                Debug.Log($"{player}번 플레이어 게임 캐릭터 생성됨!");
+            }
         }
     }
+
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
@@ -138,10 +97,5 @@ public class NetworkUI : MonoBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)
-    {
-    }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data){ }
 }
-
-
