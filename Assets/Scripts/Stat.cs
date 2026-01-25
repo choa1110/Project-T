@@ -1,5 +1,12 @@
 using System.Collections.Generic;
 
+public enum StatModType
+{
+    Flat,       // 깡 스탯 (예: +10)
+    PercentAdd, // %합연산 (예: +10% -> +0.1 * base)
+    Multiplicative // 곱연산 (예: 2배 -> 2.0 * base)
+}
+
 public class Stat
 {
     float _baseValue;
@@ -63,7 +70,7 @@ public class Stat
             else if (mod.type == StatModType.PercentAdd)
             {
                 // %합연산들을 모두 더함
-                sumPercentAdd += mod.amount;
+                sumPercentAdd += mod.amount / 100;
             }
             else if (mod.type == StatModType.Flat)
             {

@@ -1,36 +1,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Buff Data", menuName = "Buff Data/Default")]
+[System.Serializable]
+[CreateAssetMenu(fileName = "Buff Data", menuName = "Buff Data")]
 public class BuffData : ScriptableObject
 {
     public string buffName;
-    public float buffDuration; // 지속 시간 (0 이하면 영구 지속)
-    public BuffCondition condition = BuffCondition.Always;
+    public int rank;
 
-    protected Player buffTarget;
+    [TextAreaAttribute]
+    public string discription;
 
-    public void Tick(float delta)
-    {
-        buffDuration = Mathf.Max(0, buffDuration - delta);
-    }
+    public bool isInfinite;
+    public bool isConditional;
+    public float duration;
 
-    public void ApplyAllEffects(Player target)
-    {
-        buffTarget = target;
+    public List<BuffCondition> conditions;
+    public List<BuffEffect> effects;
+}
 
-        foreach (var effect in effects)
-            effect.Apply(buffTarget);
-    }
-
-    public void ClearAllEffects()
-    {
-        foreach (var effect in effects)
-            effect.Remove();
-    }
-
-    [Header("Effects")]
-    public List<BuffEffect> effects; // 이 버프가 주는 효과들
+public abstract class BuffCondition : ScriptableObject
+{
+    public abstract void Bind(Player target);
+    public abstract bool IsMet();
 }
 
 public abstract class BuffEffect : ScriptableObject
