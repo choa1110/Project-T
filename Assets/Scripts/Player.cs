@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     CharacterController _controller;
     Animator _anim;
     InputSystem _input;
+    ItemSystem _item;
     CharacterInfo _info;
 
     public FollowCamera POV;
@@ -23,6 +24,7 @@ public class Player : MonoBehaviour
     public List<GameObject> modelList;
 
     public UnityEvent onHit;
+    public UnityEvent<float> onDamage;
 
     Vector3 _horVelocity;
     float _verVelocity;
@@ -89,6 +91,7 @@ public class Player : MonoBehaviour
         _controller = GetComponent<CharacterController>();
         _anim = GetComponent<Animator>();
         _input = GetComponent<InputSystem>();
+        _item = GetComponent<ItemSystem>();
 
         modelList[_modelNum].SetActive(true);
 
@@ -102,6 +105,8 @@ public class Player : MonoBehaviour
         }
 
         stats.InitalizeStats();
+
+        RoundStart();
     }
 
     public void RoundStart()
@@ -137,6 +142,7 @@ public class Player : MonoBehaviour
             }
 
             Combo();
+            ItemUse();
         }
 
         if (Keyboard.current.hKey.wasPressedThisFrame)
@@ -220,12 +226,22 @@ public class Player : MonoBehaviour
         }
     }
 
+    void ItemUse()
+    {
+        if (_input.useItem1)
+            _item.UseItem(this, 0);
+
+        if (_input.useItem2)
+            _item.UseItem(this, 1);
+    }
+
     public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (_isDead) return;
 
         _curHP = Mathf.Clamp(_curHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
         onHit.Invoke();
+        onDamage.Invoke(_curHP / stats.GetStat(StatType.MaxHP).Value);
 
         if (!_isGrounded)
             knockPow *= 1.5f;
@@ -255,6 +271,12 @@ public class Player : MonoBehaviour
         if (v < 0f) return -1f;
         if (v > 0f) return 1f;
         return 0f;
+    }
+
+    // 유도탄용 - 미완
+    public Player GetClosestOpponent()
+    {
+        return this;
     }
 
     // Animation Events

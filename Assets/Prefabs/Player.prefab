@@ -255,6 +255,7 @@ GameObject:
   - component: {fileID: 3585062283753992433}
   - component: {fileID: 8041200987710526796}
   - component: {fileID: 931208147735945396}
+  - component: {fileID: 8111007182238084657}
   - component: {fileID: 5105540053892191170}
   m_Layer: 3
   m_Name: Player
@@ -410,6 +411,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b7caa2cd3dfcaa46ae6e346140334da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
+--- !u!114 &8111007182238084657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8212789482076507676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c66976353be16234ebedfc4d1f02c1ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSystem
+  slotList: []
 --- !u!114 &5105540053892191170
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -445,6 +459,9 @@ MonoBehaviour:
   - {fileID: 9063024666672490011}
   - {fileID: 634605891072362354}
   onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDamage:
     m_PersistentCalls:
       m_Calls: []
   _groundLayer:
@@ -1271,6 +1288,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: f81a4eda03ca4704c94cb4a1ec3e507b, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 5278693648806994293}
   - {fileID: 36192030086037934}
@@ -1963,6 +1981,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 4737241017296882263}
   - {fileID: 2615523800257740494}
@@ -2655,6 +2674,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 84e7c2a21aecc2842877b031d1ce3557, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 6972685328622460441}
   - {fileID: 5898429543953796865}
@@ -3437,6 +3457,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 1833654922538381043}
   - {fileID: 2533276181512865774}
