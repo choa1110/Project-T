@@ -3,6 +3,8 @@
 public class Buff
 {
     BuffData _buff;
+    //외부(BuffSystem)에서 읽기 위한 프로퍼티
+    public BuffData Data => _buff;
     Player _target;
 
     public bool expired { get; private set; }
