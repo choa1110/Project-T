@@ -27,7 +27,7 @@ public class ChatSceneUI : MonoBehaviour
 
     void Start()
     {
-        _runner = FindObjectOfType<NetworkRunner>();
+        _runner = FindFirstObjectByType<NetworkRunner>();
         
         if (_runner != null && _runner.SessionInfo != null)
             roomNameText.text = $"방: {_runner.SessionInfo.Name}";
@@ -59,12 +59,11 @@ public class ChatSceneUI : MonoBehaviour
 
             if (i < players.Count) 
             {
-                // A. 사람이 있는 자리 -> 정보 표시
                 var p = players[i];
-                nameSlots[i].text = p.NickName; // 닉네임
+                nameSlots[i].text = p.NickName;
 
                 // 상태 표시 (방장 / 레디 / 대기)
-                if (p.Object.HasStateAuthority) 
+                if (p.IsLeader) 
                     stateSlots[i].text = "<color=orange>HOST</color>";
                 else if (p.IsReady) 
                     stateSlots[i].text = "<color=green>READY</color>";
@@ -72,16 +71,13 @@ public class ChatSceneUI : MonoBehaviour
                     stateSlots[i].text = "<color=red>WAIT</color>";
                 
                 // (선택) 배경 이미지가 있다면 활성화
-                nameSlots[i].transform.parent.gameObject.SetActive(true);
+                if(nameSlots[i].text != null)
+                    nameSlots[i].transform.parent.gameObject.SetActive(true);
             }
             else
             {
-                // B. 사람이 없는 자리 -> "빈 자리" 표시 또는 숨기기
                 nameSlots[i].text = "빈 자리";
                 stateSlots[i].text = "-";
-                
-                // (선택) 빈 자리는 아예 안 보이게 하려면 아래 주석 해제
-                // nameSlots[i].transform.parent.gameObject.SetActive(false);
             }
         }
     }

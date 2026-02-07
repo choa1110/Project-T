@@ -48,6 +48,8 @@ MonoBehaviour:
   _NickName: 
   _IsReady:
     _value: 0
+  _IsLeader:
+    _value: 0
 --- !u!114 &9074141253512951886
 MonoBehaviour:
   m_ObjectHideFlags: 0
