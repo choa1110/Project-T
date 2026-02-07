@@ -8,6 +8,9 @@ public class BuffData : ScriptableObject
     public string buffName;
     public int rank;
 
+    public Sprite icon; //(버프 아이콘용 이미지)
+    [TextArea] public string description; //(버프 설명)
+
     [TextAreaAttribute]
     public string discription;
 
