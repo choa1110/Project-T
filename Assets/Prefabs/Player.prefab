@@ -95,7 +95,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 8
-  areaRadius: 0.25
+  areaRadius: 0.5
 --- !u!1 &1556197728934557906
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,7 +191,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 8
-  areaRadius: 0.25
+  areaRadius: 0.5
 --- !u!1 &3438548303340242054
 GameObject:
   m_ObjectHideFlags: 0
@@ -257,7 +257,7 @@ GameObject:
   - component: {fileID: 8041200987710526796}
   - component: {fileID: 931208147735945396}
   - component: {fileID: 5105540053892191170}
-  - component: {fileID: 8147829034486848769}
+  - component: {fileID: -1394671117463737779}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -323,8 +323,9 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 931208147735945396}
   - {fileID: 5105540053892191170}
-  - {fileID: 8147829034486848769}
+  - {fileID: -1394671117463737779}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1286421703718410836
 MonoBehaviour:
@@ -471,10 +472,12 @@ MonoBehaviour:
       m_Calls: []
   _IsDead: 0
   _CurrentHP: 0
+  _CurrentKnockbackVelocity: {x: 0, y: 0, z: 0}
+  _KnockbackTimer: 0
   _groundLayer:
     serializedVersion: 2
     m_Bits: 9
---- !u!114 &8147829034486848769
+--- !u!114 &-1394671117463737779
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -483,14 +486,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 8212789482076507676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Script: {fileID: 11500000, guid: 378411a89480da345945c2f888327a2d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  m_EditorClassIdentifier: Fusion.Unity::Fusion.NetworkCharacterController
   _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
+  gravity: -20
+  jumpImpulse: 8
+  acceleration: 10
+  braking: 10
+  maxSpeed: 2
+  rotationSpeed: 15
 --- !u!1 &8300193886268729100
 GameObject:
   m_ObjectHideFlags: 0
@@ -1700,7 +1705,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1103982698879521993, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_Layer

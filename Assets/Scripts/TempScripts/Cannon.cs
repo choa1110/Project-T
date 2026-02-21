@@ -4,7 +4,7 @@ public class Cannon : MonoBehaviour
 {
     public GameObject Cannonball;
     public Transform shootPoint;
-    public AttackParameters meters;
+    // public AttackParameters meters;
 
     [SerializeField] float term;
 
@@ -23,15 +23,19 @@ public class Cannon : MonoBehaviour
 
     void Shoot()
     {
-        GameObject go = Instantiate(Cannonball);
-        go.transform.position = shootPoint.position;
-        go.transform.forward = shootPoint.forward;
+        // GameObject go = Instantiate(Cannonball);
+        // go.transform.position = shootPoint.position;
+        // go.transform.forward = shootPoint.forward;
+        GameObject go = Instantiate(Cannonball, shootPoint.position, shootPoint.rotation);
 
-        AttackArea area = go.GetComponent<AttackArea>();
-        area.SetAttackStatus(meters.parameters[0], 5, 25);
-        area.AttackStart();
+        // AttackArea area = go.GetComponent<AttackArea>();
+        // area.SetAttackStatus(meters.parameters[0], 5, 25);
+        // area.AttackStart();
 
         Rigidbody rb = go.GetComponent<Rigidbody>();
-        rb.AddForce(go.transform.forward * 25, ForceMode.Impulse);
+        if(rb != null)
+        {
+            rb.AddForce(go.transform.forward * 25, ForceMode.Impulse);
+        }
     }
 }
