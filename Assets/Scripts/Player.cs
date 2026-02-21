@@ -22,13 +22,12 @@ public class Player : NetworkBehaviour
     public List<GameObject> modelList;
     public UnityEvent onHit;
 
-    // 이동 관련 변수
-    Vector3 _moveDirection;
-    float _blendSpeedY;
-    float _blendSpeedX;
+    // 이동 관련 변수 - Fusion 2에서는 애니메이션 동기화를 위해 Networked 권장
+    [Networked] float _blendSpeedY { get; set; }
+    [Networked] float _blendSpeedX { get; set; }
 
     // 상태 변수
-    [Networked] public bool IsDead { get; set; } // 동기화 필요
+    [Networked] public bool IsDead { get; set; } 
     bool _isMoveable = true;
     float _jumpStartTimer;
     int _jumpCount;
@@ -39,8 +38,6 @@ public class Player : NetworkBehaviour
 
     List<AttackArea> attackAreas = new List<AttackArea>();
 
-    // Vector3 _currentKnockbackVelocity;
-    // float _knockbackTimer;
     [Networked] public Vector3 CurrentKnockbackVelocity { get; set; }
     [Networked] public float KnockbackTimer { get; set; }
     [SerializeField] private LayerMask _groundLayer;
@@ -61,7 +58,6 @@ public class Player : NetworkBehaviour
         foreach (AttackArea area in _info.fists)
         {
             attackAreas.Add(area);
-            // area.SetOwner(gameObject);
             area.SetOwner(this);
         }
 
@@ -82,17 +78,28 @@ public class Player : NetworkBehaviour
 
     public void RoundStart()
     {
-        CurrentHP = stats.GetStat(StatType.MaxHP).Value; // _curHP -> CurrentHP
-        _curLife = life;
-        _jumpCount = jumpAbiliy;
+        if (Object.HasStateAuthority)
+        {
+            CurrentHP = stats.GetStat(StatType.MaxHP).Value;
+            _curLife = life;
+            _jumpCount = jumpAbiliy;
+        }
     }
 
-    // Update는 오직 "애니메이션 보간"이나 "UI 갱신"용입니다. 로직은 넣지 마세요.
-    void Update()
+    // Fusion 2: Visual updates and animation blending should happen in Render for maximum smoothness
+    public override void Render()
     {
         _anim.SetFloat("MoveSpeedRate", stats.GetStatRate(StatType.SpeedMove));
         _anim.SetFloat("AtkSpeedRate", stats.GetStatRate(StatType.AtkSpeed));
+        
+        // 애니메이션 파라미터 적용 (Networked 변수를 사용하여 모든 클라이언트에서 동일하게 보임)
+        _anim.SetFloat("SpeedX", _blendSpeedX);
+        _anim.SetFloat("SpeedY", _blendSpeedY);
+        _anim.SetBool("Airborne", !_ncc.Grounded);
     }
+
+    // Update는 비워두거나 제거해도 됩니다.
+    void Update() { }
 
     // 클라이언트가 호스트에게 때렸다고 요청
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -105,16 +112,15 @@ public class Player : NetworkBehaviour
         {
             targetPlayer.CurrentHP = Mathf.Clamp(targetPlayer.CurrentHP - damage, 0, targetPlayer.stats.GetStat(StatType.MaxHP).Value);
 
-
-            if(!_ncc.Grounded)
-                knockPow *= 1.5f;
-
-            Vector3 kbDir = knockDir.normalized;
-            float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
-            Vector3 initialVel = kbDir * knockDis;
+            // 넉백 계산: 공중 피격 시 가중치 및 무게 반영
+            float weight = targetPlayer.stats.GetStat(StatType.Weight).Value;
+            float knockMultiplier = !targetPlayer._ncc.Grounded ? 1.5f : 1.0f;
+            float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.1f, weight);
+            
+            Vector3 initialVel = knockDir.normalized * finalKnockPow;
 
             targetPlayer.StartKnockback(initialVel);
-            targetPlayer.RPC_BroadcastHitEffect(hitPos, knockDis, camShake);
+            targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
         }
     }
     // 서버가 모든 클라이언트에게 정보 전달
@@ -127,23 +133,39 @@ public class Player : NetworkBehaviour
         if(Object.HasInputAuthority && POV != null)
             POV.CameraShake(camShake);
     }
+
     // 핵심 물리/이동 로직 
     public override void FixedUpdateNetwork()
     {
-        _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
-        ProcessKnockback();
+        if (IsDead) return;
 
-        _moveDirection = Vector3.zero;
-
-        bool isKnockedBack = KnockbackTimer > 0;
-
-        if (GetInput(out NetworkInputData data))
+        // Fusion 2: 이동 로직은 Authority(서버) 혹은 InputAuthority(로컬 플레이어)만 실행하도록 제한
+        if (Object.HasStateAuthority || Object.HasInputAuthority)
         {
-            if (!IsDead && !isKnockedBack)
+            _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
+            ProcessKnockback();
+
+            Vector3 moveDirection = Vector3.zero;
+            bool isKnockedBack = KnockbackTimer > 0;
+
+            if (GetInput(out NetworkInputData data))
             {
-                if (_isMoveable)
+                if (_isMoveable && !isKnockedBack)
                 {
-                    Movement(data);
+                    // Movement calculation
+                    Vector3 inputDir;
+                    if (POV != null)
+                        inputDir = POV.transform.right * data.direction.x + POV.transform.forward * data.direction.y;
+                    else
+                        inputDir = new Vector3(data.direction.x, 0, data.direction.y);
+
+                    inputDir.y = 0f;
+                    moveDirection = inputDir.normalized;
+
+                    // Networked 변수 업데이트 (Render에서 사용됨)
+                    _blendSpeedY = Mathf.Lerp(_blendSpeedY, Sign(data.direction.y), 5f * Runner.DeltaTime);
+                    _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(data.direction.x), 5f * Runner.DeltaTime);
+
                     Rotation(data);
                     
                     if (data.buttons.IsSet(InputButtons.Attack)) 
@@ -153,55 +175,34 @@ public class Player : NetworkBehaviour
                 }
                 else
                 {
-                    _blendSpeedY = 0;
-                    _blendSpeedX = 0;
+                    _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
+                    _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
                 }
             }
-        }
 
-        // NCC 파라미터 설정 및 이동
-        float currentSpeed = stats.GetStat(StatType.SpeedMove).Value;
-        if (!_ncc.Grounded) currentSpeed *= 0.7f;
-        
-        _ncc.maxSpeed = currentSpeed;
-        _ncc.gravity = Gravity;
-        _ncc.acceleration = 100f;
+            // NCC 파라미터 설정 및 이동
+            float currentSpeed = stats.GetStat(StatType.SpeedMove).Value;
+            if (!_ncc.Grounded) currentSpeed *= 0.7f;
+            
+            _ncc.maxSpeed = currentSpeed;
+            _ncc.gravity = Gravity;
+            _ncc.acceleration = 100f;
 
-        // 기본 이동 실행
-        if (isKnockedBack)
-        {
-            _ncc.Move(CurrentKnockbackVelocity);
+            // 기본 이동 실행
+            if (isKnockedBack)
+            {
+                _ncc.Move(CurrentKnockbackVelocity);
+            }
+            else
+            {
+                _ncc.Move(moveDirection);
+            }
         }
-        else
-        {
-            _ncc.Move(_moveDirection);
-        }
-
-        // 애니메이션 및 상태 동기화
-        _anim.SetBool("Airborne", !_ncc.Grounded);
-        _anim.SetFloat("SpeedX", _blendSpeedX);
-        _anim.SetFloat("SpeedY", _blendSpeedY);
 
         if (_ncc.Grounded)
         {
             _jumpCount = jumpAbiliy;
         }
-    }
-
-    void Movement(NetworkInputData data)
-    {
-        Vector3 inputDir;
-
-        if (POV != null)
-            inputDir = POV.transform.right * data.direction.x + POV.transform.forward * data.direction.y;
-        else
-            inputDir = new Vector3(data.direction.x, 0, data.direction.y);
-
-        inputDir.y = 0f;
-        _moveDirection = inputDir.normalized;
-
-        _blendSpeedY = Mathf.Lerp(_blendSpeedY, Sign(data.direction.y), 5f * Runner.DeltaTime);
-        _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(data.direction.x), 5f * Runner.DeltaTime);
     }
 
     void Rotation(NetworkInputData data)
@@ -218,7 +219,6 @@ public class Player : NetworkBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, t * Runner.DeltaTime);
     }
 
-    // ★ 공격 입력 처리
     void Combo()
     {
         if (_ncc.Grounded)
@@ -230,39 +230,47 @@ public class Player : NetworkBehaviour
     public void StartKnockback(Vector3 initialVel)
     {
         CurrentKnockbackVelocity = initialVel;
-        KnockbackTimer = 0.7f; // 넉백 지속 시간
+        KnockbackTimer = 0.5f; // 약간 단축하여 반응성 개선
     }
 
-    // ★ 매 프레임(Tick)마다 넉백 속도를 줄임
     void ProcessKnockback()
     {
         if (KnockbackTimer > 0)
         {
-            // 속도 감쇠 (Lerp 사용)
-            Vector3 minVel = CurrentKnockbackVelocity * 0.2f;
-            CurrentKnockbackVelocity = Vector3.Lerp(CurrentKnockbackVelocity, minVel, 5f * Runner.DeltaTime);
-            
+            // 속도 감쇠 (Damping) - Lerp를 사용하여 부드럽게 감속
+            CurrentKnockbackVelocity = Vector3.Lerp(CurrentKnockbackVelocity, Vector3.zero, 5f * Runner.DeltaTime);
             KnockbackTimer -= Runner.DeltaTime;
-        }
-        else
-        {
-            CurrentKnockbackVelocity = Vector3.zero;
+
+            if (KnockbackTimer <= 0)
+            {
+                CurrentKnockbackVelocity = Vector3.zero;
+                KnockbackTimer = 0;
+            }
         }
     }
 
     // 유틸리티
     static float Sign(float v)
     {
-        if (v < 0f) return -1f;
-        if (v > 0f) return 1f;
-        return 0f;
+        if (v < 0.01f && v > -0.01f) return 0f;
+        return v > 0 ? 1f : -1f;
     }
 
     // Animation Events 및 기타 함수들
     public void EnableMovement() { _isMoveable = true; }
     public void DisableMovement() { _isMoveable = false; }
-    public void InAttack(int num) { attackAreas[num].AttackStart(); }
-    public void OutAttack(int num) { attackAreas[num].AttackEnd(); }
+    
+    public void InAttack(int num) 
+    { 
+        if(num >= 0 && num < attackAreas.Count)
+            attackAreas[num].AttackStart(); 
+    }
+    
+    public void OutAttack(int num) 
+    { 
+        if(num >= 0 && num < attackAreas.Count)
+            attackAreas[num].AttackEnd(); 
+    }
     
     public void SetAttackStats(int num)
     {
@@ -276,8 +284,7 @@ public class Player : NetworkBehaviour
 
     void SetHit(Vector3 hitPoint, float hitDis)
     {
-        // (피격 애니메이션 로직 유지)
-        if (hitDis > 20f) _anim.SetInteger("Hit", 3); // 예시 단순화
+        if (hitDis > 15f) _anim.SetInteger("Hit", 3);
         else _anim.SetInteger("Hit", 1);
     }
 
