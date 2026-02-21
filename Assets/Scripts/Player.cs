@@ -4,6 +4,12 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
+public enum ExtraStatType
+{
+    Life,
+    JumpAbility
+}
+
 public class Player : MonoBehaviour
 {
     CharacterController _controller;
@@ -12,14 +18,18 @@ public class Player : MonoBehaviour
     ItemSystem _item;
     CharacterInfo _info;
 
+    Ability _ability;
+    float _coolDown;
+    public SkillInterface skill;
+
     public FollowCamera POV;
     public AttackParameters paramlist;
 
     [SerializeField] int _modelNum;
     public int team;
     public PlayerStats stats;
-    public int life;
-    public int jumpAbiliy;
+    [SerializeField] int life;
+    [SerializeField] int jumpAbiliy;
 
     public List<GameObject> modelList;
 
@@ -28,6 +38,7 @@ public class Player : MonoBehaviour
 
     Vector3 _horVelocity;
     float _verVelocity;
+    Vector3 _externalVelocity;
     float _blendSpeedY;
     float _blendSpeedX;
 
@@ -143,6 +154,7 @@ public class Player : MonoBehaviour
 
             Combo();
             ItemUse();
+            ActivateSkill();
         }
 
         if (Keyboard.current.hKey.wasPressedThisFrame)
@@ -151,7 +163,8 @@ public class Player : MonoBehaviour
             ApplyHit(transform.position, 1, new Vector3(1, 0f, 1), 20, 10);
         }
 
-        _controller.Move((_horVelocity + Vector3.up * _verVelocity) * Time.deltaTime);
+        _controller.Move((_horVelocity + Vector3.up * _verVelocity + _externalVelocity) * Time.deltaTime);
+        _externalVelocity = Vector3.zero;
     }
 
     void GroundCheck()
@@ -235,6 +248,21 @@ public class Player : MonoBehaviour
             _item.UseItem(this, 1);
     }
 
+    void ActivateSkill()
+    {
+        if (_ability != null)
+        {
+            if (_input.skill && _coolDown == 0)
+            {
+                AbilityDB.Instance.ActivateAbility(_ability.skillNum, this);
+
+                _coolDown = _ability.coolTime;
+                skill.OnSkillUse();
+                StartCoroutine(CoolDown());
+            }
+        }
+    }
+
     public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (_isDead) return;
@@ -257,6 +285,20 @@ public class Player : MonoBehaviour
         POV.CameraShake(camShake);
     }
 
+    public void ApplyHeal(float amount)
+    {
+        _curHP = Mathf.Clamp(_curHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
+        onDamage.Invoke(_curHP / stats.GetStat(StatType.MaxHP).Value);
+    }
+
+    public void SetAbility(Ability ability)
+    {
+        _ability = ability;
+        _coolDown = _ability.coolTime / 2;
+
+        skill.SetSkill(_ability);
+        StartCoroutine(CoolDown());
+    }
 
     public void Knockback(Vector3 initialVel)
     {
@@ -273,10 +315,28 @@ public class Player : MonoBehaviour
         return 0f;
     }
 
+    public void ExtraStatModify(ExtraStatType targetStat, int amount)
+    {
+        switch (targetStat)
+        {
+            case ExtraStatType.Life:
+                life += amount;
+                break;
+            case ExtraStatType.JumpAbility:
+                jumpAbiliy += amount;
+                break;
+        }
+    }
+
     // À¯µµÅº¿ë - ¹Ì¿Ï
     public Player GetClosestOpponent()
     {
         return this;
+    }
+
+    public void PulledToPoint(Player puller)
+    {
+        StartCoroutine(PullLerp(puller));
     }
 
     // Animation Events
@@ -378,5 +438,59 @@ public class Player : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    IEnumerator PullLerp(Player puller, float duration = 5f)
+    {
+        float timer = 0f;
+        Vector3 magnetVelocity = Vector3.zero;
+
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+
+            Vector3 targetPos = puller.transform.position;
+            targetPos += (transform.position - targetPos).normalized;
+
+            targetPos = Vector3.zero;
+
+            Vector3 dir = targetPos - transform.position;
+            float distance = dir.magnitude;
+
+            if (distance > 0.05f)
+            {
+                dir.Normalize();
+
+                // °Å¸® ±â¹Ý Èû °¨¼Ò (°¡±î¿ï¼ö·Ï ¾àÇØÁü)
+                float distanceFactor = Mathf.Clamp01(distance / 2f);
+
+                Vector3 pullVel = dir * 30f * distanceFactor;
+                magnetVelocity += pullVel * Time.deltaTime;
+
+                magnetVelocity = Vector3.ClampMagnitude(magnetVelocity, 15f);
+            }
+
+            // °¨¼è (ÀÚ¿¬½º·´°Ô Èû ºüÁü)
+            magnetVelocity = Vector3.Lerp(magnetVelocity, Vector3.zero, 3f * Time.deltaTime);
+
+            _externalVelocity += magnetVelocity;
+
+            yield return null;
+        }
+    }
+
+    IEnumerator CoolDown()
+    {
+        yield return new WaitForSeconds(_ability.duration);
+
+        while (_coolDown > 0)
+        {
+            _coolDown = Mathf.Clamp(_coolDown - Time.deltaTime, 0, _ability.coolTime);
+            skill.CoolRate(_ability.coolTime - _coolDown);
+
+            yield return null;
+        }
+
+        skill.OnCoolComplete();
     }
 }

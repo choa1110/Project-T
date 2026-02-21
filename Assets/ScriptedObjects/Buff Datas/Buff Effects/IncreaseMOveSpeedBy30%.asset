@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 158b74c40e1d3b846afb8fea9103792c, type: 3}
-  m_Name: IncreaseMOveSpeedBy30%
+  m_Name: IncreaseMoveSpeedBy30%
   m_EditorClassIdentifier: Assembly-CSharp::StatModifyEffect
   targetStat: 5
   modType: 1

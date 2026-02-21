@@ -3,9 +3,18 @@ using UnityEngine;
 
 public class ItemDB : MonoBehaviour
 {
-    public List<Item> itemList;
+    static ItemDB _instance;
+    public static ItemDB Instance { get => _instance; }
+
+    [SerializeField] List<Item> itemList;
 
     public GameObject missile;
+
+    void Awake()
+    {
+        if (_instance == null)
+            _instance = this;
+    }
 
     public void UseItem(int itemID, Player user)
     {
@@ -14,9 +23,19 @@ public class ItemDB : MonoBehaviour
             case 1:
                 OnUse_HomingMissile(user);
                 break;
+            case 2:
+                OnUse_MagnetPull(user);
+                break;
             default:
                 break;
         }
+    }
+
+    public Item SetRandomItem()
+    {
+        int num = Random.Range(0, itemList.Count);
+
+        return itemList[num];
     }
 
     void OnUse_HomingMissile(Player user)
@@ -30,7 +49,13 @@ public class ItemDB : MonoBehaviour
         go.transform.position = shootPosition;
         go.transform.forward = user.transform.forward;
 
-        HomingMissile gm = go.GetComponent<HomingMissile>();
-        gm.SetTarget(user.GetClosestOpponent());
+        HomingMissile hm = go.GetComponent<HomingMissile>();
+        hm.SetTarget(user.GetClosestOpponent());
+    }
+
+    void OnUse_MagnetPull(Player user)
+    {
+        Player target = user.GetClosestOpponent();
+        target.PulledToPoint(user);
     }
 }

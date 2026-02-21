@@ -3,12 +3,9 @@ using UnityEngine;
 
 public class ItemSystem : MonoBehaviour
 {
-    public ItemDB _db;
-
     Item[] itemList = new Item[2];
 
     [SerializeField] List<ItemSlot> slotList;
-
 
     public bool SetItem(Item item)
     {
@@ -33,7 +30,7 @@ public class ItemSystem : MonoBehaviour
     {
         if (itemList[num] == null) return;
 
-        _db.UseItem(itemList[num].itemId, user);
+        ItemDB.Instance.UseItem(itemList[num].itemId, user);
         itemList[num] = null;
 
         slotList[num].EmptySlot();

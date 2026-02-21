@@ -52,6 +52,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Skill",
+                    "type": "Value",
+                    "id": "c9b7dcbb-37c0-4431-8ba2-deec24d63a2d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "UseItem1",
                     "type": "Value",
                     "id": "e8878f19-206a-44b0-9af1-6ef6692b7aad",
@@ -189,6 +198,17 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "UseItem2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2041b496-5d36-4c11-8c76-b74192e31dfd",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Skill",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

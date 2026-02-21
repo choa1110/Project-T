@@ -6,7 +6,7 @@ public class BuffSystem : MonoBehaviour
     Player _player;
     PlayerStats _playerStats;
 
-    List<Buff> _activeBuffs = new List<Buff>();
+    List<BuffFunction> _activeBuffs = new List<BuffFunction>();
 
     void Awake()
     {
@@ -25,14 +25,14 @@ public class BuffSystem : MonoBehaviour
         }
     }
 
-    public void ApplyBuff(BuffData data)
+    public void ApplyBuff(Buff data)
     {
-        Buff buff = new Buff(data, _player);
+        BuffFunction buff = new BuffFunction(data, _player);
 
         _activeBuffs.Add(buff);
     }
 
-    private void RemoveBuff(Buff buff)
+    private void RemoveBuff(BuffFunction buff)
     {
         buff.Remove();
         _activeBuffs.Remove(buff);

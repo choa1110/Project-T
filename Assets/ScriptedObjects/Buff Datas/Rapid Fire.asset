@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db46384528646364da42ca202fa6bf76, type: 3}
-  m_Name: Heavy
+  m_Name: Rapid Fire
   m_EditorClassIdentifier: Assembly-CSharp::Buff
-  buffName: Heavy
-  rank: 1
-  discription: Increases weight by 20%
-  isInfinite: 1
+  buffName: Rapid Fire
+  rank: 0
+  discription: Increases attack speed by 100%, but reduces knockback power by 50%
+    for 5 seconds.
+  isInfinite: 0
   isConditional: 0
-  duration: 0
+  duration: 5
   conditions: []
   effects:
-  - {fileID: 11400000, guid: 39759cd77f6908a458bea6717339e2b5, type: 2}
+  - {fileID: 11400000, guid: 48c373966b1754b44a0110f0db8303f0, type: 2}
+  - {fileID: 11400000, guid: d5b290681b0d08a45a937cb453b0af0e, type: 2}

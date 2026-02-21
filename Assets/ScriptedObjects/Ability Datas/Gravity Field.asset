@@ -9,9 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 158b74c40e1d3b846afb8fea9103792c, type: 3}
-  m_Name: IncreaseMoveSpeedBy15%
-  m_EditorClassIdentifier: Assembly-CSharp::StatModifyEffect
-  targetStat: 5
-  modType: 1
-  amount: 15
+  m_Script: {fileID: 11500000, guid: 7d9809782fc15e74c86f19eeab01cc21, type: 3}
+  m_Name: Gravity Field
+  m_EditorClassIdentifier: Assembly-CSharp::Ability
+  skillName: Gravity Field
+  skillNum: 0
+  coolTime: 30
+  isInstant: 0
+  duration: 5

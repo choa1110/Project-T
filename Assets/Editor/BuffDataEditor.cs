@@ -1,6 +1,6 @@
 using UnityEditor;
 
-[CustomEditor(typeof(BuffData))]
+[CustomEditor(typeof(Buff))]
 public class BuffDataEditor : Editor
 {
     public override void OnInspectorGUI()

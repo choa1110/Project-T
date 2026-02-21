@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public class StatBuffItem : MonoBehaviour
+public class BuffItem : MonoBehaviour
 {
-    public BuffData buffData;
+    [SerializeField] int buffNum;
 
     void OnTriggerEnter(Collider other)
     {
@@ -10,7 +10,7 @@ public class StatBuffItem : MonoBehaviour
 
         if (sys != null)
         {
-            sys.ApplyBuff(buffData);
+            BuffDB.Instance.ApplyItemBuffToPlayer(sys, buffNum);
             Destroy(gameObject);
         }
     }
