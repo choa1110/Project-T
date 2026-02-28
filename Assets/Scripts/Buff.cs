@@ -1,55 +1,32 @@
-﻿using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
 
-public class Buff
+[System.Serializable]
+[CreateAssetMenu(fileName = "Buff", menuName = "Buff")]
+public class Buff : ScriptableObject
 {
-    BuffData _buff;
-    //외부(BuffSystem)에서 읽기 위한 프로퍼티
-    public BuffData Data => _buff;
-    Player _target;
+    public string buffName;
+    public int rank;
 
-    public bool expired { get; private set; }
+    [TextAreaAttribute]
+    public string discription;
 
-    float timeLeft;
-    bool isConditionMet;
+    public bool isInfinite;
+    public bool isConditional;
+    public float duration;
 
-    public Buff(BuffData data, Player player)
-    {
-        _buff = data;
-        _target = player;
-        timeLeft = data.duration;
+    public List<BuffCondition> conditions;
+    public List<BuffEffect> effects;
+}
 
-        foreach (var cond in _buff.conditions)
-            cond.Bind(_target);
-    }
+public abstract class BuffCondition : ScriptableObject
+{
+    public abstract void Bind(Player target);
+    public abstract bool IsMet();
+}
 
-    public void UpdateTick(float delta)
-    {
-        if (!_buff.isInfinite)
-        {
-            timeLeft = Mathf.Max(0, timeLeft - delta);
-
-            if (Mathf.Approximately(timeLeft, 0))
-                expired = true;
-        }
-
-        bool nowMet = true;
-        foreach (var cond in _buff.conditions)
-        {
-            if (!cond.IsMet())
-            {
-                nowMet = false; 
-                break;
-            }
-        }
-
-        if (nowMet && !isConditionMet)
-            Apply();
-        else if (!nowMet && isConditionMet)
-            Remove();
-
-        isConditionMet = nowMet;
-    }
-
-    private void Apply() => _buff.effects.ForEach(e => e.Apply(_target));
-    public void Remove() => _buff.effects.ForEach(e => e.Remove());
+public abstract class BuffEffect : ScriptableObject
+{
+    public abstract void Apply(Player target);
+    public abstract void Remove();
 }

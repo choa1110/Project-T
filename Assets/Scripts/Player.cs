@@ -4,11 +4,30 @@ using UnityEngine;
 using UnityEngine.Events;
 using Fusion;
 
+<<<<<<< HEAD
+public enum ExtraStatType
+{
+    Life,
+    JumpAbility
+}
+
+public class Player : MonoBehaviour
+=======
 public class Player : NetworkBehaviour
+>>>>>>> main
 {
     NetworkCharacterController _ncc;
     Animator _anim;
+<<<<<<< HEAD
+    InputSystem _input;
+    ItemSystem _item;
+=======
+>>>>>>> main
     CharacterInfo _info;
+
+    Ability _ability;
+    float _coolDown;
+    public SkillInterface skill;
 
     public FollowCamera POV;
     public AttackParameters paramlist;
@@ -16,15 +35,25 @@ public class Player : NetworkBehaviour
     [SerializeField] int _modelNum;
     public int team;
     public PlayerStats stats;
-    public int life;
-    public int jumpAbiliy;
+    [SerializeField] int life;
+    [SerializeField] int jumpAbiliy;
 
     public List<GameObject> modelList;
-    public UnityEvent onHit;
 
+    public UnityEvent onHit;
+    public UnityEvent<float> onDamage;
+
+<<<<<<< HEAD
+    Vector3 _horVelocity;
+    float _verVelocity;
+    Vector3 _externalVelocity;
+    float _blendSpeedY;
+    float _blendSpeedX;
+=======
     // 이동 관련 변수 - Fusion 2에서는 애니메이션 동기화를 위해 Networked 권장
     [Networked] float _blendSpeedY { get; set; }
     [Networked] float _blendSpeedX { get; set; }
+>>>>>>> main
 
     // 상태 변수
     [Networked] public bool IsDead { get; set; } 
@@ -50,6 +79,11 @@ public class Player : NetworkBehaviour
     {
         _ncc = GetComponent<NetworkCharacterController>();
         _anim = GetComponent<Animator>();
+<<<<<<< HEAD
+        _input = GetComponent<InputSystem>();
+        _item = GetComponent<ItemSystem>();
+=======
+>>>>>>> main
 
         modelList[_modelNum].SetActive(true);
         _info = modelList[_modelNum].GetComponent<CharacterInfo>();
@@ -62,6 +96,8 @@ public class Player : NetworkBehaviour
         }
 
         stats.InitalizeStats();
+
+        RoundStart();
     }
 
     public override void Spawned()
@@ -197,10 +233,37 @@ public class Player : NetworkBehaviour
             {
                 _ncc.Move(moveDirection);
             }
+<<<<<<< HEAD
+
+            Combo();
+            ItemUse();
+            ActivateSkill();
+=======
+>>>>>>> main
         }
 
         if (_ncc.Grounded)
         {
+<<<<<<< HEAD
+            // �׽�Ʈ��
+            ApplyHit(transform.position, 1, new Vector3(1, 0f, 1), 20, 10);
+        }
+
+        _controller.Move((_horVelocity + Vector3.up * _verVelocity + _externalVelocity) * Time.deltaTime);
+        _externalVelocity = Vector3.zero;
+    }
+
+    void GroundCheck()
+    {
+        Ray groundRay = new Ray(transform.position + Vector3.up * 0.3f, Vector3.down);
+
+        bool hit = Physics.SphereCast(groundRay, 0.3f, 0.3f, _groundLayer);
+
+        if (hit && _verVelocity <= 0)
+        {
+            _isGrounded = true;
+=======
+>>>>>>> main
             _jumpCount = jumpAbiliy;
         }
     }
@@ -227,6 +290,70 @@ public class Player : NetworkBehaviour
         }
     }
 
+<<<<<<< HEAD
+    void ItemUse()
+    {
+        if (_input.useItem1)
+            _item.UseItem(this, 0);
+
+        if (_input.useItem2)
+            _item.UseItem(this, 1);
+    }
+
+    void ActivateSkill()
+    {
+        if (_ability != null)
+        {
+            if (_input.skill && _coolDown == 0)
+            {
+                AbilityDB.Instance.ActivateAbility(_ability.skillNum, this);
+
+                _coolDown = _ability.coolTime;
+                skill.OnSkillUse();
+                StartCoroutine(CoolDown());
+            }
+        }
+    }
+
+    public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    {
+        if (_isDead) return;
+
+        _curHP = Mathf.Clamp(_curHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
+        onHit.Invoke();
+        onDamage.Invoke(_curHP / stats.GetStat(StatType.MaxHP).Value);
+
+        if (!_isGrounded)
+            knockPow *= 1.5f;
+
+        Vector3 kbDir = knockDir.normalized;
+        float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
+        Vector3 initialVel = kbDir * knockDis;
+
+        Knockback(initialVel);
+
+        SetHit(pos, knockDis);
+
+        POV.CameraShake(camShake);
+    }
+
+    public void ApplyHeal(float amount)
+    {
+        _curHP = Mathf.Clamp(_curHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
+        onDamage.Invoke(_curHP / stats.GetStat(StatType.MaxHP).Value);
+    }
+
+    public void SetAbility(Ability ability)
+    {
+        _ability = ability;
+        _coolDown = _ability.coolTime / 2;
+
+        skill.SetSkill(_ability);
+        StartCoroutine(CoolDown());
+    }
+
+    public void Knockback(Vector3 initialVel)
+=======
     public void StartKnockback(Vector3 initialVel)
     {
         CurrentKnockbackVelocity = initialVel;
@@ -234,6 +361,7 @@ public class Player : NetworkBehaviour
     }
 
     void ProcessKnockback()
+>>>>>>> main
     {
         if (KnockbackTimer > 0)
         {
@@ -256,7 +384,35 @@ public class Player : NetworkBehaviour
         return v > 0 ? 1f : -1f;
     }
 
+<<<<<<< HEAD
+    public void ExtraStatModify(ExtraStatType targetStat, int amount)
+    {
+        switch (targetStat)
+        {
+            case ExtraStatType.Life:
+                life += amount;
+                break;
+            case ExtraStatType.JumpAbility:
+                jumpAbiliy += amount;
+                break;
+        }
+    }
+
+    // ����ź�� - �̿�
+    public Player GetClosestOpponent()
+    {
+        return this;
+    }
+
+    public void PulledToPoint(Player puller)
+    {
+        StartCoroutine(PullLerp(puller));
+    }
+
+    // Animation Events
+=======
     // Animation Events 및 기타 함수들
+>>>>>>> main
     public void EnableMovement() { _isMoveable = true; }
     public void DisableMovement() { _isMoveable = false; }
     
@@ -288,6 +444,109 @@ public class Player : NetworkBehaviour
         else _anim.SetInteger("Hit", 1);
     }
 
+<<<<<<< HEAD
+    public void ResetHit()
+    {
+        _anim.SetInteger("Hit", 0);
+    }
+
+    public void SetKnockedHit()
+    {
+        _anim.SetInteger("Hit", 5);
+    }
+
+    // Coroutines
+    IEnumerator KnockbackRoutine(Vector3 initialVel)
+    {
+        Vector3 vel = initialVel;
+        Vector3 minVel = initialVel * 0.2f;
+        float time = 0f;
+
+        while (time < 0.7f || !_isGrounded)
+        {
+            vel = Vector3.Lerp(vel, minVel, 5f * Time.deltaTime);
+
+            Vector3 delta = vel * Time.deltaTime;
+
+            _controller.Move(delta);
+
+            time += Time.deltaTime;
+
+            yield return null;
+        }
+
+        _knockbackCor = null;
+    }
+
+    IEnumerator RotateByVelocity(Vector3 tarVel)
+    {
+        Quaternion targetRotation = Quaternion.LookRotation(tarVel);
+        float time = 0f;
+
+        while (time <= 0.3f)
+        {
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, time * 3.3f);
+            time += Time.deltaTime;
+
+            yield return null;
+        }
+    }
+
+    IEnumerator PullLerp(Player puller, float duration = 5f)
+    {
+        float timer = 0f;
+        Vector3 magnetVelocity = Vector3.zero;
+
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+
+            Vector3 targetPos = puller.transform.position;
+            targetPos += (transform.position - targetPos).normalized;
+
+            targetPos = Vector3.zero;
+
+            Vector3 dir = targetPos - transform.position;
+            float distance = dir.magnitude;
+
+            if (distance > 0.05f)
+            {
+                dir.Normalize();
+
+                // �Ÿ� ��� �� ���� (�������� ������)
+                float distanceFactor = Mathf.Clamp01(distance / 2f);
+
+                Vector3 pullVel = dir * 30f * distanceFactor;
+                magnetVelocity += pullVel * Time.deltaTime;
+
+                magnetVelocity = Vector3.ClampMagnitude(magnetVelocity, 15f);
+            }
+
+            // ���� (�ڿ������� �� ����)
+            magnetVelocity = Vector3.Lerp(magnetVelocity, Vector3.zero, 3f * Time.deltaTime);
+
+            _externalVelocity += magnetVelocity;
+
+            yield return null;
+        }
+    }
+
+    IEnumerator CoolDown()
+    {
+        yield return new WaitForSeconds(_ability.duration);
+
+        while (_coolDown > 0)
+        {
+            _coolDown = Mathf.Clamp(_coolDown - Time.deltaTime, 0, _ability.coolTime);
+            skill.CoolRate(_ability.coolTime - _coolDown);
+
+            yield return null;
+        }
+
+        skill.OnCoolComplete();
+    }
+=======
     public void ResetHit() { _anim.SetInteger("Hit", 0); }
     public void SetKnockedHit() { _anim.SetInteger("Hit", 5); }
+>>>>>>> main
 }

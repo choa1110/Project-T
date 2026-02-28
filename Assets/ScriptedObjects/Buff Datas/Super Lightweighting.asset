@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db46384528646364da42ca202fa6bf76, type: 3}
+  m_Name: Super Lightweighting
+  m_EditorClassIdentifier: Assembly-CSharp::Buff
+  buffName: Super Lightweighting
+  rank: 0
+  discription: Increases jump height by 100%, and grants an extra jump for 10 seconds.
+  isInfinite: 0
+  isConditional: 0
+  duration: 10
+  conditions: []
+  effects:
+  - {fileID: 11400000, guid: cbead6c47d2853141948a5fa462ee1cb, type: 2}
+  - {fileID: 11400000, guid: 96b22bac0b7d2c8478d0e04985279fd6, type: 2}

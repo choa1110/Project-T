@@ -10,6 +10,7 @@ public class InputSystem : MonoBehaviour
     public bool attack { get; private set; }
     public bool sprint { get; private set; }
     public bool guard { get; private set; }
+    public bool skill { get; private set; }
     public bool useItem1 { get; private set; }
     public bool useItem2 { get; private set; }
 
@@ -41,6 +42,11 @@ public class InputSystem : MonoBehaviour
     void OnGuard(InputValue value)
     {
         guard = value.isPressed;
+    }
+
+    void OnSkill(InputValue value)
+    {
+        skill = value.isPressed;
     }
 
     void OnUseItem1(InputValue value)
