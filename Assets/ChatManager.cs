@@ -6,13 +6,10 @@ using Fusion;
 
 public class ChatManager : MonoBehaviour, IChatClientListener
 {
-    [Header("����")]
-    public string chatAppId; // ��ú��忡�� ������ App ID
-    public string currentChannel = "Lobby"; // ������ ä�� �̸�
+    public string chatAppId;
+    public string currentChannel = "Lobby"; 
 
-    [Header("UI ��ũ��Ʈ ����")]
-    public NetworkUI networkUI; // UI���� "ȭ�鿡 ���"��� ��Ű�� ���� �ʿ�
-
+    public NetworkUI networkUI;
     private ChatClient chatClient;
     private string myNickName;
 
@@ -27,7 +24,6 @@ public class ChatManager : MonoBehaviour, IChatClientListener
         chatClient = new ChatClient(this);
 
         chatClient.Connect(chatAppId, "1.0", new AuthenticationValues(myNickName));
-        Debug.Log("ä�� ���� ���� �õ�...");
     }
 
     public void EnterRoomChannel(string roomName)
@@ -41,7 +37,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
 
         chatClient.Subscribe(new string[] { currentChannel });
 
-        networkUI.ReceiveMessage("System", $"[{currentChannel}] ä�η� �̵�");
+        networkUI.ReceiveMessage("System", $"[{currentChannel}]");
     }
 
     void Update()
@@ -54,7 +50,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
 
     public void SendChatMessage(string message)
     {
-        if (chatClient.CanChat) // ���� ���� Ȯ��
+        if (chatClient.CanChat)
         {
             chatClient.PublishMessage(currentChannel, message);
         }
@@ -64,7 +60,7 @@ public class ChatManager : MonoBehaviour, IChatClientListener
     {
         currentChannel = "Lobby";
         chatClient.Subscribe(new string[] { currentChannel });
-        networkUI.ReceiveMessage("System", $"{myNickName}�� ä�� ������ ����Ǿ����ϴ�.");
+        networkUI.ReceiveMessage("System", $"{myNickName}");
     }
 
     public void OnGetMessages(string channelName, string[] senders, object[] messages)

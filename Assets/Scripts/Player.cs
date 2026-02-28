@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
+using Fusion;
 
 public enum ExtraStatType
 {
@@ -328,7 +328,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    // À¯µµÅº¿ë - ¹Ì¿Ï
+    // ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½ - ï¿½Ì¿ï¿½
     public Player GetClosestOpponent()
     {
         return this;
@@ -461,7 +461,7 @@ public class Player : MonoBehaviour
             {
                 dir.Normalize();
 
-                // °Å¸® ±â¹Ý Èû °¨¼Ò (°¡±î¿ï¼ö·Ï ¾àÇØÁü)
+                // ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
                 float distanceFactor = Mathf.Clamp01(distance / 2f);
 
                 Vector3 pullVel = dir * 30f * distanceFactor;
@@ -470,7 +470,7 @@ public class Player : MonoBehaviour
                 magnetVelocity = Vector3.ClampMagnitude(magnetVelocity, 15f);
             }
 
-            // °¨¼è (ÀÚ¿¬½º·´°Ô Èû ºüÁü)
+            // ï¿½ï¿½ï¿½ï¿½ (ï¿½Ú¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
             magnetVelocity = Vector3.Lerp(magnetVelocity, Vector3.zero, 3f * Time.deltaTime);
 
             _externalVelocity += magnetVelocity;
