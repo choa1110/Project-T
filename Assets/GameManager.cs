@@ -16,6 +16,11 @@ public class GameManager : MonoBehaviour, INetworkRunnerCallbacks
         if (_runner != null)
         {
             _runner.AddCallbacks(this);
+            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");        
+            }
+        
+        else {
+            Debug.LogError("<color=red>GameManager: 심각한 문제! NetworkRunner를 찾을 수 없습니다!</color>");
         }
     }
     
@@ -98,6 +103,7 @@ public class GameManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
+        Debug.Log("입력 보내는중");
         var data = new NetworkInputData();
 
         float x = Input.GetAxisRaw("Horizontal");
