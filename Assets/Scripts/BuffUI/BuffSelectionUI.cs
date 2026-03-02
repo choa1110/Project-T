@@ -19,14 +19,14 @@ public class BuffSelectionUI : MonoBehaviour
     {
         panel.SetActive(true);
 
-        // ±âÁ¸ Ä«µå Á¦°Å
+        // ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         foreach (Transform child in cardContainer)
             Destroy(child.gameObject);
 
-        // »õ Ä«µå »ý¼º
+        // ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         foreach (int id in buffIds)
         {
-            BuffData data = BuffDatabase.Instance.GetBuffByID(id);
+            Buff data = BuffDatabase.Instance.GetBuffByID(id);
             if (data == null) continue;
 
             GameObject card = Instantiate(cardPrefab, cardContainer);
@@ -37,7 +37,7 @@ public class BuffSelectionUI : MonoBehaviour
     public void OnCardSelected(int buffId)
     {
         panel.SetActive(false);
-        // ¼±ÅÃ °á°ú¸¦ BuffManager¸¦ ÅëÇØ ¼­¹ö·Î Àü¼Û
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ BuffManagerï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         BuffManager.Instance.SendSelectionToServer(buffId);
     }
 }

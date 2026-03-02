@@ -12,15 +12,15 @@ public class BuffManager : NetworkBehaviour
     }
 
     // ====================================================
-    // [Server] ¶ó¿îµå Á¾·á ½Ã ¿ÜºÎ(GameManager µî)¿¡¼­ È£Ãâ
+    // [Server] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Üºï¿½(GameManager ï¿½ï¿½)ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½
     // ====================================================
     public void StartBuffSelectionPhase()
     {
-        if (!Object.HasStateAuthority) return; // ¼­¹ö¸¸ ½ÇÇà °¡´É
+        if (!Object.HasStateAuthority) return; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-        Debug.Log("[BuffManager] ¹öÇÁ ¼±ÅÃ ½ÃÀÛ");
+        Debug.Log("[BuffManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
 
-        // Á¢¼ÓÇÑ ¸ðµç ÇÃ·¹ÀÌ¾î¿¡°Ô °¢ÀÚ ´Ù¸¥ ·£´ý ¼±ÅÃÁö Àü¼Û
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         foreach (var playerRef in Runner.ActivePlayers)
         {
             int[] options = GetRandomBuffIDs(3);
@@ -29,12 +29,12 @@ public class BuffManager : NetworkBehaviour
     }
 
     // ====================================================
-    // [RPC] Server -> Client (UI ¿­¾î¶ó)
+    // [RPC] Server -> Client (UI ï¿½ï¿½ï¿½ï¿½ï¿½)
     // ====================================================
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_ShowSelectionUI([RpcTarget] PlayerRef target, int[] options)
     {
-        // ³» Å¬¶óÀÌ¾ðÆ®(Local Player)¿¡°Ô ¿Â ¸Þ½ÃÁöÀÏ ¶§¸¸ UI Ç¥½Ã
+        // ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®(Local Player)ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ UI Ç¥ï¿½ï¿½
         if (Runner.LocalPlayer == target)
         {
             BuffSelectionUI.Instance.OpenSelection(options);
@@ -42,7 +42,7 @@ public class BuffManager : NetworkBehaviour
     }
 
     // ====================================================
-    // [Client] UI¿¡¼­ È£Ãâ -> ¼­¹ö·Î Àü¼Û
+    // [Client] UIï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ -> ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     // ====================================================
     public void SendSelectionToServer(int buffID)
     {
@@ -50,29 +50,29 @@ public class BuffManager : NetworkBehaviour
     }
 
     // ====================================================
-    // [RPC] Client -> Server (¼±ÅÃ ¿Ï·á, Àû¿ëÇØÁà)
+    // [RPC] Client -> Server (ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
     // ====================================================
     [Rpc(RpcSources.InputAuthority | RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_SelectBuff(int buffID, RpcInfo info = default)
     {
-        // 1. RPC¸¦ º¸³½ ÇÃ·¹ÀÌ¾î Ã£±â
+        // 1. RPCï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ Ã£ï¿½ï¿½
         Player senderPlayer = FindPlayerByRef(info.Source);
 
         if (senderPlayer != null)
         {
-            BuffData buff = BuffDatabase.Instance.GetBuffByID(buffID);
-            Debug.Log($"[BuffManager] {info.Source}´ÔÀÌ {buff.buffName} ¼±ÅÃÇÔ");
+            Buff buff = BuffDatabase.Instance.GetBuffByID(buffID);
+            Debug.Log($"[BuffManager] {info.Source}ï¿½ï¿½ï¿½ï¿½ {buff.buffName} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 
-            // 2. ½ÇÁ¦ ¹öÇÁ Àû¿ë (¼­¹ö ±ÇÇÑÀ¸·Î ½ÇÇàµÊ)
+            // 2. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½)
             senderPlayer.GetComponent<BuffSystem>().ApplyBuff(buff);
         }
     }
 
     // ----------------------------------------------------
-    // À¯Æ¿¸®Æ¼ ÇÔ¼öµé
+    // ï¿½ï¿½Æ¿ï¿½ï¿½Æ¼ ï¿½Ô¼ï¿½ï¿½ï¿½
     // ----------------------------------------------------
 
-    // PlayerRef·Î ½ÇÁ¦ Player °´Ã¼ Ã£±â (°£´Ü ¹öÀü)
+    // PlayerRefï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Player ï¿½ï¿½Ã¼ Ã£ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
     private Player FindPlayerByRef(PlayerRef playerRef)
     {
         foreach (var p in FindObjectsOfType<Player>())
@@ -83,7 +83,7 @@ public class BuffManager : NetworkBehaviour
         return null;
     }
 
-    // Áßº¹ ¾ø´Â ·£´ý ID »Ì±â
+    // ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ID ï¿½Ì±ï¿½
     private int[] GetRandomBuffIDs(int count)
     {
         var allBuffs = BuffDatabase.Instance.allBuffs;

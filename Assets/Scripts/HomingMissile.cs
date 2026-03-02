@@ -21,7 +21,7 @@ public class HomingMissile : MonoBehaviour
     {
         _target = player;
 
-        _attackArea.SetOwner(gameObject);
+        // _attackArea.SetOwner(gameObject);
         _attackArea.SetAttackStatus(param.parameters[0], 10, 20);
         _attackArea.AttackStart();
     }

@@ -39,8 +39,8 @@ public class AttackArea : MonoBehaviour
 
     void FixedUpdate()
     {
-        if(_ownerPlayer == null || !_ownerPlayer.Object.HasInputAuthority) return;
-
+        if(_ownerPlayer == null) return;
+        if (!_ownerPlayer.Object || !_ownerPlayer.Object.HasInputAuthority) return;
         if (!_inAttack) return;
 
         _curPoint = transform.position;

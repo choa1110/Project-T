@@ -323,7 +323,6 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 931208147735945396}
   - {fileID: 5105540053892191170}
   - {fileID: -1394671117463737779}
   ForceRemoteRenderTimeframe: 0
@@ -445,6 +444,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37844be9eb5164e45921dde4fdea6f2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
+  skill: {fileID: 0}
   POV: {fileID: 0}
   paramlist: {fileID: 11400000, guid: c70fbc6d6d6193745ac6e0ee9fd8aee6, type: 2}
   _modelNum: 0
@@ -470,10 +470,18 @@ MonoBehaviour:
   onHit:
     m_PersistentCalls:
       m_Calls: []
+  onDamage:
+    m_PersistentCalls:
+      m_Calls: []
   _IsDead: 0
   _CurrentHP: 0
   _CurrentKnockbackVelocity: {x: 0, y: 0, z: 0}
   _KnockbackTimer: 0
+  _PullTarget: {fileID: 0}
+  _PullTimer: 0
+  _MagnetVelocity: {x: 0, y: 0, z: 0}
+  _CurrentCoolDown: 0
+  _SkillDurationTimer: 0
   _groundLayer:
     serializedVersion: 2
     m_Bits: 9
@@ -1317,6 +1325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: f81a4eda03ca4704c94cb4a1ec3e507b, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 5278693648806994293}
   - {fileID: 36192030086037934}
@@ -2009,6 +2018,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 4737241017296882263}
   - {fileID: 2615523800257740494}
@@ -2701,6 +2711,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 84e7c2a21aecc2842877b031d1ce3557, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 6972685328622460441}
   - {fileID: 5898429543953796865}
@@ -3483,6 +3494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
+  icon: {fileID: 0}
   fists:
   - {fileID: 1833654922538381043}
   - {fileID: 2533276181512865774}

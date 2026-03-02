@@ -1,32 +1,592 @@
+// using System.Collections;
+// using System.Collections.Generic;
+// using UnityEngine;
+// using UnityEngine.Events;
+// using Fusion;
+
+
+// public enum ExtraStatType
+// {
+//     Life,
+//     JumpAbility
+// }
+
+// public class Player : NetworkBehaviour
+
+// {
+//     NetworkCharacterController _ncc;
+//     Animator _anim;
+
+//     InputSystem _input;
+//     ItemSystem _item;
+
+//     CharacterInfo _info;
+
+//     Ability _ability;
+//     float _coolDown;
+//     public SkillInterface skill;
+
+//     public FollowCamera POV;
+//     public AttackParameters paramlist;
+
+//     [SerializeField] int _modelNum;
+//     public int team;
+//     public PlayerStats stats;
+//     [SerializeField] int life;
+//     [SerializeField] int jumpAbiliy;
+
+//     public List<GameObject> modelList;
+
+//     public UnityEvent onHit;
+//     public UnityEvent<float> onDamage;
+
+
+//     Vector3 _horVelocity;
+//     float _verVelocity;
+//     Vector3 _externalVelocity;
+//     // float _blendSpeedY;
+//     // float _blendSpeedX;
+
+//     // 이동 관련 변수 - Fusion 2에서는 애니메이션 동기화를 위해 Networked 권장
+//     [Networked] float _blendSpeedY { get; set; }
+//     [Networked] float _blendSpeedX { get; set; }
+
+
+//     // 상태 변수
+//     [Networked] public bool IsDead { get; set; }
+//     bool _isGrounded = true;
+//     bool _isMoveable = true;
+//     float _jumpStartTimer;
+//     int _jumpCount;
+
+//     // 체력은 중요하므로 Networked로 관리 (간단한 구현)
+//     [Networked] public float CurrentHP { get; set; }
+//     int _curLife;
+
+//     List<AttackArea> attackAreas = new List<AttackArea>();
+
+//     [Networked] public Vector3 CurrentKnockbackVelocity { get; set; }
+//     [Networked] public float KnockbackTimer { get; set; }
+//     [SerializeField] private LayerMask _groundLayer;
+
+//     const float Gravity = -9.81f;
+//     const float GroundTurnLerp = 5f;
+//     const float AirTurnLerp = 1.5f;
+//     Coroutine _knockbackCor;
+
+//     void Awake()
+//     {
+//         _ncc = GetComponent<NetworkCharacterController>();
+//         _anim = GetComponent<Animator>();
+
+//         _input = GetComponent<InputSystem>();
+//         _item = GetComponent<ItemSystem>();
+
+
+//         modelList[_modelNum].SetActive(true);
+//         _info = modelList[_modelNum].GetComponent<CharacterInfo>();
+//         _anim.avatar = _info.avatar;
+
+//         foreach (AttackArea area in _info.fists)
+//         {
+//             attackAreas.Add(area);
+//             area.SetOwner(this);
+//         }
+
+//         stats.InitalizeStats();
+
+//         RoundStart();
+//     }
+
+//     public override void Spawned()
+//     {
+//         team = Object.InputAuthority.PlayerId;
+
+//         if (Object.HasInputAuthority)
+//         {
+//             POV = FindFirstObjectByType<FollowCamera>();
+//             POV.target = this;
+//         }
+//         RoundStart();
+//     }
+
+//     public void RoundStart()
+//     {
+//         if (Object.HasStateAuthority)
+//         {
+//             CurrentHP = stats.GetStat(StatType.MaxHP).Value;
+//             _curLife = life;
+//             _jumpCount = jumpAbiliy;
+//         }
+//     }
+
+//     // Fusion 2: Visual updates and animation blending should happen in Render for maximum smoothness
+//     public override void Render()
+//     {
+//         _anim.SetFloat("MoveSpeedRate", stats.GetStatRate(StatType.SpeedMove));
+//         _anim.SetFloat("AtkSpeedRate", stats.GetStatRate(StatType.AtkSpeed));
+        
+//         // 애니메이션 파라미터 적용 (Networked 변수를 사용하여 모든 클라이언트에서 동일하게 보임)
+//         _anim.SetFloat("SpeedX", _blendSpeedX);
+//         _anim.SetFloat("SpeedY", _blendSpeedY);
+//         _anim.SetBool("Airborne", !_ncc.Grounded);
+//     }
+
+//     // Update는 비워두거나 제거해도 됩니다.
+//     void Update() { }
+
+//     // 클라이언트가 호스트에게 때렸다고 요청
+//     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+//     public void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+//     {
+//         if(targetObject == null) return;
+
+//         Player targetPlayer = targetObject.GetComponent<Player>();
+//         if(targetPlayer != null && !targetPlayer.IsDead)
+//         {
+//             targetPlayer.CurrentHP = Mathf.Clamp(targetPlayer.CurrentHP - damage, 0, targetPlayer.stats.GetStat(StatType.MaxHP).Value);
+
+//             // 넉백 계산: 공중 피격 시 가중치 및 무게 반영
+//             float weight = targetPlayer.stats.GetStat(StatType.Weight).Value;
+//             float knockMultiplier = !targetPlayer._ncc.Grounded ? 1.5f : 1.0f;
+//             float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.1f, weight);
+            
+//             Vector3 initialVel = knockDir.normalized * finalKnockPow;
+
+//             targetPlayer.StartKnockback(initialVel);
+//             targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+//         }
+//     }
+//     // 서버가 모든 클라이언트에게 정보 전달
+//     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+//     public void RPC_BroadcastHitEffect(Vector3 hitPos, float knockDis, float camShake)
+//     {
+//         onHit.Invoke();
+
+//         SetHit(hitPos, knockDis);
+//         if(Object.HasInputAuthority && POV != null)
+//             POV.CameraShake(camShake);
+//     }
+
+//     // 핵심 물리/이동 로직 
+//     public override void FixedUpdateNetwork()
+//     {
+//         if (IsDead) return;
+
+//         // Fusion 2: 이동 로직은 Authority(서버) 혹은 InputAuthority(로컬 플레이어)만 실행하도록 제한
+//         if (Object.HasStateAuthority || Object.HasInputAuthority)
+//         {
+//             _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
+//             ProcessKnockback();
+
+//             Vector3 moveDirection = Vector3.zero;
+//             bool isKnockedBack = KnockbackTimer > 0;
+
+//             if (GetInput(out NetworkInputData data))
+//             {
+//                 if (_isMoveable && !isKnockedBack)
+//                 {
+//                     // Movement calculation
+//                     Vector3 inputDir;
+//                     if (POV != null)
+//                         inputDir = POV.transform.right * data.direction.x + POV.transform.forward * data.direction.y;
+//                     else
+//                         inputDir = new Vector3(data.direction.x, 0, data.direction.y);
+
+//                     inputDir.y = 0f;
+//                     moveDirection = inputDir.normalized;
+
+//                     // Networked 변수 업데이트 (Render에서 사용됨)
+//                     _blendSpeedY = Mathf.Lerp(_blendSpeedY, Sign(data.direction.y), 5f * Runner.DeltaTime);
+//                     _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(data.direction.x), 5f * Runner.DeltaTime);
+
+//                     Rotation(data);
+                    
+//                     if (data.buttons.IsSet(InputButtons.Attack)) 
+//                     {
+//                         Combo();
+//                     }
+//                 }
+//                 else
+//                 {
+//                     _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
+//                     _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
+//                 }
+//             }
+
+//             // NCC 파라미터 설정 및 이동
+//             float currentSpeed = stats.GetStat(StatType.SpeedMove).Value;
+//             if (!_ncc.Grounded) currentSpeed *= 0.7f;
+            
+//             _ncc.maxSpeed = currentSpeed;
+//             _ncc.gravity = Gravity;
+//             _ncc.acceleration = 100f;
+
+//             // 기본 이동 실행
+//             if (isKnockedBack)
+//             {
+//                 _ncc.Move(CurrentKnockbackVelocity);
+//             }
+//             else
+//             {
+//                 _ncc.Move(moveDirection);
+//             }
+
+
+//             Combo();
+//             ItemUse();
+//             ActivateSkill();
+
+//         }
+
+//         if (_ncc.Grounded)
+//         {
+
+//             // �׽�Ʈ��
+//             ApplyHit(transform.position, 1, new Vector3(1, 0f, 1), 20, 10);
+//         }
+
+//         _ncc.Move((_horVelocity + Vector3.up * _verVelocity + _externalVelocity) * Time.deltaTime);
+//         _externalVelocity = Vector3.zero;
+//     }
+
+//     void GroundCheck()
+//     {
+//         Ray groundRay = new Ray(transform.position + Vector3.up * 0.3f, Vector3.down);
+
+//         bool hit = Physics.SphereCast(groundRay, 0.3f, 0.3f, _groundLayer);
+
+//         if (hit && _verVelocity <= 0)
+//         {
+//             _isGrounded = true;
+
+
+//             _jumpCount = jumpAbiliy;
+//         }
+//     }
+
+//     void Rotation(NetworkInputData data)
+//     {
+//         if (data.direction == Vector2.zero)
+//             return;
+
+//         float cameraY = POV != null ? POV.transform.eulerAngles.y : 0;
+//         float moveAngle = Mathf.Atan2(data.direction.x, data.direction.y) * Mathf.Rad2Deg + cameraY;
+
+//         Quaternion targetRot = Quaternion.Euler(0f, moveAngle, 0f);
+//         float t = _ncc.Grounded ? GroundTurnLerp : AirTurnLerp;
+
+//         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, t * Runner.DeltaTime);
+//     }
+
+//     void Combo()
+//     {
+//         if (_ncc.Grounded)
+//         {
+//             _anim.SetBool("Combo", true);
+//         }
+//     }
+
+
+//     void ItemUse()
+//     {
+//         if (_input.useItem1)
+//             _item.UseItem(this, 0);
+
+//         if (_input.useItem2)
+//             _item.UseItem(this, 1);
+//     }
+
+//     void ActivateSkill()
+//     {
+//         if (_ability != null)
+//         {
+//             if (_input.skill && _coolDown == 0)
+//             {
+//                 AbilityDB.Instance.ActivateAbility(_ability.skillNum, this);
+
+//                 _coolDown = _ability.coolTime;
+//                 skill.OnSkillUse();
+//                 StartCoroutine(CoolDown());
+//             }
+//         }
+//     }
+
+//     public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
+//     {
+//         if (IsDead) return;
+
+//         CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
+//         onHit.Invoke();
+//         onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+
+//         if (!_isGrounded)
+//             knockPow *= 1.5f;
+
+//         Vector3 kbDir = knockDir.normalized;
+//         float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
+//         Vector3 initialVel = kbDir * knockDis;
+
+//         Knockback(initialVel);
+
+//         SetHit(pos, knockDis);
+
+//         POV.CameraShake(camShake);
+//     }
+
+//     public void ApplyHeal(float amount)
+//     {
+//         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
+//         onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+//     }
+
+//     public void SetAbility(Ability ability)
+//     {
+//         _ability = ability;
+//         _coolDown = _ability.coolTime / 2;
+
+//         skill.SetSkill(_ability);
+//         StartCoroutine(CoolDown());
+//     }
+
+//     public void Knockback(Vector3 initialVel){}
+
+//     public void StartKnockback(Vector3 initialVel)
+//     {
+//         CurrentKnockbackVelocity = initialVel;
+//         KnockbackTimer = 0.5f; // 약간 단축하여 반응성 개선
+//     }
+
+//     void ProcessKnockback()
+
+//     {
+//         if (KnockbackTimer > 0)
+//         {
+//             // 속도 감쇠 (Damping) - Lerp를 사용하여 부드럽게 감속
+//             CurrentKnockbackVelocity = Vector3.Lerp(CurrentKnockbackVelocity, Vector3.zero, 5f * Runner.DeltaTime);
+//             KnockbackTimer -= Runner.DeltaTime;
+
+//             if (KnockbackTimer <= 0)
+//             {
+//                 CurrentKnockbackVelocity = Vector3.zero;
+//                 KnockbackTimer = 0;
+//             }
+//         }
+//     }
+
+//     // 유틸리티
+//     static float Sign(float v)
+//     {
+//         if (v < 0.01f && v > -0.01f) return 0f;
+//         return v > 0 ? 1f : -1f;
+//     }
+
+
+//     public void ExtraStatModify(ExtraStatType targetStat, int amount)
+//     {
+//         switch (targetStat)
+//         {
+//             case ExtraStatType.Life:
+//                 life += amount;
+//                 break;
+//             case ExtraStatType.JumpAbility:
+//                 jumpAbiliy += amount;
+//                 break;
+//         }
+//     }
+
+//     // ����ź�� - �̿�
+//     public Player GetClosestOpponent()
+//     {
+//         return this;
+//     }
+
+//     public void PulledToPoint(Player puller)
+//     {
+//         StartCoroutine(PullLerp(puller));
+//     }
+
+//     // Animation Events
+
+//     // Animation Events 및 기타 함수들
+
+//     public void EnableMovement() { _isMoveable = true; }
+//     public void DisableMovement() { _isMoveable = false; }
+    
+//     public void InAttack(int num) 
+//     { 
+//         if(num >= 0 && num < attackAreas.Count)
+//             attackAreas[num].AttackStart(); 
+//     }
+    
+//     public void OutAttack(int num) 
+//     { 
+//         if(num >= 0 && num < attackAreas.Count)
+//             attackAreas[num].AttackEnd(); 
+//     }
+    
+//     public void SetAttackStats(int num)
+//     {
+//         float dam = stats.GetStat(StatType.PowDam).Value;
+//         float knock = stats.GetStat(StatType.PowKnock).Value;
+//         foreach (AttackArea area in attackAreas)
+//             area.SetAttackStatus(paramlist.parameters[num], dam, knock);
+//     }
+
+//     public void ResetCombo() { _anim.SetBool("Combo", false); }
+
+//     void SetHit(Vector3 hitPoint, float hitDis)
+//     {
+//         Vector3 velocity = _ncc.Velocity; 
+//         velocity.y = 0;
+
+//         if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
+//         {
+//             // 뒤에서 맞을때
+//             if (hitDis > 20f)
+//                 _anim.SetInteger("Hit", 4);
+//             else
+//                 _anim.SetInteger("Hit", 2);
+//         }
+//         else
+//         {
+//             // 앞에서 맞을때
+//             if (hitDis > 20f)
+//                 _anim.SetInteger("Hit", 3);
+//             else
+//                 _anim.SetInteger("Hit", 1);
+
+//             velocity *= -1;
+//         }
+//     }
+
+
+//     public void ResetHit()
+//     {
+//         _anim.SetInteger("Hit", 0);
+//     }
+
+//     public void SetKnockedHit()
+//     {
+//         _anim.SetInteger("Hit", 5);
+//     }
+
+//     // Coroutines
+//     IEnumerator KnockbackRoutine(Vector3 initialVel)
+//     {
+//         Vector3 vel = initialVel;
+//         Vector3 minVel = initialVel * 0.2f;
+//         float time = 0f;
+
+//         while (time < 0.7f || !_isGrounded)
+//         {
+//             vel = Vector3.Lerp(vel, minVel, 5f * Time.deltaTime);
+
+//             Vector3 delta = vel * Time.deltaTime;
+
+//             _ncc.Move(delta);
+
+//             time += Time.deltaTime;
+
+//             yield return null;
+//         }
+
+//         _knockbackCor = null;
+//     }
+
+//     IEnumerator RotateByVelocity(Vector3 tarVel)
+//     {
+//         Quaternion targetRotation = Quaternion.LookRotation(tarVel);
+//         float time = 0f;
+
+//         while (time <= 0.3f)
+//         {
+//             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, time * 3.3f);
+//             time += Time.deltaTime;
+
+//             yield return null;
+//         }
+//     }
+
+//     IEnumerator PullLerp(Player puller, float duration = 5f)
+//     {
+//         float timer = 0f;
+//         Vector3 magnetVelocity = Vector3.zero;
+
+//         while (timer < duration)
+//         {
+//             timer += Time.deltaTime;
+
+//             Vector3 targetPos = puller.transform.position;
+//             targetPos += (transform.position - targetPos).normalized;
+
+//             targetPos = Vector3.zero;
+
+//             Vector3 dir = targetPos - transform.position;
+//             float distance = dir.magnitude;
+
+//             if (distance > 0.05f)
+//             {
+//                 dir.Normalize();
+
+//                 // �Ÿ� ��� �� ���� (�������� ������)
+//                 float distanceFactor = Mathf.Clamp01(distance / 2f);
+
+//                 Vector3 pullVel = dir * 30f * distanceFactor;
+//                 magnetVelocity += pullVel * Time.deltaTime;
+
+//                 magnetVelocity = Vector3.ClampMagnitude(magnetVelocity, 15f);
+//             }
+
+//             // ���� (�ڿ������� �� ����)
+//             magnetVelocity = Vector3.Lerp(magnetVelocity, Vector3.zero, 3f * Time.deltaTime);
+
+//             _externalVelocity += magnetVelocity;
+
+//             yield return null;
+//         }
+//     }
+
+//     IEnumerator CoolDown()
+//     {
+//         yield return new WaitForSeconds(_ability.duration);
+
+//         while (_coolDown > 0)
+//         {
+//             _coolDown = Mathf.Clamp(_coolDown - Time.deltaTime, 0, _ability.coolTime);
+//             skill.CoolRate(_ability.coolTime - _coolDown);
+
+//             yield return null;
+//         }
+
+//         skill.OnCoolComplete();
+//     }
+
+// }
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using Fusion;
 
-<<<<<<< HEAD
 public enum ExtraStatType
 {
     Life,
     JumpAbility
 }
 
-public class Player : MonoBehaviour
-=======
 public class Player : NetworkBehaviour
->>>>>>> main
 {
     NetworkCharacterController _ncc;
     Animator _anim;
-<<<<<<< HEAD
+
     InputSystem _input;
     ItemSystem _item;
-=======
->>>>>>> main
+
     CharacterInfo _info;
 
     Ability _ability;
-    float _coolDown;
     public SkillInterface skill;
 
     public FollowCamera POV;
@@ -43,32 +603,40 @@ public class Player : NetworkBehaviour
     public UnityEvent onHit;
     public UnityEvent<float> onDamage;
 
-<<<<<<< HEAD
     Vector3 _horVelocity;
     float _verVelocity;
     Vector3 _externalVelocity;
-    float _blendSpeedY;
-    float _blendSpeedX;
-=======
-    // 이동 관련 변수 - Fusion 2에서는 애니메이션 동기화를 위해 Networked 권장
+
+    // 이동 관련 변수
     [Networked] float _blendSpeedY { get; set; }
     [Networked] float _blendSpeedX { get; set; }
->>>>>>> main
 
     // 상태 변수
-    [Networked] public bool IsDead { get; set; } 
+    [Networked] public bool IsDead { get; set; }
+    bool _isGrounded = true;
     bool _isMoveable = true;
     float _jumpStartTimer;
     int _jumpCount;
 
-    // 체력은 중요하므로 Networked로 관리 (간단한 구현)
+    // 체력 및 스탯 변수
     [Networked] public float CurrentHP { get; set; }
     int _curLife;
 
     List<AttackArea> attackAreas = new List<AttackArea>();
 
+    // 넉백 관련 네트워크 변수
     [Networked] public Vector3 CurrentKnockbackVelocity { get; set; }
     [Networked] public float KnockbackTimer { get; set; }
+    
+    // 끌어당기기(Pull) 관련 네트워크 변수
+    [Networked] public Player PullTarget { get; set; }
+    [Networked] public float PullTimer { get; set; }
+    [Networked] public Vector3 MagnetVelocity { get; set; }
+
+    // 스킬 쿨타임 관련 네트워크 변수
+    [Networked] public float CurrentCoolDown { get; set; }
+    [Networked] public float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
+
     [SerializeField] private LayerMask _groundLayer;
 
     const float Gravity = -9.81f;
@@ -79,11 +647,9 @@ public class Player : NetworkBehaviour
     {
         _ncc = GetComponent<NetworkCharacterController>();
         _anim = GetComponent<Animator>();
-<<<<<<< HEAD
+
         _input = GetComponent<InputSystem>();
         _item = GetComponent<ItemSystem>();
-=======
->>>>>>> main
 
         modelList[_modelNum].SetActive(true);
         _info = modelList[_modelNum].GetComponent<CharacterInfo>();
@@ -97,7 +663,7 @@ public class Player : NetworkBehaviour
 
         stats.InitalizeStats();
 
-        RoundStart();
+        // RoundStart();
     }
 
     public override void Spawned()
@@ -122,22 +688,18 @@ public class Player : NetworkBehaviour
         }
     }
 
-    // Fusion 2: Visual updates and animation blending should happen in Render for maximum smoothness
     public override void Render()
     {
         _anim.SetFloat("MoveSpeedRate", stats.GetStatRate(StatType.SpeedMove));
         _anim.SetFloat("AtkSpeedRate", stats.GetStatRate(StatType.AtkSpeed));
         
-        // 애니메이션 파라미터 적용 (Networked 변수를 사용하여 모든 클라이언트에서 동일하게 보임)
         _anim.SetFloat("SpeedX", _blendSpeedX);
         _anim.SetFloat("SpeedY", _blendSpeedY);
         _anim.SetBool("Airborne", !_ncc.Grounded);
     }
 
-    // Update는 비워두거나 제거해도 됩니다.
     void Update() { }
 
-    // 클라이언트가 호스트에게 때렸다고 요청
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
@@ -148,7 +710,6 @@ public class Player : NetworkBehaviour
         {
             targetPlayer.CurrentHP = Mathf.Clamp(targetPlayer.CurrentHP - damage, 0, targetPlayer.stats.GetStat(StatType.MaxHP).Value);
 
-            // 넉백 계산: 공중 피격 시 가중치 및 무게 반영
             float weight = targetPlayer.stats.GetStat(StatType.Weight).Value;
             float knockMultiplier = !targetPlayer._ncc.Grounded ? 1.5f : 1.0f;
             float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.1f, weight);
@@ -159,7 +720,7 @@ public class Player : NetworkBehaviour
             targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
         }
     }
-    // 서버가 모든 클라이언트에게 정보 전달
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float knockDis, float camShake)
     {
@@ -170,25 +731,29 @@ public class Player : NetworkBehaviour
             POV.CameraShake(camShake);
     }
 
-    // 핵심 물리/이동 로직 
     public override void FixedUpdateNetwork()
     {
         if (IsDead) return;
 
-        // Fusion 2: 이동 로직은 Authority(서버) 혹은 InputAuthority(로컬 플레이어)만 실행하도록 제한
         if (Object.HasStateAuthority || Object.HasInputAuthority)
         {
+            Debug.Log("Processing 1");
             _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
+            
             ProcessKnockback();
+            ProcessPulling();   // 코루틴 대신 FUN에서 끌어당기기 연산
+            ProcessCoolDown();  // 코루틴 대신 FUN에서 쿨타임 연산
 
             Vector3 moveDirection = Vector3.zero;
             bool isKnockedBack = KnockbackTimer > 0;
 
             if (GetInput(out NetworkInputData data))
             {
+                Debug.Log("Processing 2 " + data);
                 if (_isMoveable && !isKnockedBack)
                 {
-                    // Movement calculation
+                    
+                    Debug.Log("Processing 3");
                     Vector3 inputDir;
                     if (POV != null)
                         inputDir = POV.transform.right * data.direction.x + POV.transform.forward * data.direction.y;
@@ -198,7 +763,6 @@ public class Player : NetworkBehaviour
                     inputDir.y = 0f;
                     moveDirection = inputDir.normalized;
 
-                    // Networked 변수 업데이트 (Render에서 사용됨)
                     _blendSpeedY = Mathf.Lerp(_blendSpeedY, Sign(data.direction.y), 5f * Runner.DeltaTime);
                     _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(data.direction.x), 5f * Runner.DeltaTime);
 
@@ -216,7 +780,6 @@ public class Player : NetworkBehaviour
                 }
             }
 
-            // NCC 파라미터 설정 및 이동
             float currentSpeed = stats.GetStat(StatType.SpeedMove).Value;
             if (!_ncc.Grounded) currentSpeed *= 0.7f;
             
@@ -224,7 +787,6 @@ public class Player : NetworkBehaviour
             _ncc.gravity = Gravity;
             _ncc.acceleration = 100f;
 
-            // 기본 이동 실행
             if (isKnockedBack)
             {
                 _ncc.Move(CurrentKnockbackVelocity);
@@ -233,37 +795,32 @@ public class Player : NetworkBehaviour
             {
                 _ncc.Move(moveDirection);
             }
-<<<<<<< HEAD
 
-            Combo();
-            ItemUse();
-            ActivateSkill();
-=======
->>>>>>> main
+            if (Object.HasInputAuthority)
+            {
+                ItemUse();
+                ActivateSkill();
+            }
         }
 
         if (_ncc.Grounded)
         {
-<<<<<<< HEAD
-            // �׽�Ʈ��
-            ApplyHit(transform.position, 1, new Vector3(1, 0f, 1), 20, 10);
+            _jumpCount = jumpAbiliy;
         }
 
-        _controller.Move((_horVelocity + Vector3.up * _verVelocity + _externalVelocity) * Time.deltaTime);
+        // 주의: Time.deltaTime을 Runner.DeltaTime으로 변경
+        _ncc.Move((_horVelocity + Vector3.up * _verVelocity + _externalVelocity) * Runner.DeltaTime);
         _externalVelocity = Vector3.zero;
     }
 
     void GroundCheck()
     {
         Ray groundRay = new Ray(transform.position + Vector3.up * 0.3f, Vector3.down);
-
         bool hit = Physics.SphereCast(groundRay, 0.3f, 0.3f, _groundLayer);
 
         if (hit && _verVelocity <= 0)
         {
             _isGrounded = true;
-=======
->>>>>>> main
             _jumpCount = jumpAbiliy;
         }
     }
@@ -290,7 +847,6 @@ public class Player : NetworkBehaviour
         }
     }
 
-<<<<<<< HEAD
     void ItemUse()
     {
         if (_input.useItem1)
@@ -300,28 +856,50 @@ public class Player : NetworkBehaviour
             _item.UseItem(this, 1);
     }
 
+    // 스킬 발동 (코루틴 제거)
     void ActivateSkill()
     {
         if (_ability != null)
         {
-            if (_input.skill && _coolDown == 0)
+            if (_input.skill && CurrentCoolDown <= 0 && SkillDurationTimer <= 0)
             {
                 AbilityDB.Instance.ActivateAbility(_ability.skillNum, this);
 
-                _coolDown = _ability.coolTime;
+                SkillDurationTimer = _ability.duration;
+                CurrentCoolDown = _ability.coolTime;
                 skill.OnSkillUse();
-                StartCoroutine(CoolDown());
+            }
+        }
+    }
+
+    // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)
+    void ProcessCoolDown()
+    {
+        if (SkillDurationTimer > 0)
+        {
+            SkillDurationTimer -= Runner.DeltaTime;
+        }
+        else if (CurrentCoolDown > 0)
+        {
+            CurrentCoolDown = Mathf.Clamp(CurrentCoolDown - Runner.DeltaTime, 0, _ability.coolTime);
+            
+            // UI 업데이트는 로컬 플레이어 화면에서만
+            if (Object.HasInputAuthority && skill != null)
+            {
+                skill.CoolRate(_ability.coolTime - CurrentCoolDown);
+                if (CurrentCoolDown <= 0)
+                    skill.OnCoolComplete();
             }
         }
     }
 
     public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
-        if (_isDead) return;
+        if (IsDead) return;
 
-        _curHP = Mathf.Clamp(_curHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
+        CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
         onHit.Invoke();
-        onDamage.Invoke(_curHP / stats.GetStat(StatType.MaxHP).Value);
+        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
 
         if (!_isGrounded)
             knockPow *= 1.5f;
@@ -330,42 +908,37 @@ public class Player : NetworkBehaviour
         float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
         Vector3 initialVel = kbDir * knockDis;
 
-        Knockback(initialVel);
-
+        StartKnockback(initialVel);
         SetHit(pos, knockDis);
 
-        POV.CameraShake(camShake);
+        if(POV != null) POV.CameraShake(camShake);
     }
 
     public void ApplyHeal(float amount)
     {
-        _curHP = Mathf.Clamp(_curHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
-        onDamage.Invoke(_curHP / stats.GetStat(StatType.MaxHP).Value);
+        CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
+        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
     }
 
     public void SetAbility(Ability ability)
     {
         _ability = ability;
-        _coolDown = _ability.coolTime / 2;
+        CurrentCoolDown = _ability.coolTime / 2;
+        SkillDurationTimer = 0f;
 
         skill.SetSkill(_ability);
-        StartCoroutine(CoolDown());
     }
 
-    public void Knockback(Vector3 initialVel)
-=======
     public void StartKnockback(Vector3 initialVel)
     {
         CurrentKnockbackVelocity = initialVel;
-        KnockbackTimer = 0.5f; // 약간 단축하여 반응성 개선
+        KnockbackTimer = 0.5f; 
     }
 
     void ProcessKnockback()
->>>>>>> main
     {
         if (KnockbackTimer > 0)
         {
-            // 속도 감쇠 (Damping) - Lerp를 사용하여 부드럽게 감속
             CurrentKnockbackVelocity = Vector3.Lerp(CurrentKnockbackVelocity, Vector3.zero, 5f * Runner.DeltaTime);
             KnockbackTimer -= Runner.DeltaTime;
 
@@ -377,14 +950,53 @@ public class Player : NetworkBehaviour
         }
     }
 
-    // 유틸리티
+    public void PulledToPoint(Player puller, float duration = 5f)
+    {
+        PullTarget = puller;
+        PullTimer = duration;
+        MagnetVelocity = Vector3.zero;
+    }
+
+    void ProcessPulling()
+    {
+        if (PullTimer > 0 && PullTarget != null)
+        {
+            PullTimer -= Runner.DeltaTime;
+
+            Vector3 targetPos = PullTarget.transform.position;
+            Vector3 dir = targetPos - transform.position;
+            float distance = dir.magnitude;
+
+            if (distance > 0.05f)
+            {
+                dir.Normalize();
+                float distanceFactor = Mathf.Clamp01(distance / 2f);
+
+                Vector3 pullVel = dir * 30f * distanceFactor;
+                MagnetVelocity += pullVel * Runner.DeltaTime;
+                MagnetVelocity = Vector3.ClampMagnitude(MagnetVelocity, 15f);
+            }
+
+            if (PullTimer <= 0)
+            {
+                MagnetVelocity = Vector3.zero;
+                PullTarget = null;
+            }
+        }
+        else
+        {
+            MagnetVelocity = Vector3.Lerp(MagnetVelocity, Vector3.zero, 3f * Runner.DeltaTime);
+        }
+
+        _externalVelocity += MagnetVelocity;
+    }
+
     static float Sign(float v)
     {
         if (v < 0.01f && v > -0.01f) return 0f;
         return v > 0 ? 1f : -1f;
     }
 
-<<<<<<< HEAD
     public void ExtraStatModify(ExtraStatType targetStat, int amount)
     {
         switch (targetStat)
@@ -398,21 +1010,12 @@ public class Player : NetworkBehaviour
         }
     }
 
-    // ����ź�� - �̿�
     public Player GetClosestOpponent()
     {
         return this;
     }
 
-    public void PulledToPoint(Player puller)
-    {
-        StartCoroutine(PullLerp(puller));
-    }
-
     // Animation Events
-=======
-    // Animation Events 및 기타 함수들
->>>>>>> main
     public void EnableMovement() { _isMoveable = true; }
     public void DisableMovement() { _isMoveable = false; }
     
@@ -440,113 +1043,27 @@ public class Player : NetworkBehaviour
 
     void SetHit(Vector3 hitPoint, float hitDis)
     {
-        if (hitDis > 15f) _anim.SetInteger("Hit", 3);
-        else _anim.SetInteger("Hit", 1);
-    }
+        Vector3 velocity = _ncc.Velocity; 
+        velocity.y = 0;
 
-<<<<<<< HEAD
-    public void ResetHit()
-    {
-        _anim.SetInteger("Hit", 0);
-    }
-
-    public void SetKnockedHit()
-    {
-        _anim.SetInteger("Hit", 5);
-    }
-
-    // Coroutines
-    IEnumerator KnockbackRoutine(Vector3 initialVel)
-    {
-        Vector3 vel = initialVel;
-        Vector3 minVel = initialVel * 0.2f;
-        float time = 0f;
-
-        while (time < 0.7f || !_isGrounded)
+        if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
         {
-            vel = Vector3.Lerp(vel, minVel, 5f * Time.deltaTime);
-
-            Vector3 delta = vel * Time.deltaTime;
-
-            _controller.Move(delta);
-
-            time += Time.deltaTime;
-
-            yield return null;
+            if (hitDis > 20f)
+                _anim.SetInteger("Hit", 4);
+            else
+                _anim.SetInteger("Hit", 2);
         }
-
-        _knockbackCor = null;
-    }
-
-    IEnumerator RotateByVelocity(Vector3 tarVel)
-    {
-        Quaternion targetRotation = Quaternion.LookRotation(tarVel);
-        float time = 0f;
-
-        while (time <= 0.3f)
+        else
         {
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, time * 3.3f);
-            time += Time.deltaTime;
+            if (hitDis > 20f)
+                _anim.SetInteger("Hit", 3);
+            else
+                _anim.SetInteger("Hit", 1);
 
-            yield return null;
+            velocity *= -1;
         }
     }
 
-    IEnumerator PullLerp(Player puller, float duration = 5f)
-    {
-        float timer = 0f;
-        Vector3 magnetVelocity = Vector3.zero;
-
-        while (timer < duration)
-        {
-            timer += Time.deltaTime;
-
-            Vector3 targetPos = puller.transform.position;
-            targetPos += (transform.position - targetPos).normalized;
-
-            targetPos = Vector3.zero;
-
-            Vector3 dir = targetPos - transform.position;
-            float distance = dir.magnitude;
-
-            if (distance > 0.05f)
-            {
-                dir.Normalize();
-
-                // �Ÿ� ��� �� ���� (�������� ������)
-                float distanceFactor = Mathf.Clamp01(distance / 2f);
-
-                Vector3 pullVel = dir * 30f * distanceFactor;
-                magnetVelocity += pullVel * Time.deltaTime;
-
-                magnetVelocity = Vector3.ClampMagnitude(magnetVelocity, 15f);
-            }
-
-            // ���� (�ڿ������� �� ����)
-            magnetVelocity = Vector3.Lerp(magnetVelocity, Vector3.zero, 3f * Time.deltaTime);
-
-            _externalVelocity += magnetVelocity;
-
-            yield return null;
-        }
-    }
-
-    IEnumerator CoolDown()
-    {
-        yield return new WaitForSeconds(_ability.duration);
-
-        while (_coolDown > 0)
-        {
-            _coolDown = Mathf.Clamp(_coolDown - Time.deltaTime, 0, _ability.coolTime);
-            skill.CoolRate(_ability.coolTime - _coolDown);
-
-            yield return null;
-        }
-
-        skill.OnCoolComplete();
-    }
-=======
     public void ResetHit() { _anim.SetInteger("Hit", 0); }
     public void SetKnockedHit() { _anim.SetInteger("Hit", 5); }
->>>>>>> main
 }

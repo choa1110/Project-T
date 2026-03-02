@@ -11,15 +11,15 @@ public class BuffCardUI : MonoBehaviour
     private int _buffId;
     private BuffSelectionUI _parentUI;
 
-    public void Setup(BuffData data, int id, BuffSelectionUI parent)
+    public void Setup(Buff data, int id, BuffSelectionUI parent)
     {
         _buffId = id;
         _parentUI = parent;
 
         nameText.text = data.buffName;
-        // descText°¡ ÀÖÀ¸¸é ¼³¸í Ç¥½Ã, ¾øÀ¸¸é ÀÌ¸§¸¸
-        if (descText != null) descText.text = data.description;
-        if (data.icon != null) iconImage.sprite = data.icon;
+        // descTextï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½
+        if (descText != null) descText.text = data.discription;
+        // if (data.icon != null) iconImage.sprite = data.icon;
 
         selectButton.onClick.RemoveAllListeners();
         selectButton.onClick.AddListener(OnClicked);
