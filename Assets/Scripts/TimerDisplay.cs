@@ -5,22 +5,28 @@ public class TimerDisplay : MonoBehaviour
 {
     TMP_Text display;
 
-    public float initTime;
 
     void Awake()
     {
         display = GetComponent<TMP_Text>();
     }
      
-    // ≈◊Ω∫∆ÆøÎ -> º≠πˆ »£√‚
     void Update()
     {
-        initTime -= Time.deltaTime;
-        UpdateDisplay(initTime);
+        if(GameManager.instance != null && GameManager.instance.Object != null && GameManager.instance.Object.IsValid)
+        {
+            UpdateDisplay(GameManager.instance.RoundTimer);
+        }
+        else
+        {
+            UpdateDisplay(10f); //ÏùºÎã®ÏùÄ 10Ï¥à
+        }
     }
 
     public void UpdateDisplay(float remainingTime)
     {
+        remainingTime = Mathf.Max(0, remainingTime);
+
         int minutes = Mathf.FloorToInt(remainingTime / 60f);
         int seconds = Mathf.FloorToInt(remainingTime % 60f);
 

@@ -10,7 +10,7 @@ public class BuffItem : MonoBehaviour
 
         if (sys != null)
         {
-            BuffDB.Instance.ApplyItemBuffToPlayer(sys, buffNum);
+            // BuffDB.Instance.ApplyItemBuffToPlayer(sys, buffNum);
             Destroy(gameObject);
         }
     }

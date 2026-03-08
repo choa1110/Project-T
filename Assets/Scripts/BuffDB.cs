@@ -17,8 +17,13 @@ public class BuffDB : MonoBehaviour
             _instance = this;
     }
 
-    public void ApplyItemBuffToPlayer(BuffSystem target, int num)
-    {
-        target.ApplyBuff(itemBuff[num]);
-    }
+    public Buff GetRank1Buff(int index) { return rank1Buff[index]; }
+    public Buff GetRank2Buff(int index) { return rank2Buff[index]; }
+    public Buff GetRank3Buff(int index) { return rank3Buff[index]; }
+
+    public Buff GetItemBuff(int index) { return itemBuff[index]; }
+    // public void ApplyItemBuffToPlayer(BuffSystem target, int num)
+    // {
+    //     target.ApplyBuff(itemBuff[num]);
+    // }
 }

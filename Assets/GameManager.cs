@@ -4,14 +4,19 @@ using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour, INetworkRunnerCallbacks
+public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
+    public static GameManager instance; // Singleton
     private NetworkRunner _runner;
-
     public NetworkPrefabRef playerPrefab;
+
+    [Networked] public float RoundTimer { get; set; }
+    public CardUI cardUI;
+    private bool _isCardUIOpened = false;
 
     private void Start()
     {
+        instance = this;
         _runner = FindFirstObjectByType<NetworkRunner>();
         if (_runner != null)
         {
@@ -23,7 +28,46 @@ public class GameManager : MonoBehaviour, INetworkRunnerCallbacks
             Debug.LogError("<color=red>GameManager: 심각한 문제! NetworkRunner를 찾을 수 없습니다!</color>");
         }
     }
-    
+
+    public override void Spawned()
+    {
+        if (Object.HasStateAuthority)
+        {
+            RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
+            _isCardUIOpened = false;
+        }
+    }
+
+    [Networked] public int CurrentRound { get; set; } = 1 ;
+    public override void FixedUpdateNetwork()
+    {
+        if (Object.HasStateAuthority && RoundTimer > 0 && !_isCardUIOpened)
+        {
+            RoundTimer -= Runner.DeltaTime;
+
+            if (RoundTimer <= 0)
+            {
+                RoundTimer = 0;
+                _isCardUIOpened = true;
+                
+                RPC_ShowCardUI(CurrentRound); 
+            }
+        }
+    }
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_ShowCardUI(int rank)
+    {
+        if(cardUI != null)
+        {
+            cardUI.OpenCardSelection(rank);
+            Debug.Log("카드 선택 창 열림");
+        }
+        else
+        {
+            Debug.LogError("GameManager에 CardUI가 연결되어 있지 않습니다!");
+        }
+    }
+
     public void OnSceneLoadDone(NetworkRunner runner)
     {
         if (runner.IsServer)
