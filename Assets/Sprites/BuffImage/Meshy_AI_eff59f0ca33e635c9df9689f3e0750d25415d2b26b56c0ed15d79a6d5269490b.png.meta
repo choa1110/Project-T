@@ -108,12 +108,34 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Meshy_AI_eff59f0ca33e635c9df9689f3e0750d25415d2b26b56c0ed15d79a6d5269490b_0
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 70
+        width: 880
+        height: 884
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35e8711b95cc6ff4983c86de53a45a51
+      internalID: -114713434
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 18f0d1a4740f5cd4b9345b64d199220c
     internalID: 0
     vertices: []
     indices: 
@@ -122,7 +144,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Meshy_AI_eff59f0ca33e635c9df9689f3e0750d25415d2b26b56c0ed15d79a6d5269490b_0: -114713434
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
