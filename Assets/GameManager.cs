@@ -7,24 +7,32 @@ using UnityEngine;
 public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static GameManager instance; // Singleton
-    private NetworkRunner _runner;
+
+    // 수정 1: _runner 변수명을 _gameRunner로 변경하여 이름 충돌 에러 해결
+    private NetworkRunner _gameRunner;
     public NetworkPrefabRef playerPrefab;
 
     [Networked] public float RoundTimer { get; set; }
+
+    // 수정 2: [Networked] 속성이 있는 프로퍼티는 선언부에서 초기화(= 1;)하면 
+    // Fusion 에러가 발생할 수 있으므로 선언만 하고 Spawned()에서 초기화합니다.
+    [Networked] public int CurrentRound { get; set; }
+
     public CardUI cardUI;
     private bool _isCardUIOpened = false;
 
     private void Start()
     {
         instance = this;
-        _runner = FindFirstObjectByType<NetworkRunner>();
-        if (_runner != null)
+        _gameRunner = FindFirstObjectByType<NetworkRunner>();
+
+        if (_gameRunner != null)
         {
-            _runner.AddCallbacks(this);
-            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");        
-            }
-        
-        else {
+            _gameRunner.AddCallbacks(this);
+            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");
+        }
+        else
+        {
             Debug.LogError("<color=red>GameManager: 심각한 문제! NetworkRunner를 찾을 수 없습니다!</color>");
         }
     }
@@ -33,12 +41,14 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (Object.HasStateAuthority)
         {
-            RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
+            RoundTimer = 10f; // test는 30초로, 나중엔 180초로 수정
             _isCardUIOpened = false;
+
+            // 네트워크 변수 초기화는 여기서 진행
+            CurrentRound = 1;
         }
     }
 
-    [Networked] public int CurrentRound { get; set; } = 1 ;
     public override void FixedUpdateNetwork()
     {
         if (Object.HasStateAuthority && RoundTimer > 0 && !_isCardUIOpened)
@@ -49,15 +59,16 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 RoundTimer = 0;
                 _isCardUIOpened = true;
-                
-                RPC_ShowCardUI(CurrentRound); 
+
+                RPC_ShowCardUI(CurrentRound);
             }
         }
     }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_ShowCardUI(int rank)
     {
-        if(cardUI != null)
+        if (cardUI != null)
         {
             cardUI.OpenCardSelection(rank);
             Debug.Log("카드 선택 창 열림");
@@ -91,59 +102,30 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (runner.GetPlayerObject(player) != null)
         {
-             return;
+            return;
         }
 
-        // 2. 위치 계산
+        // 위치 계산
         int index = player.PlayerId;
         float xPos = index * 2f;
         Vector3 spawnPosition = new Vector3(xPos, 3f, 0);
-        
-        // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
+
+        // 스폰 실행
         Debug.Log(this.name + " : " + playerPrefab);
         runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
         Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
     }
 
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
-    {
-    }
-
-    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
-    {
-    }
-
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
-    {
-    }
-
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
-    {
-    }
-
-    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
-    {
-    }
-
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
-    {
-    }
-
-    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
-    {
-    }
-
-    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
-    {
-    }
-
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)
-    {
-    }
-
-    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress)
-    {
-    }
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
+    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
@@ -156,34 +138,17 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         if (Input.GetKey(KeyCode.Space))
             data.buttons.Set(InputButtons.Jump, true);
-        
+
         if (Input.GetMouseButton(0))
             data.buttons.Set(InputButtons.Attack, true);
 
         input.Set(data);
     }
 
-    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)
-    {
-    }
-
-    public void OnConnectedToServer(NetworkRunner runner)
-    {
-    }
-
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
-    {
-    }
-
-    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
-    {
-    }
-
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken)
-    {
-    }
-
-    public void OnSceneLoadStart(NetworkRunner runner)
-    {
-    }
+    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
+    public void OnConnectedToServer(NetworkRunner runner) { }
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnSceneLoadStart(NetworkRunner runner) { }
 }
