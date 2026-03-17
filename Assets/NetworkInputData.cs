@@ -12,7 +12,6 @@ public enum InputButtons
 public struct NetworkInputData : INetworkInput
 {
     public Vector2 direction; // 이동 방향
-    
-    // 2. 버튼 상태를 담을 변수 추가 (이게 없어서 에러가 났던 겁니다!)
+
     public NetworkButtons buttons; 
 }

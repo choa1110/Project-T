@@ -46,7 +46,6 @@ public class CardUI : MonoBehaviour
     }
     public void OnCardClicked(int buttonNumber)
     {
-        int selectedIndex = currentIndices[buttonNumber];
         Player myPlayer = GetMyPlayer();
 
         if(myPlayer != null)

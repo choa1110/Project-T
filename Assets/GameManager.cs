@@ -7,20 +7,29 @@ using UnityEngine;
 public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static GameManager instance; // Singleton
-    private NetworkRunner _runner;
+    private NetworkRunner _networkRunner;
     public NetworkPrefabRef playerPrefab;
 
     [Networked] public float RoundTimer { get; set; }
     public CardUI cardUI;
     private bool _isCardUIOpened = false;
 
+    //박스 생성 추가
+    [Header("Item Box Spawner")]
+    public NetworkPrefabRef itemBoxPrefab;
+    public float boxSpawnInterval = 8f;
+    private float _boxSpawnTimer;
+
+    [Header("Item UI")]
+    public ItemSlot[] itemSlots;
+    
     private void Start()
     {
         instance = this;
-        _runner = FindFirstObjectByType<NetworkRunner>();
-        if (_runner != null)
+        _networkRunner = FindFirstObjectByType<NetworkRunner>();
+        if (_networkRunner != null)
         {
-            _runner.AddCallbacks(this);
+            _networkRunner.AddCallbacks(this);
             Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");        
             }
         
@@ -50,10 +59,34 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 RoundTimer = 0;
                 _isCardUIOpened = true;
                 
-                RPC_ShowCardUI(CurrentRound); 
+                // RPC_ShowCardUI(CurrentRound); 
+            }
+        }
+        if (Object.HasStateAuthority)
+        {
+            _boxSpawnTimer -= Runner.DeltaTime;
+
+            if (_boxSpawnTimer <= 0)
+            {
+                _boxSpawnTimer = boxSpawnInterval;
+                SpawnRandomItemBox();
             }
         }
     }
+
+    private void SpawnRandomItemBox()
+    {
+        float randomX = UnityEngine.Random.Range(-25f, 25f);
+        float randomZ = UnityEngine.Random.Range(-25f, 25f);
+        
+        Vector3 spawnPos = new Vector3(randomX, 1f, randomZ);
+
+        Runner.Spawn(itemBoxPrefab, spawnPos, Quaternion.identity);
+        
+        Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
+    }
+
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_ShowCardUI(int rank)
     {
