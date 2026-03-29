@@ -1,11 +1,12 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BuffCardUI : MonoBehaviour
 {
     public Image iconImage;
-    public Text nameText;
-    public Text descText;
+    public TMP_Text nameText;
+    public TMP_Text descText;
     public Button selectButton;
 
     private int _buffId;
@@ -17,9 +18,11 @@ public class BuffCardUI : MonoBehaviour
         _parentUI = parent;
 
         nameText.text = data.buffName;
-        // descText�� ������ ���� ǥ��, ������ �̸���
-        if (descText != null) descText.text = data.discription;
-        // if (data.icon != null) iconImage.sprite = data.icon;
+
+        if (descText != null)
+            descText.text = data.discription;
+
+        if (data.icon != null && iconImage != null) iconImage.sprite = data.icon;
 
         selectButton.onClick.RemoveAllListeners();
         selectButton.onClick.AddListener(OnClicked);

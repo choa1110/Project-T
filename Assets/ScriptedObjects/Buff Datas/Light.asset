@@ -21,3 +21,4 @@ MonoBehaviour:
   conditions: []
   effects:
   - {fileID: 11400000, guid: bf76429eee7ce8f43ac54e3fae51314f, type: 2}
+  icon: {fileID: 969868413, guid: 30e4fa8e1f875cd41a2f16fd79e5f19a, type: 3}

@@ -11,12 +11,15 @@ public class Buff : ScriptableObject
     [TextAreaAttribute]
     public string discription;
 
+
     public bool isInfinite;
     public bool isConditional;
     public float duration;
 
     public List<BuffCondition> conditions;
     public List<BuffEffect> effects;
+    
+    public Sprite icon;
 }
 
 public abstract class BuffCondition : ScriptableObject
