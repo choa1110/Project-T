@@ -22,4 +22,3 @@ MonoBehaviour:
   effects:
   - {fileID: 11400000, guid: cbead6c47d2853141948a5fa462ee1cb, type: 2}
   - {fileID: 11400000, guid: 96b22bac0b7d2c8478d0e04985279fd6, type: 2}
-  icon: {fileID: 59418736, guid: a5d5dd84aab07dc4d9702be185cd55b7, type: 3}

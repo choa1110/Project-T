@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Fusion;
 
 public class ItemDB : MonoBehaviour
 {
@@ -9,23 +8,12 @@ public class ItemDB : MonoBehaviour
 
     [SerializeField] List<Item> itemList;
 
-    public NetworkPrefabRef missilePrefab;
+    public GameObject missile;
 
     void Awake()
     {
         if (_instance == null)
             _instance = this;
-    }
-
-    public Item GetItemByID(int id)
-    {
-        return itemList.Find(x => x.itemId == id);
-    }
-
-    public int GetRandomItemID()
-    {
-        int num = Random.Range(0, itemList.Count);
-        return itemList[num].itemId;
     }
 
     public void UseItem(int itemID, Player user)
@@ -43,24 +31,31 @@ public class ItemDB : MonoBehaviour
         }
     }
 
+    public Item SetRandomItem()
+    {
+        int num = Random.Range(0, itemList.Count);
+
+        return itemList[num];
+    }
+
     void OnUse_HomingMissile(Player user)
     {
+        GameObject go = Instantiate(missile);
+
         Vector3 shootPosition = user.transform.position;
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        NetworkObject go = user.Runner.Spawn(missilePrefab, shootPosition, Quaternion.LookRotation(user.transform.forward));
         go.transform.position = shootPosition;
         go.transform.forward = user.transform.forward;
 
         HomingMissile hm = go.GetComponent<HomingMissile>();
-        if(hm !=null) hm.SetTarget(user.GetClosestOpponent());
+        hm.SetTarget(user.GetClosestOpponent());
     }
 
     void OnUse_MagnetPull(Player user)
     {
         Player target = user.GetClosestOpponent();
-        if(target != null)
-            target.PulledToPoint(user);
+        target.PulledToPoint(user);
     }
 }

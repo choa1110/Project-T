@@ -13,9 +13,9 @@ public class TimerDisplay : MonoBehaviour
      
     void Update()
     {
-        if(GameManager.instance != null && GameManager.instance.Object != null && GameManager.instance.Object.IsValid)
+        if(GameManager.Instance != null && GameManager.Instance.Object != null && GameManager.Instance.Object.IsValid)
         {
-            UpdateDisplay(GameManager.instance.RoundTimer);
+            UpdateDisplay(GameManager.Instance.RoundTimer);
         }
         else
         {
