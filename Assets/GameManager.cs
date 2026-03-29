@@ -7,9 +7,7 @@ using UnityEngine;
 public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static GameManager instance; // Singleton
-
-    // 수정 1: _runner 변수명을 _gameRunner로 변경하여 이름 충돌 에러 해결
-    private NetworkRunner _gameRunner;
+    private NetworkRunner _networkRunner;
     public NetworkPrefabRef playerPrefab;
 
     [Networked] public float RoundTimer { get; set; }
@@ -21,18 +19,26 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public CardUI cardUI;
     private bool _isCardUIOpened = false;
 
+    //박스 생성 추가
+    [Header("Item Box Spawner")]
+    public NetworkPrefabRef itemBoxPrefab;
+    public float boxSpawnInterval = 8f;
+    private float _boxSpawnTimer;
+
+    [Header("Item UI")]
+    public ItemSlot[] itemSlots;
+    
     private void Start()
     {
         instance = this;
-        _gameRunner = FindFirstObjectByType<NetworkRunner>();
-
-        if (_gameRunner != null)
+        _networkRunner = FindFirstObjectByType<NetworkRunner>();
+        if (_networkRunner != null)
         {
-            _gameRunner.AddCallbacks(this);
-            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");
-        }
-        else
-        {
+            _networkRunner.AddCallbacks(this);
+            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");        
+            }
+        
+        else {
             Debug.LogError("<color=red>GameManager: 심각한 문제! NetworkRunner를 찾을 수 없습니다!</color>");
         }
     }
@@ -59,11 +65,34 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 RoundTimer = 0;
                 _isCardUIOpened = true;
+                
+                // RPC_ShowCardUI(CurrentRound); 
+            }
+        }
+        if (Object.HasStateAuthority)
+        {
+            _boxSpawnTimer -= Runner.DeltaTime;
 
-                RPC_ShowCardUI(CurrentRound);
+            if (_boxSpawnTimer <= 0)
+            {
+                _boxSpawnTimer = boxSpawnInterval;
+                SpawnRandomItemBox();
             }
         }
     }
+
+    private void SpawnRandomItemBox()
+    {
+        float randomX = UnityEngine.Random.Range(-25f, 25f);
+        float randomZ = UnityEngine.Random.Range(-25f, 25f);
+        
+        Vector3 spawnPos = new Vector3(randomX, 1f, randomZ);
+
+        Runner.Spawn(itemBoxPrefab, spawnPos, Quaternion.identity);
+        
+        Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
+    }
+
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_ShowCardUI(int rank)

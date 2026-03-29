@@ -1,15 +1,25 @@
 using UnityEngine;
+using Fusion;
 
-public class ItemBox : MonoBehaviour
+public class ItemBox : NetworkBehaviour
 {
     void OnTriggerEnter(Collider other)
     {
+
+        if (Object == null || !Object.IsValid) return;
+        
+        if(!Object.HasStateAuthority) return;
+
         ItemSystem sys = other.GetComponent<ItemSystem>();
 
         if (sys != null)
         {
-            if (sys.SetItem(ItemDB.Instance.SetRandomItem()))
-                Destroy(gameObject);
+            int randomItemId = ItemDB.Instance.GetRandomItemID();
+            
+            if(sys.GiveItem(randomItemId))
+            {
+                Runner.Despawn(Object);
+            }
         }
     }
-}
+} 

@@ -317,12 +317,13 @@ public class Player : NetworkBehaviour
     {   
         if(Object.HasInputAuthority){
             if (_input.useItem1)
-                RPC_UseItemBuff(0);
+                _item.RequestUseItem(0);
 
             if (_input.useItem2)
                 RPC_UseItemBuff(1);
         }
     }
+    
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RPC_UseItemBuff(int itemIndex)
     {

@@ -2102,7 +2102,8 @@ MonoBehaviour:
   itemList:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
-  missile: {fileID: 3668800957590035198, guid: 3d7456119c758dc499915b74e758828d, type: 3}
+  missilePrefab:
+    RawGuidValue: 3d7456119c758dc499915b74e758828d
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0
@@ -2200,6 +2201,13 @@ MonoBehaviour:
   playerPrefab:
     RawGuidValue: ccb4a8796ce56e742a3d1a624488b116
   _RoundTimer: 0
+  cardUI: {fileID: 565050842}
+  itemBoxPrefab:
+    RawGuidValue: 2a77df2e54dd0fc4584eb42035e1dc8f
+  boxSpawnInterval: 8
+  itemSlots:
+  - {fileID: 895089600}
+  - {fileID: 1196452118}
   _CurrentRound: 1
   cardUI: {fileID: 565050842}
 --- !u!4 &851641443
