@@ -20,17 +20,10 @@ public class BuffDB : MonoBehaviour
     public Buff GetRank1Buff(int index) { return rank1Buff[index]; }
     public Buff GetRank2Buff(int index) { return rank2Buff[index]; }
     public Buff GetRank3Buff(int index) { return rank3Buff[index]; }
-    public Buff GetItemBuff(int index) { return itemBuff[index]; }
 
-    // 라운드(Rank)에 맞는 전체 리스트 반환
-    public List<Buff> GetBuffListByRank(int rank)
-    {
-        switch (rank)
-        {
-            case 1: return rank1Buff;
-            case 2: return rank2Buff;
-            case 3: return rank3Buff;
-            default: return rank1Buff; // 예외 상황 방지용 기본값
-        }
-    }
+    public Buff GetItemBuff(int index) { return itemBuff[index]; }
+    // public void ApplyItemBuffToPlayer(BuffSystem target, int num)
+    // {
+    //     target.ApplyBuff(itemBuff[num]);
+    // }
 }

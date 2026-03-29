@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class BuffSelectionUI : MonoBehaviour
 {
@@ -15,33 +14,30 @@ public class BuffSelectionUI : MonoBehaviour
         panel.SetActive(false);
     }
 
-    public void OpenSelection(int[] buffIds, int round)
+    // [Called by BuffManager RPC]
+    public void OpenSelection(int[] buffIds)
     {
         panel.SetActive(true);
 
+        // ���� ī�� ����
         foreach (Transform child in cardContainer)
             Destroy(child.gameObject);
 
-        // 해당 라운드의 전체 버프 리스트를 가져옵니다.
-        List<Buff> targetList = BuffDB.Instance.GetBuffListByRank(round);
-
+        // �� ī�� ����
         foreach (int id in buffIds)
         {
-            // 인덱스 아웃 오브 레인지 방지
-            if (id >= 0 && id < targetList.Count)
-            {
-                Buff data = targetList[id];
-                if (data == null) continue;
+            Buff data = BuffDatabase.Instance.GetBuffByID(id);
+            if (data == null) continue;
 
-                GameObject card = Instantiate(cardPrefab, cardContainer);
-                card.GetComponent<BuffCardUI>().Setup(data, id, this);
-            }
+            GameObject card = Instantiate(cardPrefab, cardContainer);
+            card.GetComponent<BuffCardUI>().Setup(data, id, this);
         }
     }
 
     public void OnCardSelected(int buffId)
     {
         panel.SetActive(false);
+        // ���� ����� BuffManager�� ���� ������ ����
         BuffManager.Instance.SendSelectionToServer(buffId);
     }
 }

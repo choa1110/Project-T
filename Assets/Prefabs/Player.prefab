@@ -251,14 +251,12 @@ GameObject:
   - component: {fileID: 1410047850469424872}
   - component: {fileID: 2830943943605825183}
   - component: {fileID: 7172458550511845091}
-  - component: {fileID: 1286421703718410836}
   - component: {fileID: 2457758510500592477}
   - component: {fileID: 3585062283753992433}
   - component: {fileID: 8041200987710526796}
   - component: {fileID: 931208147735945396}
   - component: {fileID: 5105540053892191170}
   - component: {fileID: -1394671117463737779}
-  - component: {fileID: -6281275407679430906}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -327,38 +325,7 @@ MonoBehaviour:
   - {fileID: 931208147735945396}
   - {fileID: 5105540053892191170}
   - {fileID: -1394671117463737779}
-  - {fileID: -6281275407679430906}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &1286421703718410836
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8212789482076507676}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: e283aeca8c5de0c418d2f2b2f544401b, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: Player
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
 --- !u!54 &2457758510500592477
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -488,6 +455,8 @@ MonoBehaviour:
   _groundLayer:
     serializedVersion: 2
     m_Bits: 9
+  comboRegister: 0
+  animEnd: 1
 --- !u!114 &-1394671117463737779
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -507,22 +476,6 @@ MonoBehaviour:
   braking: 10
   maxSpeed: 2
   rotationSpeed: 15
---- !u!114 &-6281275407679430906
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8212789482076507676}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c66976353be16234ebedfc4d1f02c1ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ItemSystem
-  _NetworkedItems: 
-  slotList:
-  - {fileID: 0}
-  - {fileID: 0}
 --- !u!1 &8300193886268729100
 GameObject:
   m_ObjectHideFlags: 0

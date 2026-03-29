@@ -40,7 +40,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (GetInput(out NetworkInputData data))
         {
-            Vector3 moveDir = new Vector3(data.direction.x, 0, data.direction.y);
+            Vector3 moveDir = new Vector3(data.move.x, 0, data.move.y);
             
             control.Move(moveDir * moveSpeed * Runner.DeltaTime); 
         }

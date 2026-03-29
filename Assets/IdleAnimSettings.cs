@@ -11,7 +11,8 @@ public class IdleAnimSettings : StateMachineBehaviour
             _player = animator.gameObject.GetComponent<Player>();
 
         _player.EnableMovement();
-        animator.SetBool("Combo", false);
+        _player.ResetCombo();
+        _player.comboRegister = false;
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks

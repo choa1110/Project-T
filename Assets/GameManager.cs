@@ -3,57 +3,93 @@ using System.Collections.Generic;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using UnityEngine.InputSystem;
+
+public struct NetworkInputData : INetworkInput
+{
+    public Vector2 move;
+    public NetworkButtons buttons;
+}
+
+public enum InputButton
+{
+    Jump,
+    Attack,
+    Sprint,
+    Guard,
+    Skill,
+    UseItem1,
+    UseItem2
+}
 
 public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
-    public static GameManager instance; // Singleton
-    private NetworkRunner _networkRunner;
+    static GameManager _instance;
+    public static GameManager Instance { get => _instance; }
+
+    private NetworkRunner _runner;
+
     public NetworkPrefabRef playerPrefab;
 
     [Networked] public float RoundTimer { get; set; }
-
-    // 수정 2: [Networked] 속성이 있는 프로퍼티는 선언부에서 초기화(= 1;)하면 
-    // Fusion 에러가 발생할 수 있으므로 선언만 하고 Spawned()에서 초기화합니다.
-    [Networked] public int CurrentRound { get; set; }
-
     public CardUI cardUI;
-    private bool _isCardUIOpened = false;
+    bool _isCardUIOpened = false;
 
-    //박스 생성 추가
-    [Header("Item Box Spawner")]
-    public NetworkPrefabRef itemBoxPrefab;
-    public float boxSpawnInterval = 8f;
-    private float _boxSpawnTimer;
+    [SerializeField] InputActionAsset inputActions;
 
-    [Header("Item UI")]
-    public ItemSlot[] itemSlots;
-    
-    private void Start()
+    InputAction move;
+    InputAction jump;
+    InputAction attack;
+    InputAction sprint;
+    InputAction guard;
+    InputAction skill;
+    InputAction useItem1;
+    InputAction useItem2;
+
+    void Awake()
     {
-        instance = this;
-        _networkRunner = FindFirstObjectByType<NetworkRunner>();
-        if (_networkRunner != null)
+        if (_instance == null)
+            _instance = this;
+
+        _runner = FindFirstObjectByType<NetworkRunner>();
+
+        if (_runner != null)
         {
-            _networkRunner.AddCallbacks(this);
-            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");        
-            }
-        
-        else {
+            _runner.AddCallbacks(this);
+            Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");
+        }
+        else
+        {
             Debug.LogError("<color=red>GameManager: 심각한 문제! NetworkRunner를 찾을 수 없습니다!</color>");
         }
+
+        var map = inputActions.FindActionMap("Player");
+
+        Debug.Log(map.FindAction("Move"));
+        Debug.Log(map.FindAction("Jump"));
+        Debug.Log(map.FindAction("Attack"));
+        move = map.FindAction("Move");
+        jump = map.FindAction("Jump");
+        attack = map.FindAction("Attack");
+        sprint = map.FindAction("Sprint");
+        guard = map.FindAction("Guard");
+        skill = map.FindAction("Skill");
+        useItem1 = map.FindAction("UseItem1");
+        useItem2 = map.FindAction("UseItem2");
+
+        OnEnableKeyInput();
     }
 
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
         {
-            RoundTimer = 10f; // test는 30초로, 나중엔 180초로 수정
+            RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
             _isCardUIOpened = false;
-
-            // 네트워크 변수 초기화는 여기서 진행
-            CurrentRound = 1;
         }
     }
+
+    [Networked] public int CurrentRound { get; set; } = 1 ;
 
     public override void FixedUpdateNetwork()
     {
@@ -66,38 +102,15 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 RoundTimer = 0;
                 _isCardUIOpened = true;
                 
-                // RPC_ShowCardUI(CurrentRound); 
-            }
-        }
-        if (Object.HasStateAuthority)
-        {
-            _boxSpawnTimer -= Runner.DeltaTime;
-
-            if (_boxSpawnTimer <= 0)
-            {
-                _boxSpawnTimer = boxSpawnInterval;
-                SpawnRandomItemBox();
+                RPC_ShowCardUI(CurrentRound); 
             }
         }
     }
-
-    private void SpawnRandomItemBox()
-    {
-        float randomX = UnityEngine.Random.Range(-25f, 25f);
-        float randomZ = UnityEngine.Random.Range(-25f, 25f);
-        
-        Vector3 spawnPos = new Vector3(randomX, 1f, randomZ);
-
-        Runner.Spawn(itemBoxPrefab, spawnPos, Quaternion.identity);
-        
-        Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
-    }
-
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_ShowCardUI(int rank)
     {
-        if (cardUI != null)
+        if(cardUI != null)
         {
             cardUI.OpenCardSelection(rank);
             Debug.Log("카드 선택 창 열림");
@@ -131,53 +144,108 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (runner.GetPlayerObject(player) != null)
         {
-            return;
+             return;
         }
 
-        // 위치 계산
+        // 2. 위치 계산
         int index = player.PlayerId;
         float xPos = index * 2f;
         Vector3 spawnPosition = new Vector3(xPos, 3f, 0);
-
-        // 스폰 실행
+        
+        // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
         runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
         Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
     }
 
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
-    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
-    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
-    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
-    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    {
+    }
+
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    {
+    }
+
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+    }
+
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+    }
+
+    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
+    {
+    }
+
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
+    {
+    }
+
+    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
+    {
+    }
+
+    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
+    {
+    }
+
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)
+    {
+    }
+
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress)
+    {
+    }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
-        Debug.Log("입력 보내는중");
-        var data = new NetworkInputData();
+        NetworkInputData data = new NetworkInputData();
 
-        float x = Input.GetAxisRaw("Horizontal");
-        float y = Input.GetAxisRaw("Vertical");
-        data.direction = new Vector2(x, y);
+        data.move = move.ReadValue<Vector2>();
 
-        if (Input.GetKey(KeyCode.Space))
-            data.buttons.Set(InputButtons.Jump, true);
-
-        if (Input.GetMouseButton(0))
-            data.buttons.Set(InputButtons.Attack, true);
+        data.buttons.Set(InputButton.Jump, jump.IsPressed());
+        data.buttons.Set(InputButton.Attack, attack.IsPressed());
+        data.buttons.Set(InputButton.Sprint, sprint.IsPressed());
+        data.buttons.Set(InputButton.Guard, guard.IsPressed());
+        data.buttons.Set(InputButton.Skill, skill.IsPressed());
+        data.buttons.Set(InputButton.UseItem1, useItem1.IsPressed());
+        data.buttons.Set(InputButton.UseItem2, useItem2.IsPressed());
 
         input.Set(data);
     }
 
-    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnConnectedToServer(NetworkRunner runner) { }
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
-    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadStart(NetworkRunner runner) { }
+    public void OnEnableKeyInput()
+    {
+        inputActions.Enable();
+    }
+
+    public void OnDisableKeyInput()
+    {
+        inputActions.Disable();
+    }
+
+    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)
+    {
+    }
+
+    public void OnConnectedToServer(NetworkRunner runner)
+    {
+    }
+
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
+    {
+    }
+
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
+    {
+    }
+
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken)
+    {
+    }
+
+    public void OnSceneLoadStart(NetworkRunner runner)
+    {
+    }
 }

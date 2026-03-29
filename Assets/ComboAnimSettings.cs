@@ -12,6 +12,8 @@ public class ComboAnimSettings : StateMachineBehaviour
 
         animator.applyRootMotion = true;
         _player.DisableMovement();
+
+        _player.comboRegister = false;
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks

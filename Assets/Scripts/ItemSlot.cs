@@ -16,4 +16,4 @@ public class ItemSlot : MonoBehaviour
         slotIcon.sprite = null;
         slotIcon.enabled = false;
     }
-} 
+}
