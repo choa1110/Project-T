@@ -2307,7 +2307,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
   missilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 3d7456119c758dc499915b74e758828d
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0
