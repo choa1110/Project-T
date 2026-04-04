@@ -36,9 +36,9 @@ public class Player : NetworkBehaviour
     public UnityEvent onHit;
     public UnityEvent<float> onDamage;
 
-    Vector3 _horVelocity;
-    float _verVelocity;
-    Vector3 _externalVelocity;
+    [Networked] Vector3 _horVelocity { get; set; }
+    [Networked] float _verVelocity { get; set; }
+    [Networked] Vector3 _externalVelocity { get; set; }
 
     // 이동 관련 변수
     [Networked] float _blendSpeedY { get; set; }
@@ -73,7 +73,6 @@ public class Player : NetworkBehaviour
     [SerializeField] private LayerMask _groundLayer;
 
     [Networked] int ComboStep { get; set; }
-    //[Networked] TickTimer ComboTimer { get; set; }
 
     const float Gravity = -9.81f;
     const float GroundTurnLerp = 5f;
@@ -194,58 +193,47 @@ public class Player : NetworkBehaviour
 
         if (IsDead) return;
 
-        if (Object.HasStateAuthority || Object.HasInputAuthority)
+        _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
+
+        if (_jumpStartTimer <= 0)
+            jumpedThisFrame = false;
+
+        ProcessKnockback();
+        ProcessPulling();
+        ProcessCoolDown();
+
+        if (GetInput(out NetworkInputData data))
         {
-            _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
+            _curButtons = data.buttons.GetPressed(_prevButtons);
 
-            if (_jumpStartTimer <= 0)
-                jumpedThisFrame = false;
-            
-            ProcessKnockback();
-            ProcessPulling();
-            ProcessCoolDown();
-
-            Vector3 moveDirection = Vector3.zero;
-            bool isKnockedBack = KnockbackTimer > 0;
-
-            if (GetInput(out NetworkInputData data))
+            if (_isMoveable)
             {
-                _curButtons = data.buttons.GetPressed(_prevButtons);
+                Movement(data.move);
+                Rotation(data.move);
 
-                if (_isMoveable)
-                {
-                    Movement(data.move);
-                    Rotation(data.move);
-
-                    if (_curButtons.IsSet(InputButton.Jump))
-                        Jump();
-                }
-                else
-                {
-                    _horVelocity = Vector3.zero;
-                    _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
-                    _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
-                }
+                if (_curButtons.IsSet(InputButton.Jump))
+                    Jump();
             }
-
-            float currentSpeed = stats.GetStat(StatType.SpeedMove).Value;
-            if (!_ncc.Grounded) currentSpeed *= 0.7f;
-            
-            _ncc.maxSpeed = currentSpeed;
-
-            if (_curButtons.IsSet(InputButton.Attack))
-                Combo();
-
-            ItemUse(data);
-
-            if (_curButtons.IsSet(InputButton.Skill))
-                ActivateSkill();
-
-            _ncc.Move(_horVelocity + Vector3.up * _verVelocity + _externalVelocity);
-            _externalVelocity = Vector3.zero;
-
-            _prevButtons = data.buttons;
+            else
+            {
+                _horVelocity = Vector3.zero;
+                _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
+                _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
+            }
         }
+
+        if (_curButtons.IsSet(InputButton.Attack))
+            Combo();
+
+        ItemUse(data);
+
+        if (_curButtons.IsSet(InputButton.Skill))
+            ActivateSkill();
+
+        _ncc.Move(_horVelocity + Vector3.up * _verVelocity + _externalVelocity);
+        _externalVelocity = Vector3.zero;
+
+        _prevButtons = data.buttons;
     }
 
     void ApplyGravity()
@@ -261,19 +249,18 @@ public class Player : NetworkBehaviour
 
     void Movement(Vector2 input)
     {
-        Vector3 inputDir = POV.transform.right * input.x + POV.transform.forward * input.y;
-        inputDir.y = 0f;
+        Vector3 inputDir = new Vector3(input.x, 0f, input.y);
         inputDir = inputDir.normalized;
 
         _blendSpeedY = Mathf.Lerp(_blendSpeedY, Sign(input.y), 5f * Runner.DeltaTime);
         _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(input.x), 5f * Runner.DeltaTime);
 
         if (inputDir == default)
-            _horVelocity = Vector3.Lerp(_horVelocity, default, 20f * Runner.DeltaTime);
+            _horVelocity = Vector3.Lerp(_horVelocity, default, 25f * Runner.DeltaTime);
         else
         {
             if (_ncc.Grounded)
-                _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * 10f * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value);
+                _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * 20f * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value);
             else
                 _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * 10f * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value * 0.7f);
         }
@@ -296,8 +283,7 @@ public class Player : NetworkBehaviour
         if (input == Vector2.zero)
             return;
 
-        float cameraY = POV != null ? POV.transform.eulerAngles.y : 0;
-        float moveAngle = Mathf.Atan2(input.x, input.y) * Mathf.Rad2Deg + cameraY;
+        float moveAngle = Mathf.Atan2(input.x, input.y) * Mathf.Rad2Deg;
 
         Quaternion targetRot = Quaternion.Euler(0f, moveAngle, 0f);
         float t = _ncc.Grounded ? GroundTurnLerp : AirTurnLerp;
@@ -317,6 +303,9 @@ public class Player : NetworkBehaviour
 
     void ItemUse(NetworkInputData data)
     {
+        if (!Object.HasStateAuthority)
+            return;
+
         if (data.buttons.IsSet(InputButton.UseItem1))
             _item.UseItem(this, 0);
 
@@ -338,6 +327,9 @@ public class Player : NetworkBehaviour
 
     void ActivateSkill()
     {
+        if (!Object.HasStateAuthority)
+            return;
+
         if (_ability != null)
         {
             if (CurrentCoolDown <= 0 && SkillDurationTimer <= 0)
