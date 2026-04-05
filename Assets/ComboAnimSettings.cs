@@ -12,6 +12,7 @@ public class ComboAnimSettings : StateMachineBehaviour
 
         animator.applyRootMotion = true;
         _player.DisableMovement();
+        _player.SetAttackStats(_player.ComboStep - 1);
 
         _player.comboRegister = false;
     }

@@ -44,10 +44,10 @@ public class Cannonball : MonoBehaviour
                 Vector3 initialVel = knockDir.normalized * knockDis;
 
                 // 서버에서 Networked 넉백 변수 셋팅
-                target.StartKnockback(initialVel);
+                //target.StartKnockback(initialVel);
 
                 // 모든 클라이언트에게 피격 이펙트 및 카메라 쉐이크(예: 강도 2f) 실행 명령
-                target.RPC_BroadcastHitEffect(transform.position, knockPow, 2f);
+                //target.RPC_BroadcastHitEffect(transform.position, knockPow, 2f);
             }
 
             // 플레이어에 맞았으니 대포알은 즉시 파괴

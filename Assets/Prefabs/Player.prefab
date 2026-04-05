@@ -424,7 +424,7 @@ MonoBehaviour:
   stats:
     maxHP: 200
     powDam: 10
-    powKnock: 5
+    powKnock: 21
     atkSpeed: 1
     atkRange: 1
     speedMove: 5
@@ -447,9 +447,7 @@ MonoBehaviour:
       m_Calls: []
   _IsDead: 0
   _CurrentHP: 0
-  _CurrentKnockbackVelocity: {x: 0, y: 0, z: 0}
-  _KnockbackTimer: 0
-  _PullTarget: {fileID: 0}
+  _Puller: {fileID: 0}
   _PullTimer: 0
   _MagnetVelocity: {x: 0, y: 0, z: 0}
   _CurrentCoolDown: 0
@@ -457,6 +455,8 @@ MonoBehaviour:
   _groundLayer:
     serializedVersion: 2
     m_Bits: 9
+  _ComboStep: 0
+  _HitState: 0
   comboRegister: 0
 --- !u!114 &-1394671117463737779
 MonoBehaviour:

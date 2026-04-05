@@ -74,9 +74,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         var map = inputActions.FindActionMap("Player");
 
-        Debug.Log(map.FindAction("Move"));
-        Debug.Log(map.FindAction("Jump"));
-        Debug.Log(map.FindAction("Attack"));
         move = map.FindAction("Move");
         jump = map.FindAction("Jump");
         attack = map.FindAction("Attack");
