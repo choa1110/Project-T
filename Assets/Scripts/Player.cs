@@ -58,9 +58,12 @@ public class Player : NetworkBehaviour
     List<AttackArea> attackAreas = new List<AttackArea>();
 
     // 넉백 관련 네트워크 변수
-    [Networked] public Vector3 CurrentKnockbackVelocity { get; set; }
-    [Networked] public float KnockbackTimer { get; set; }
-    
+    [Networked] Vector3 CurrentKnockbackVelocity { get; set; }
+    [Networked] float KnockbackTimer { get; set; }
+    [Networked] Quaternion RotateVelTarget { get; set; }
+    [Networked] float RotateVelTimer { get; set; }
+    Vector3 MinimunKnockbackVelocity;
+
     // 끌어당기기(Pull) 관련 네트워크 변수
     [Networked] public Player PullTarget { get; set; }
     [Networked] public float PullTimer { get; set; }
@@ -72,7 +75,8 @@ public class Player : NetworkBehaviour
 
     [SerializeField] private LayerMask _groundLayer;
 
-    [Networked] int ComboStep { get; set; }
+    [Networked] public int ComboStep { get; set; }
+    [Networked] public int HitState { get; set; }
 
     const float Gravity = -9.81f;
     const float GroundTurnLerp = 5f;
@@ -135,6 +139,7 @@ public class Player : NetworkBehaviour
         _anim.SetBool("Jump", jumpedThisFrame);
         _anim.SetBool("Airborne", !_ncc.Grounded);
         _anim.SetInteger("ComboStep", ComboStep);
+        _anim.SetInteger("Hit", HitState);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -154,6 +159,7 @@ public class Player : NetworkBehaviour
             Vector3 initialVel = knockDir.normalized * finalKnockPow;
 
             targetPlayer.StartKnockback(initialVel);
+            targetPlayer.SetHit(hitPos, finalKnockPow);
             targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
         }
     }
@@ -162,11 +168,6 @@ public class Player : NetworkBehaviour
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float knockDis, float camShake)
     {
         onHit.Invoke();
-
-        SetHit(hitPos, knockDis);
-
-        if (Object.HasInputAuthority && POV != null)
-            POV.CameraShake(camShake);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -199,6 +200,7 @@ public class Player : NetworkBehaviour
             jumpedThisFrame = false;
 
         ProcessKnockback();
+        ProcessRotateByVelocity();
         ProcessPulling();
         ProcessCoolDown();
 
@@ -295,7 +297,7 @@ public class Player : NetworkBehaviour
     {
         if (_ncc.Grounded && !comboRegister)
         {
-            ComboStep++;
+            ComboStep = Mathf.Clamp(ComboStep + 1, 0, 3);
 
             comboRegister = true;
         }
@@ -382,7 +384,8 @@ public class Player : NetworkBehaviour
         StartKnockback(initialVel);
         SetHit(pos, knockDis);
 
-        if(POV != null) POV.CameraShake(camShake);
+        if (POV != null)
+            POV.CameraShake(camShake);
     }
 
     public void ApplyHeal(float amount)
@@ -400,25 +403,44 @@ public class Player : NetworkBehaviour
         skill.SetSkill(_ability);
     }
 
-    public void StartKnockback(Vector3 initialVel)
+    void StartKnockback(Vector3 initialVel)
     {
         CurrentKnockbackVelocity = initialVel;
-        KnockbackTimer = 0.5f; 
+        MinimunKnockbackVelocity = initialVel * 0.1f;
+        KnockbackTimer = 0.7f; 
     }
 
     void ProcessKnockback()
     {
-        if (KnockbackTimer > 0)
+        if (KnockbackTimer > 0 || !_ncc.Grounded)
         {
-            CurrentKnockbackVelocity = Vector3.Lerp(CurrentKnockbackVelocity, Vector3.zero, 5f * Runner.DeltaTime);
+            CurrentKnockbackVelocity = Vector3.Lerp(CurrentKnockbackVelocity, MinimunKnockbackVelocity, 5f * Runner.DeltaTime);
             KnockbackTimer -= Runner.DeltaTime;
 
-            if (KnockbackTimer <= 0)
-            {
-                CurrentKnockbackVelocity = Vector3.zero;
-                KnockbackTimer = 0;
-            }
+            _externalVelocity += CurrentKnockbackVelocity;
         }
+        else
+        {
+            CurrentKnockbackVelocity = Vector3.zero;
+            KnockbackTimer = 0;
+        }
+    }
+
+    void StartRotateVel(Vector3 tarVel)
+    {
+        RotateVelTarget = Quaternion.LookRotation(tarVel);
+        RotateVelTimer = 0.3f;
+    }
+
+    void ProcessRotateByVelocity()
+    {
+        if (RotateVelTimer > 0f)
+        {
+            transform.rotation = Quaternion.Lerp(transform.rotation, RotateVelTarget, 3.3f * Runner.DeltaTime);
+            RotateVelTimer -= Runner.DeltaTime;
+        }
+        else
+            RotateVelTarget = transform.rotation;
     }
 
     public void PulledToPoint(Player puller, float duration = 5f)
@@ -512,29 +534,30 @@ public class Player : NetworkBehaviour
 
     public void ResetCombo() { ComboStep = 0; }
 
-    void SetHit(Vector3 hitPoint, float hitDis)
+    void SetHit(Vector3 hitPoint, float knockDis)
     {
-        Vector3 velocity = _ncc.Velocity; 
+        Vector3 velocity = _ncc.Velocity;
         velocity.y = 0;
 
         if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
         {
-            if (hitDis > 20f)
-                _anim.SetInteger("Hit", 4);
+            if (knockDis > 20f)
+                HitState = 4;
             else
-                _anim.SetInteger("Hit", 2);
+                HitState = 2;
         }
         else
         {
-            if (hitDis > 20f)
-                _anim.SetInteger("Hit", 3);
+            if (knockDis > 20f)
+                HitState = 3;
             else
-                _anim.SetInteger("Hit", 1);
+                HitState = 1;
 
             velocity *= -1;
         }
+
+        StartRotateVel(velocity);
     }
 
-    public void ResetHit() { _anim.SetInteger("Hit", 0); }
-    public void SetKnockedHit() { _anim.SetInteger("Hit", 5); }
+    public void ResetHit() { HitState = 0; }
 }
