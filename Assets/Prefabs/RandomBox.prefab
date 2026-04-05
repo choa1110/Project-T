@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 7602195752704983980}
   - component: {fileID: 8179739894742072705}
   - component: {fileID: 8628251030496797281}
+  - component: {fileID: -2262010544258259776}
+  - component: {fileID: 8395643633668080241}
   m_Layer: 0
   m_Name: RandomBox
   m_TagString: Untagged
@@ -125,3 +127,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 551c757e6f807c8489d4fec0cc370717, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemBox
+--- !u!114 &-2262010544258259776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6733627046481391911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3040471344
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8628251030496797281}
+  - {fileID: 8395643633668080241}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8395643633668080241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6733627046481391911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

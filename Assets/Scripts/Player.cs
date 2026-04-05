@@ -318,10 +318,10 @@ public class Player : NetworkBehaviour
     void ItemUse(NetworkInputData data)
     {
         if (data.buttons.IsSet(InputButton.UseItem1))
-            _item.UseItem(this, 0);
+            _item.RequestUseItem(0);
 
         if (data.buttons.IsSet(InputButton.UseItem2))
-            _item.UseItem(this, 1);
+            _item.RequestUseItem(1);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]

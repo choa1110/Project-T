@@ -893,7 +893,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2
@@ -945,7 +945,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -1536,6 +1536,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -2306,7 +2307,8 @@ MonoBehaviour:
   itemList:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
-  missile: {fileID: 3668800957590035198, guid: 3d7456119c758dc499915b74e758828d, type: 3}
+  missilePrefab:
+    RawGuidValue: 3d7456119c758dc499915b74e758828d
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0
@@ -2382,6 +2384,7 @@ GameObject:
   - component: {fileID: 851641443}
   - component: {fileID: 851641442}
   - component: {fileID: 851641444}
+  - component: {fileID: 851641445}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2404,121 +2407,15 @@ MonoBehaviour:
   playerPrefab:
     RawGuidValue: ccb4a8796ce56e742a3d1a624488b116
   _RoundTimer: 0
-  cardUI: {fileID: 565050842}
-  inputActions: {fileID: -944628639613478452, guid: e283aeca8c5de0c418d2f2b2f544401b, type: 3}
-  move:
-    m_Name: Move
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: c6b0e62e-958d-4c4e-943d-75bef1c97e39
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 2D Vector
-      m_Id: 3c84bb3a-6fa4-4246-b580-364a27d4df64
-      m_Path: 2DVector
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Move
-      m_Flags: 4
-    - m_Name: up
-      m_Id: 87cd4a41-6108-44f5-ac9f-02f930cfbd30
-      m_Path: <Keyboard>/w
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Move
-      m_Flags: 8
-    - m_Name: down
-      m_Id: a8736318-6df5-4dcb-8bd5-3eec055f2b2f
-      m_Path: <Keyboard>/s
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Move
-      m_Flags: 8
-    - m_Name: left
-      m_Id: 4e332cb2-5a26-48d0-b6cd-11f745eede2c
-      m_Path: <Keyboard>/a
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Move
-      m_Flags: 8
-    - m_Name: right
-      m_Id: b60eb9ed-47a8-483d-93f4-b3ffebb28e0b
-      m_Path: <Keyboard>/d
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Move
-      m_Flags: 8
-    m_Flags: 0
-  jump:
-    m_Name: Jump
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 60102023-cbb2-4841-b856-fa599e128ada
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  attack:
-    m_Name: Attack
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 7f817faa-916e-4ce3-a142-70517503e6e6
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  sprint:
-    m_Name: Sprint
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: b4e7a343-19c8-465d-9c18-7aeddcb210b1
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  guard:
-    m_Name: Guard
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 307f7da1-362c-41c5-8705-d3f1f734bd76
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  skill:
-    m_Name: Skill
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 41cd7e38-b1fe-410a-96fe-294c62e8fe5a
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  useItem1:
-    m_Name: Use Item 1
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 89e1e015-1ea3-4c1e-a1d0-d88f5bd153b5
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  useItem2:
-    m_Name: Use Item 2
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 22d5976f-09b5-4e21-9ea4-3bede6c18ec1
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
   _CurrentRound: 1
+  cardUI: {fileID: 565050842}
+  itemBoxPrefab:
+    RawGuidValue: 2a77df2e54dd0fc4584eb42035e1dc8f
+  boxSpawnInterval: 8
+  itemSlots:
+  - {fileID: 895089600}
+  - {fileID: 1196452118}
+  inputActions: {fileID: -944628639613478452, guid: e283aeca8c5de0c418d2f2b2f544401b, type: 3}
 --- !u!4 &851641443
 Transform:
   m_ObjectHideFlags: 0
@@ -2553,6 +2450,19 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 851641442}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &851641445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851641441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4915bacb9a938a54ba223ebae8995b74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
+  slotIcon: {fileID: 0}
 --- !u!1 &895089596
 GameObject:
   m_ObjectHideFlags: 0
@@ -4517,6 +4427,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0

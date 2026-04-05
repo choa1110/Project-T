@@ -32,8 +32,17 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public NetworkPrefabRef playerPrefab;
 
     [Networked] public float RoundTimer { get; set; }
+    [Networked] public int CurrentRound { get; set; }
     public CardUI cardUI;
     bool _isCardUIOpened = false;
+
+    [Header("Item Box Spawner")]
+    public NetworkPrefabRef itemBoxPrefab;
+    public float boxSpawnInterval = 8f;
+    private float _boxSpawnTimer;
+
+    [Header("Item UI")]
+    public ItemSlot[] itemSlots;
 
     [SerializeField] InputActionAsset inputActions;
 
@@ -86,10 +95,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
             _isCardUIOpened = false;
+
+            CurrentRound = 1;
         }
     }
-
-    [Networked] public int CurrentRound { get; set; } = 1 ;
 
     public override void FixedUpdateNetwork()
     {
@@ -102,9 +111,31 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 RoundTimer = 0;
                 _isCardUIOpened = true;
                 
-                RPC_ShowCardUI(CurrentRound); 
+                // RPC_ShowCardUI(CurrentRound); 
             }
         }
+        if (Object.HasStateAuthority)
+        {
+            _boxSpawnTimer -= Runner.DeltaTime;
+
+            if (_boxSpawnTimer <= 0)
+            {
+                _boxSpawnTimer = boxSpawnInterval;
+                SpawnRandomItemBox();
+            }
+        }
+    }
+
+    private void SpawnRandomItemBox()
+    {
+        float randomX = UnityEngine.Random.Range(-25f, 25f);
+        float randomZ = UnityEngine.Random.Range(-25f, 25f);
+        
+        Vector3 spawnPos = new Vector3(randomX, 1f, randomZ);
+
+        Runner.Spawn(itemBoxPrefab, spawnPos, Quaternion.identity);
+        
+        Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
