@@ -65,7 +65,7 @@ public class Player : NetworkBehaviour
     Vector3 MinimunKnockbackVelocity;
 
     // 끌어당기기(Pull) 관련 네트워크 변수
-    [Networked] public Player PullTarget { get; set; }
+    [Networked] public Player Puller { get; set; }
     [Networked] public float PullTimer { get; set; }
     [Networked] public Vector3 MagnetVelocity { get; set; }
 
@@ -113,6 +113,7 @@ public class Player : NetworkBehaviour
         if (Object.HasInputAuthority)
         {
             POV = FindFirstObjectByType<FollowCamera>();
+            Debug.Log(POV);
             POV.target = this;
         }
 
@@ -160,12 +161,16 @@ public class Player : NetworkBehaviour
 
             targetPlayer.StartKnockback(initialVel);
             targetPlayer.SetHit(hitPos, finalKnockPow);
-            targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+
+            if (POV != null)
+                POV.CameraShake(camShake);
+
+            targetPlayer.RPC_BroadcastHitEffect();
         }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_BroadcastHitEffect(Vector3 hitPos, float knockDis, float camShake)
+    public void RPC_BroadcastHitEffect()
     {
         onHit.Invoke();
     }
@@ -366,27 +371,27 @@ public class Player : NetworkBehaviour
         }
     }
 
-    public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
-    {
-        if (IsDead) return;
-
-        CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
-        onHit.Invoke();
-        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
-
-        if (!_ncc.Grounded)
-            knockPow *= 1.5f;
-
-        Vector3 kbDir = knockDir.normalized;
-        float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
-        Vector3 initialVel = kbDir * knockDis;
-
-        StartKnockback(initialVel);
-        SetHit(pos, knockDis);
-
-        if (POV != null)
-            POV.CameraShake(camShake);
-    }
+    //public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    //{
+    //    if (IsDead) return;
+    //
+    //    CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
+    //    onHit.Invoke();
+    //    onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+    //
+    //    if (!_ncc.Grounded)
+    //        knockPow *= 1.5f;
+    //
+    //    Vector3 kbDir = knockDir.normalized;
+    //    float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
+    //    Vector3 initialVel = kbDir * knockDis;
+    //
+    //    StartKnockback(initialVel);
+    //    SetHit(pos, knockDis);
+    //
+    //    if (POV != null)
+    //        POV.CameraShake(camShake);
+    //}
 
     public void ApplyHeal(float amount)
     {
@@ -445,18 +450,20 @@ public class Player : NetworkBehaviour
 
     public void PulledToPoint(Player puller, float duration = 5f)
     {
-        PullTarget = puller;
+        Puller = puller;
         PullTimer = duration;
         MagnetVelocity = Vector3.zero;
     }
 
     void ProcessPulling()
     {
-        if (PullTimer > 0 && PullTarget != null)
+        if (PullTimer > 0 && Puller != null)
         {
             PullTimer -= Runner.DeltaTime;
 
-            Vector3 targetPos = PullTarget.transform.position;
+            Vector3 targetPos = Puller.transform.position;
+            targetPos += (transform.position - targetPos).normalized;
+
             Vector3 dir = targetPos - transform.position;
             float distance = dir.magnitude;
 
@@ -469,19 +476,16 @@ public class Player : NetworkBehaviour
                 MagnetVelocity += pullVel * Runner.DeltaTime;
                 MagnetVelocity = Vector3.ClampMagnitude(MagnetVelocity, 15f);
             }
+            else
+                MagnetVelocity = Vector3.Lerp(MagnetVelocity, Vector3.zero, 3f * Runner.DeltaTime);
 
-            if (PullTimer <= 0)
-            {
-                MagnetVelocity = Vector3.zero;
-                PullTarget = null;
-            }
+            _externalVelocity += MagnetVelocity;
         }
         else
         {
-            MagnetVelocity = Vector3.Lerp(MagnetVelocity, Vector3.zero, 3f * Runner.DeltaTime);
+            MagnetVelocity = Vector3.zero;
+            Puller = null;
         }
-
-        _externalVelocity += MagnetVelocity;
     }
 
     static float Sign(float v)
@@ -536,7 +540,7 @@ public class Player : NetworkBehaviour
 
     void SetHit(Vector3 hitPoint, float knockDis)
     {
-        Vector3 velocity = _ncc.Velocity;
+        Vector3 velocity = transform.position - hitPoint;
         velocity.y = 0;
 
         if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
@@ -560,4 +564,5 @@ public class Player : NetworkBehaviour
     }
 
     public void ResetHit() { HitState = 0; }
+    public void SetKnockedHit() { HitState = 5; }
 }
