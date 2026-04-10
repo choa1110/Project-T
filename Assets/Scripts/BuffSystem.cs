@@ -38,6 +38,20 @@ public class BuffSystem : NetworkBehaviour
         Debug.Log($"[서버] {_player.Object.InputAuthority} 플레이어에게 {data.name} 버프 적용됨!");
     }
 
+    public List<string> GetActiveBuffNames()
+    {
+        var names = new List<string>();
+        foreach (var b in _activeBuffs)
+            names.Add(b.Name);
+        return names;
+    }
+
+    public void ClearAllBuffs()
+    {
+        for (int i = _activeBuffs.Count - 1; i >= 0; i--)
+            RemoveBuff(_activeBuffs[i]);
+    }
+
     private void RemoveBuff(BuffFunction buff)
     {
         buff.Remove();

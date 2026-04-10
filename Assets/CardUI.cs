@@ -7,9 +7,7 @@ public class CardUI : MonoBehaviour
 {
     public GameObject cardPanel;
 
-    public Button cardButton1;
-    public Button cardButton2;
-    public Button cardButton3;
+    public BuffCardUI[] cardUI;
 
     public int cardRank;
     public int buffIndex;

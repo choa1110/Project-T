@@ -33,7 +33,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     [Networked] public float RoundTimer { get; set; }
     [Networked] public int CurrentRound { get; set; }
-    public CardUI cardUI;
     bool _isCardUIOpened = false;
 
     [Header("Item Box Spawner")]
@@ -107,8 +106,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 RoundTimer = 0;
                 _isCardUIOpened = true;
-                
-                // RPC_ShowCardUI(CurrentRound); 
+                BuffManager.Instance.StartBuffSelectionPhase(CurrentRound);
             }
         }
         if (Object.HasStateAuthority)
@@ -133,20 +131,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         Runner.Spawn(itemBoxPrefab, spawnPos, Quaternion.identity);
         
         Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_ShowCardUI(int rank)
-    {
-        if(cardUI != null)
-        {
-            cardUI.OpenCardSelection(rank);
-            Debug.Log("카드 선택 창 열림");
-        }
-        else
-        {
-            Debug.LogError("GameManager에 CardUI가 연결되어 있지 않습니다!");
-        }
     }
 
     public void OnSceneLoadDone(NetworkRunner runner)

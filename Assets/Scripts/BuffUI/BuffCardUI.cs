@@ -1,10 +1,11 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BuffCardUI : MonoBehaviour
 {
     public Image iconImage;
-    public Text nameText;
+    public TextMeshProUGUI nameText;
     public Text descText;
     public Button selectButton;
 
@@ -17,7 +18,6 @@ public class BuffCardUI : MonoBehaviour
         _parentUI = parent;
 
         nameText.text = data.buffName;
-        // descText�� ������ ���� ǥ��, ������ �̸���
         if (descText != null) descText.text = data.discription;
         // if (data.icon != null) iconImage.sprite = data.icon;
 
