@@ -71,6 +71,9 @@ using UnityEngine;
 
 public class FollowCamera : MonoBehaviour
 {
+    static FollowCamera _instance;
+    public static FollowCamera Instance { get => _instance; }
+
     public Player target;
 
     [SerializeField] float camDis;
@@ -79,6 +82,12 @@ public class FollowCamera : MonoBehaviour
 
     Vector3 _movePos;
     Vector3 _offset = new Vector3(0, 0, 0);
+
+    void Awake()
+    {
+        if (_instance == null)
+            _instance = this;
+    }
 
     void Start()
     {

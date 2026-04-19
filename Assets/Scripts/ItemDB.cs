@@ -50,12 +50,12 @@ public class ItemDB : MonoBehaviour
         go.transform.forward = user.transform.forward;
 
         HomingMissile hm = go.GetComponent<HomingMissile>();
-        hm.SetTarget(user.GetClosestOpponent());
+        hm.SetTarget(GameManager.Instance.GetClosesetOpponent(user));
     }
 
     void OnUse_MagnetPull(Player user)
     {
-        Player target = user.GetClosestOpponent();
+        Player target = GameManager.Instance.GetClosesetOpponent(user);
         target.PulledToPoint(user);
     }
 }

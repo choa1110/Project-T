@@ -1,6 +1,7 @@
+using Fusion;
 using UnityEngine;
 
-public class HomingMissile : MonoBehaviour
+public class HomingMissile : NetworkBehaviour
 {
     Rigidbody _rb;
     AttackArea _attackArea;

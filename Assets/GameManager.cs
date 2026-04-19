@@ -31,6 +31,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public NetworkPrefabRef playerPrefab;
 
+    List<Player> playerList = new List<Player>();
+
     [Networked] public float RoundTimer { get; set; }
     public CardUI cardUI;
     bool _isCardUIOpened = false;
@@ -118,6 +120,33 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    public void RegisterPlayer(Player reg)
+    {
+        playerList.Add(reg);
+    }
+
+    public Player GetClosesetOpponent(Player self)
+    {
+        Player target = null;
+        float minDis = 987654321f;
+
+        foreach (Player reg in playerList)
+        {
+            if (reg != self && reg.team != self.team)
+            {
+                float dis = Vector3.Distance(self.transform.position, reg.transform.position);
+
+                if (dis < minDis)
+                {
+                    minDis = dis;
+                    target = reg;
+                }
+            }
+        }
+
+        return target;
+    }
+
     public void OnSceneLoadDone(NetworkRunner runner)
     {
         if (runner.IsServer)
@@ -131,10 +160,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (runner.IsServer)
-        {
-            SpawnGameCharacter(runner, player);
-        }
+        //if (runner.IsServer)
+        //{
+        //    SpawnGameCharacter(runner, player);
+        //}
     }
 
     void SpawnGameCharacter(NetworkRunner runner, PlayerRef player)
@@ -151,6 +180,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         
         // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
+
         runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
         Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
     }
