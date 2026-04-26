@@ -6,6 +6,7 @@ public class BuffFunction
     Player _target;
 
     public bool expired { get; private set; }
+    public string Name => _buff.buffName;
 
     float timeLeft;
     bool isConditionMet;
