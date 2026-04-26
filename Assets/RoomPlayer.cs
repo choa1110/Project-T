@@ -38,6 +38,7 @@ public class RoomPlayer : NetworkBehaviour
             FindFirstObjectByType<ChatManager>()?.ConnectWithNickName();
         }
     }
+
     // 나갈 때 리스트에서 삭제
     public override void Despawned(NetworkRunner runner, bool hasState)
     {

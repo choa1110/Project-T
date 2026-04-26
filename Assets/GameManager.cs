@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
@@ -30,6 +32,9 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     private NetworkRunner _runner;
 
     public NetworkPrefabRef playerPrefab;
+
+    public Player mainPlayer;
+    public List<Player> playerList = new List<Player>();
 
     [Networked] public float RoundTimer { get; set; }
     [Networked] public int CurrentRound { get; set; }
@@ -136,6 +141,41 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
     }
 
+    public void SetMainPlayer(Player player)
+    {
+        mainPlayer = player;
+    }
+
+    public void RegisterPlayer(Player reg)
+    {
+        playerList.Add(reg);
+    }
+
+    public Player GetClosesetOpponent()
+    {
+        Player target = null;
+        float minDis = 987654321f;
+
+        foreach (Player reg in playerList)
+        {
+            if (true) //reg.team != mainPlayer.team
+            {
+                float dis = Vector3.Distance(mainPlayer.transform.position, reg.transform.position);
+
+                if (dis < minDis)
+                {
+                    minDis = dis;
+                    target = reg;
+                }
+            }
+        }
+
+        if (target == null)
+            return mainPlayer;
+        else
+            return target;
+    }
+
     public void OnSceneLoadDone(NetworkRunner runner)
     {
         if (runner.IsServer)
@@ -145,14 +185,39 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 SpawnGameCharacter(runner, player);
             }
         }
+
+        gameObject.SetActive(true);
+        StartCoroutine(WaitForRegister(runner));
+    }
+
+    IEnumerator WaitForRegister(NetworkRunner runner)
+    {
+        while (mainPlayer == null || runner.ActivePlayers.Count() != playerList.Count + 1)
+            yield return null;
+
+        SetOpponentUI();
+    }
+
+    void SetOpponentUI()
+    {
+        for (int i = 0; i < playerList.Count; i++)
+        {
+            if (mainPlayer.team == playerList[i].team)
+            {
+                HUDManager.Instance.LinkOpponent(playerList[i], 0);
+                HUDManager.Instance.LinkOpponent(playerList[0], i);
+            }
+            else
+                HUDManager.Instance.LinkOpponent(playerList[i], i);
+        }
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (runner.IsServer)
-        {
-            SpawnGameCharacter(runner, player);
-        }
+        //if (runner.IsServer)
+        //{
+        //    SpawnGameCharacter(runner, player);
+        //}
     }
 
     void SpawnGameCharacter(NetworkRunner runner, PlayerRef player)
@@ -169,6 +234,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         
         // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
+
         runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
         Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
     }

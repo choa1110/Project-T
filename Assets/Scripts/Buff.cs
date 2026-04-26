@@ -7,6 +7,7 @@ public class Buff : ScriptableObject
 {
     public string buffName;
     public int rank;
+    public Sprite icon;
 
     [TextAreaAttribute]
     public string discription;
