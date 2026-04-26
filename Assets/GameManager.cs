@@ -44,6 +44,9 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Header("Item UI")]
     public ItemSlot[] itemSlots;
 
+    [Header("Opponent UI")]
+    public OpponentData[] opponentSlots;
+
     [SerializeField] InputActionAsset inputActions;
 
     InputAction move;
@@ -251,6 +254,33 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public void OnDisableKeyInput()
     {
         inputActions.Disable();
+    }
+
+    void Update()
+    {
+        UpdateOpponentNames();
+    }
+
+    void UpdateOpponentNames()
+    {
+        if (opponentSlots == null || opponentSlots.Length == 0) return;
+        if (RoomPlayer.Players == null) return;
+
+        // Get all other players
+        var others = RoomPlayer.Players.FindAll(p => !p.Object.HasInputAuthority);
+
+        for (int i = 0; i < opponentSlots.Length; i++)
+        {
+            if (i < others.Count)
+            {
+                opponentSlots[i].gameObject.SetActive(true);
+                opponentSlots[i].SetOpponentId(others[i].NickName);
+            }
+            else
+            {
+                opponentSlots[i].gameObject.SetActive(false);
+            }
+        }
     }
 
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)

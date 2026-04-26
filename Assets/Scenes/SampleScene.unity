@@ -1219,6 +1219,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+--- !u!114 &421027502 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6830873100173712274, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+  m_PrefabInstance: {fileID: 421027501}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c0f2d282588dbf419c041b89945215b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OpponentData
 --- !u!1 &455739324
 GameObject:
   m_ObjectHideFlags: 0
@@ -2415,6 +2426,10 @@ MonoBehaviour:
   itemSlots:
   - {fileID: 895089600}
   - {fileID: 1196452118}
+  opponentSlots:
+  - {fileID: 2009309138945913807}
+  - {fileID: 1452629748}
+  - {fileID: 421027502}
   inputActions: {fileID: -944628639613478452, guid: e283aeca8c5de0c418d2f2b2f544401b, type: 3}
 --- !u!4 &851641443
 Transform:
@@ -3733,6 +3748,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+--- !u!114 &1452629748 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6830873100173712274, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+  m_PrefabInstance: {fileID: 1452629747}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c0f2d282588dbf419c041b89945215b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OpponentData
 --- !u!1 &1455593635
 GameObject:
   m_ObjectHideFlags: 0
@@ -5503,6 +5529,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+--- !u!114 &2009309138945913807 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6830873100173712274, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+  m_PrefabInstance: {fileID: 2009309138945913806}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c0f2d282588dbf419c041b89945215b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OpponentData
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
