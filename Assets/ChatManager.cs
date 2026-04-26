@@ -13,38 +13,16 @@ public class ChatManager : MonoBehaviour, IChatClientListener
     private ChatClient chatClient;
     private string myNickName;
 
-    void Start()
-    {
-        ConnectWithNickName();
-    }
-
     public void ConnectWithNickName()
     {
-        // Prevent connecting if already connected or in progress
-        if (chatClient != null && chatClient.State != ChatState.Disconnected && chatClient.State != ChatState.Uninitialized)
-        {
-            Debug.Log($"[ChatManager] Already connecting or connected. State: {chatClient.State}");
-            return;
-        }
-
         myNickName = DataManager.Instance.UserNickName;
-        
+
         if (string.IsNullOrEmpty(myNickName))
         {
-            // Don't log error here if it's expected (RoomPlayer will trigger it later)
-            Debug.Log("[ChatManager] Nickname is empty. Waiting for RoomPlayer to set it.");
             return;
         }
-
-        Debug.Log($"[ChatManager] Attempting to connect! Nickname: {myNickName}");
-
-        if (string.IsNullOrEmpty(chatAppId))
-        {
-            Debug.LogError("[ChatManager] Chat App ID is empty! Check the Inspector.");
-            return;
-        }
-        
         chatClient = new ChatClient(this);
+
         chatClient.Connect(chatAppId, "1.0", new AuthenticationValues(myNickName));
     }
 
@@ -72,20 +50,9 @@ public class ChatManager : MonoBehaviour, IChatClientListener
 
     public void SendChatMessage(string message)
     {
-        if (chatClient == null)
-        {
-            Debug.LogError("[ChatManager] chatClient가 null입니다! 연결이 아예 시작되지 않았습니다.");
-            return;
-        }
-
         if (chatClient.CanChat)
         {
             chatClient.PublishMessage(currentChannel, message);
-            Debug.Log($"[ChatManager] 메시지 전송 요청: {message}");
-        }
-        else
-        {
-            Debug.LogWarning("[ChatManager] 서버와 연결 중이거나, 채팅을 칠 수 없는 상태입니다.");
         }
     }
 

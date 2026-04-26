@@ -12,30 +12,22 @@ public class RoomPlayer : NetworkBehaviour
     
     public override void Spawned()
     {
+        transform.SetParent(GameObject.Find("LobbyManager")?.transform); // 정리용(없어도 됨)
         Players.Add(this);
 
         if (Object.HasInputAuthority)
         {
-            string myName = DataManager.Instance.UserNickName;
-            
-            // If no saved nickname, generate a random one and save it
-            if (string.IsNullOrEmpty(myName))
+            string myName = "Player " + UnityEngine.Random.Range(1000, 9999);
+            if (DataManager.Instance != null && !string.IsNullOrEmpty(DataManager.Instance.UserNickName))
             {
-                myName = "Player " + UnityEngine.Random.Range(1000, 9999);
-                DataManager.Instance.SetNickName(myName);
+                 myName = DataManager.Instance.UserNickName;
             }
-
-            Debug.Log($"[RoomPlayer] Using Nickname: {myName}");
             RPC_SetNickName(myName);
-            
-            IsReady = false; 
+            IsReady = false; // 처음엔 레디 해제
             if (Runner.IsServer)
             {
                 IsLeader = true;
             }
-
-            // Connect to Chat after nickname is set
-            FindFirstObjectByType<ChatManager>()?.ConnectWithNickName();
         }
     }
 

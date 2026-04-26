@@ -8,24 +8,15 @@ public class DataManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadNickName();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
     
     public void SetNickName(string name)
     {
         UserNickName = name;
-        PlayerPrefs.SetString("MyNickName", name);
+        PlayerPrefs.SetString("MyNickName", name); //우선 컴퓨터에 이후 데베
         PlayerPrefs.Save();
-        Debug.Log($"[DataManager] Nickname saved: {name}");
     }
 
     public string LoadNickName()
@@ -33,10 +24,8 @@ public class DataManager : MonoBehaviour
         if (PlayerPrefs.HasKey("MyNickName"))
         {
             UserNickName = PlayerPrefs.GetString("MyNickName");
-            Debug.Log($"[DataManager] Nickname loaded: {UserNickName}");
             return UserNickName;
         }
-        UserNickName = "";
         return "";
     }
 }
