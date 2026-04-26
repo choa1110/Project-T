@@ -101,8 +101,10 @@ GameObject:
   - component: {fileID: 1760713132744146408}
   - component: {fileID: 2235301647503907253}
   - component: {fileID: 2698207178301814132}
+  - component: {fileID: 5434279123391960021}
   - component: {fileID: 5776618384303607057}
   - component: {fileID: 633942945094741405}
+  - component: {fileID: 6616349578924760794}
   m_Layer: 0
   m_Name: Missile
   m_TagString: Untagged
@@ -176,6 +178,27 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5434279123391960021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3668800957590035198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3961445509
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 5776618384303607057}
+  - {fileID: 633942945094741405}
+  - {fileID: 6616349578924760794}
+  ForceRemoteRenderTimeframe: 0
 --- !u!114 &5776618384303607057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -204,9 +227,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cee714e64cd60324780c50aa01129a9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GuidedMissile
+  _NetworkedVelocity: {x: 0, y: 0, z: 0}
   param: {fileID: 11400000, guid: 2e754eb288db2204dbc87429de429d25, type: 2}
   speed: 10
   turnSpeed: 90
+--- !u!114 &6616349578924760794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3668800957590035198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
 --- !u!1 &3762244851042077040
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,7 +8,7 @@ public class OpponentData : MonoBehaviour
 
     [SerializeField] Image _opponentIcon;
     [SerializeField] TMP_Text _opponentId;
-    [SerializeField] FillBar _fillBar;
+    public FillBar fillBar;
 
     void Awake()
     {

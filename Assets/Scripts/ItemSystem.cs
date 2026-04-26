@@ -4,8 +4,14 @@ using UnityEngine;
 public class ItemSystem : MonoBehaviour
 {
     Item[] itemList = new Item[2];
+    
+    List<ItemSlot> slotList = new List<ItemSlot>();
 
-    [SerializeField] List<ItemSlot> slotList;
+    public void LinkHUD()
+    {
+        for (int i = 0; i < 2; i++)
+            slotList.Add(HUDManager.Instance.itemSlots[i]);
+    }
 
     public bool SetItem(Item item)
     {

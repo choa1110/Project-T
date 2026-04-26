@@ -1,14 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Fusion;
 
-public class ItemDB : MonoBehaviour
+public class ItemDB : NetworkBehaviour
 {
     static ItemDB _instance;
     public static ItemDB Instance { get => _instance; }
 
     [SerializeField] List<Item> itemList;
 
-    public GameObject missile;
+    public NetworkObject missile;
 
     void Awake()
     {
@@ -31,31 +32,43 @@ public class ItemDB : MonoBehaviour
         }
     }
 
-    public Item SetRandomItem()
+    public Item GetRandomItem(int from, int to)
     {
-        int num = Random.Range(0, itemList.Count);
+        int num = Random.Range(from, to);
 
         return itemList[num];
     }
 
     void OnUse_HomingMissile(Player user)
     {
-        GameObject go = Instantiate(missile);
-
         Vector3 shootPosition = user.transform.position;
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        go.transform.position = shootPosition;
-        go.transform.forward = user.transform.forward;
-
-        HomingMissile hm = go.GetComponent<HomingMissile>();
-        hm.SetTarget(GameManager.Instance.GetClosesetOpponent(user));
+        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosesetOpponent());
     }
 
     void OnUse_MagnetPull(Player user)
     {
-        Player target = GameManager.Instance.GetClosesetOpponent(user);
-        target.PulledToPoint(user);
+        Player target = GameManager.Instance.GetClosesetOpponent();
+
+        Rpc_RequestMagnetToServer(user, target);
+    }
+
+    // Rpc Request
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    void Rpc_RequestMissileToServer(Vector3 position, Quaternion rotation, Player target)
+    {
+        Runner.Spawn(missile, position, rotation, Runner.LocalPlayer, (runner, obj) => {
+            if (obj.TryGetBehaviour<HomingMissile>(out var missile))
+                missile.SetTarget(target);
+        });
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    void Rpc_RequestMagnetToServer(Player user, Player target)
+    {
+        if (target != null)
+            target.PulledToPoint(user);
     }
 }

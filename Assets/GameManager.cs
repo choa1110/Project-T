@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
@@ -31,7 +33,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public NetworkPrefabRef playerPrefab;
 
-    List<Player> playerList = new List<Player>();
+    public Player mainPlayer;
+    public List<Player> playerList = new List<Player>();
 
     [Networked] public float RoundTimer { get; set; }
     public CardUI cardUI;
@@ -120,21 +123,26 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    public void SetMainPlayer(Player player)
+    {
+        mainPlayer = player;
+    }
+
     public void RegisterPlayer(Player reg)
     {
         playerList.Add(reg);
     }
 
-    public Player GetClosesetOpponent(Player self)
+    public Player GetClosesetOpponent()
     {
         Player target = null;
         float minDis = 987654321f;
 
         foreach (Player reg in playerList)
         {
-            if (reg != self && reg.team != self.team)
+            if (true) //reg.team != mainPlayer.team
             {
-                float dis = Vector3.Distance(self.transform.position, reg.transform.position);
+                float dis = Vector3.Distance(mainPlayer.transform.position, reg.transform.position);
 
                 if (dis < minDis)
                 {
@@ -144,7 +152,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             }
         }
 
-        return target;
+        if (target == null)
+            return mainPlayer;
+        else
+            return target;
     }
 
     public void OnSceneLoadDone(NetworkRunner runner)
@@ -155,6 +166,31 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 SpawnGameCharacter(runner, player);
             }
+        }
+
+        gameObject.SetActive(true);
+        StartCoroutine(WaitForRegister(runner));
+    }
+
+    IEnumerator WaitForRegister(NetworkRunner runner)
+    {
+        while (mainPlayer == null || runner.ActivePlayers.Count() != playerList.Count + 1)
+            yield return null;
+
+        SetOpponentUI();
+    }
+
+    void SetOpponentUI()
+    {
+        for (int i = 0; i < playerList.Count; i++)
+        {
+            if (mainPlayer.team == playerList[i].team)
+            {
+                HUDManager.Instance.LinkOpponent(playerList[i], 0);
+                HUDManager.Instance.LinkOpponent(playerList[0], i);
+            }
+            else
+                HUDManager.Instance.LinkOpponent(playerList[i], i);
         }
     }
 
