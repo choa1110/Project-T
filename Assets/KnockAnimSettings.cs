@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class IdleAnimSettings : StateMachineBehaviour
+public class KnockAnimSettings : StateMachineBehaviour
 {
     Player _player;
 
@@ -10,10 +10,9 @@ public class IdleAnimSettings : StateMachineBehaviour
         if (_player == null)
             _player = animator.gameObject.GetComponent<Player>();
 
-        _player.EnableMovement();
-        _player.ResetCombo();
-        _player.SetVulnerable();
-        _player.comboRegister = false;
+        _player.DisableMovement();
+        _player.SetKnockedHit();
+        _player.SetInvulnerable();
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks

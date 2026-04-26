@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using Fusion;
+using System.Collections;
 
 public enum ExtraStatType
 {
@@ -15,12 +16,12 @@ public class Player : NetworkBehaviour
     Animator _anim;
 
     BuffSystem _buffSystem;
-    ItemSystem _item;
+    public ItemSystem item;
 
     CharacterInfo _info;
 
     Ability _ability;
-    public SkillInterface skill;
+    SkillInterface _skill;
 
     public FollowCamera POV;
     public AttackParameters paramlist;
@@ -46,6 +47,7 @@ public class Player : NetworkBehaviour
 
     // 상태 변수
     [Networked] public bool IsDead { get; set; }
+    [Networked] bool IsSuperarmour { get; set; }
     bool _isMoveable = true;
     float _jumpStartTimer;
     int _jumpCount;
@@ -93,7 +95,7 @@ public class Player : NetworkBehaviour
         _anim = GetComponent<Animator>();
 
         _buffSystem = GetComponent<BuffSystem>();
-        _item = GetComponent<ItemSystem>();
+        item = GetComponent<ItemSystem>();
 
         modelList[_modelNum].SetActive(true);
         _info = modelList[_modelNum].GetComponent<CharacterInfo>();
@@ -102,7 +104,7 @@ public class Player : NetworkBehaviour
         foreach (AttackArea area in _info.fists)
         {
             attackAreas.Add(area);
-            area.SetOwner(this);
+            area.SetOwner(gameObject);
         }
 
         stats.InitalizeStats();
@@ -110,12 +112,32 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
+        StartCoroutine(WaitForSceneLoad());
+    }
+
+    IEnumerator WaitForSceneLoad()
+    {
+        while (GameManager.Instance == null || FollowCamera.Instance == null || HUDManager.Instance == null)
+            yield return null;
+
+        SetupPlayer();
+    }
+
+    private void SetupPlayer()
+    {
         if (Object.HasInputAuthority)
         {
-            POV = FindFirstObjectByType<FollowCamera>();
-            Debug.Log(POV);
+            POV = FollowCamera.Instance;
             POV.target = this;
+
+            GameManager.Instance.SetMainPlayer(this);
+
+            onDamage.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
+            item.LinkHUD();
+            _skill = HUDManager.Instance.skillInterface;
         }
+        else
+            GameManager.Instance.RegisterPlayer(this);
 
         RoundStart();
     }
@@ -144,36 +166,38 @@ public class Player : NetworkBehaviour
         _anim.SetInteger("Hit", HitState);
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
-    {
-        if(targetObject == null) return;
-
-        Player targetPlayer = targetObject.GetComponent<Player>();
-        if(targetPlayer != null && !targetPlayer.IsDead)
-        {
-            targetPlayer.CurrentHP = Mathf.Clamp(targetPlayer.CurrentHP - damage, 0, targetPlayer.stats.GetStat(StatType.MaxHP).Value);
-
-            float weight = targetPlayer.stats.GetStat(StatType.Weight).Value;
-            float knockMultiplier = !targetPlayer._ncc.Grounded ? 1.5f : 1.0f;
-            float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.1f, weight);
-            
-            Vector3 initialVel = knockDir.normalized * finalKnockPow;
-
-            targetPlayer.StartKnockback(initialVel);
-            targetPlayer.SetHit(hitPos, finalKnockPow);
-
-            if (POV != null)
-                POV.CameraShake(camShake);
-
-            targetPlayer.RPC_BroadcastHitEffect();
-        }
-    }
+    //[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    //public void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    //{
+    //    if (targetObject == null) return;
+    //
+    //    Player targetPlayer = targetObject.GetComponent<Player>();
+    //    if (targetPlayer != null && !targetPlayer.IsDead && !targetPlayer.IsSuperarmour)
+    //    {
+    //        targetPlayer.onHit.Invoke();
+    //
+    //        targetPlayer.CurrentHP = Mathf.Clamp(targetPlayer.CurrentHP - damage, 0, targetPlayer.stats.GetStat(StatType.MaxHP).Value);
+    //
+    //        float weight = targetPlayer.stats.GetStat(StatType.Weight).Value;
+    //        float knockMultiplier = !targetPlayer._ncc.Grounded ? 1.5f : 1.0f;
+    //        float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, weight);
+    //        
+    //        Vector3 initialVel = knockDir.normalized * finalKnockPow;
+    //
+    //        targetPlayer.StartKnockback(initialVel);
+    //
+    //        targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+    //    }
+    //}
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_BroadcastHitEffect()
+    public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
     {
-        onHit.Invoke();
+        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+        SetHit(hitPos, finalKnockPow);
+
+        if (Object.HasInputAuthority)
+            POV.CameraShake(camShake);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -311,14 +335,14 @@ public class Player : NetworkBehaviour
 
     void ItemUse(NetworkInputData data)
     {
-        if (!Object.HasStateAuthority)
+        if (!Object.HasInputAuthority)
             return;
 
         if (data.buttons.IsSet(InputButton.UseItem1))
-            _item.RequestUseItem(0);
+            item.UseItem(this, 0);
 
         if (data.buttons.IsSet(InputButton.UseItem2))
-            _item.RequestUseItem(1);
+            item.UseItem(this, 1);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -335,7 +359,7 @@ public class Player : NetworkBehaviour
 
     void ActivateSkill()
     {
-        if (!Object.HasStateAuthority)
+        if (!Object.HasInputAuthority)
             return;
 
         if (_ability != null)
@@ -346,7 +370,7 @@ public class Player : NetworkBehaviour
 
                 SkillDurationTimer = _ability.duration;
                 CurrentCoolDown = _ability.coolTime;
-                skill.OnSkillUse();
+                _skill.OnSkillUse();
             }
         }
     }
@@ -363,36 +387,56 @@ public class Player : NetworkBehaviour
             CurrentCoolDown = Mathf.Clamp(CurrentCoolDown - Runner.DeltaTime, 0, _ability.coolTime);
             
             // UI 업데이트는 로컬 플레이어 화면에서만
-            if (Object.HasInputAuthority && skill != null)
+            if (Object.HasInputAuthority && _skill != null)
             {
-                skill.CoolRate(_ability.coolTime - CurrentCoolDown);
+                _skill.CoolRate(_ability.coolTime - CurrentCoolDown);
                 if (CurrentCoolDown <= 0)
-                    skill.OnCoolComplete();
+                    _skill.OnCoolComplete();
             }
         }
     }
 
-    //public void ApplyHit(Vector3 pos, float damage, Vector3 knockDir, float knockPow, float camShake)
-    //{
-    //    if (IsDead) return;
-    //
-    //    CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
-    //    onHit.Invoke();
-    //    onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
-    //
-    //    if (!_ncc.Grounded)
-    //        knockPow *= 1.5f;
-    //
-    //    Vector3 kbDir = knockDir.normalized;
-    //    float knockDis = knockPow / Mathf.Max(0.1f, stats.GetStat(StatType.Weight).Value);
-    //    Vector3 initialVel = kbDir * knockDis;
-    //
-    //    StartKnockback(initialVel);
-    //    SetHit(pos, knockDis);
-    //
-    //    if (POV != null)
-    //        POV.CameraShake(camShake);
-    //}
+    public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    {
+        if (IsDead || IsSuperarmour) return;
+
+        onHit.Invoke();
+
+        CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
+    
+        Vector3 kbDir = knockDir.normalized;
+        float knockMultiplier = !_ncc.Grounded ? 1.5f : 1.0f;
+        float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, stats.GetStat(StatType.Weight).Value);
+    
+        StartKnockback(kbDir * finalKnockPow);
+
+        RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+    }
+
+    void SetHit(Vector3 hitPoint, float knockDis)
+    {
+        Vector3 velocity = transform.position - hitPoint;
+        velocity.y = 0;
+
+        if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
+        {
+            if (knockDis > 20f)
+                HitState = 4;
+            else
+                HitState = 2;
+        }
+        else
+        {
+            if (knockDis > 20f)
+                HitState = 3;
+            else
+                HitState = 1;
+
+            velocity *= -1;
+        }
+
+        StartRotateVel(velocity);
+    }
 
     public void ApplyHeal(float amount)
     {
@@ -406,7 +450,7 @@ public class Player : NetworkBehaviour
         CurrentCoolDown = _ability.coolTime / 2;
         SkillDurationTimer = 0f;
 
-        skill.SetSkill(_ability);
+        _skill.SetSkill(_ability);
     }
 
     void StartKnockback(Vector3 initialVel)
@@ -428,6 +472,7 @@ public class Player : NetworkBehaviour
         else
         {
             CurrentKnockbackVelocity = Vector3.zero;
+            MinimunKnockbackVelocity = Vector3.zero;
             KnockbackTimer = 0;
         }
     }
@@ -435,14 +480,14 @@ public class Player : NetworkBehaviour
     void StartRotateVel(Vector3 tarVel)
     {
         RotateVelTarget = Quaternion.LookRotation(tarVel);
-        RotateVelTimer = 0.3f;
+        RotateVelTimer = 0.5f;
     }
 
     void ProcessRotateByVelocity()
     {
         if (RotateVelTimer > 0f)
         {
-            transform.rotation = Quaternion.Lerp(transform.rotation, RotateVelTarget, 3.3f * Runner.DeltaTime);
+            transform.rotation = Quaternion.Lerp(transform.rotation, RotateVelTarget, 5f * Runner.DeltaTime);
             RotateVelTimer -= Runner.DeltaTime;
         }
         else
@@ -508,11 +553,6 @@ public class Player : NetworkBehaviour
         }
     }
 
-    public Player GetClosestOpponent()
-    {
-        return this;
-    }
-
     // Animation Events
     public void EnableMovement() { _isMoveable = true; }
     public void DisableMovement() { _isMoveable = false; }
@@ -539,31 +579,9 @@ public class Player : NetworkBehaviour
 
     public void ResetCombo() { ComboStep = 0; }
 
-    void SetHit(Vector3 hitPoint, float knockDis)
-    {
-        Vector3 velocity = transform.position - hitPoint;
-        velocity.y = 0;
-
-        if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
-        {
-            if (knockDis > 20f)
-                HitState = 4;
-            else
-                HitState = 2;
-        }
-        else
-        {
-            if (knockDis > 20f)
-                HitState = 3;
-            else
-                HitState = 1;
-
-            velocity *= -1;
-        }
-
-        StartRotateVel(velocity);
-    }
-
     public void ResetHit() { HitState = 0; }
     public void SetKnockedHit() { HitState = 5; }
+
+    public void SetInvulnerable() { IsSuperarmour = true; }
+    public void SetVulnerable() { IsSuperarmour = false; }
 }

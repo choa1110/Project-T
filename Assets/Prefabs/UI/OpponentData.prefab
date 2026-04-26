@@ -396,7 +396,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OpponentData
   _opponentIcon: {fileID: 8148084126712714801}
   _opponentId: {fileID: 1648045677623521649}
-  _fillBar: {fileID: 8898562078213385492}
+  fillBar: {fileID: 8898562078213385492}
 --- !u!1 &6729351208140373828
 GameObject:
   m_ObjectHideFlags: 0

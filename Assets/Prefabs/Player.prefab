@@ -253,8 +253,8 @@ GameObject:
   - component: {fileID: 7172458550511845091}
   - component: {fileID: 2457758510500592477}
   - component: {fileID: 3585062283753992433}
-  - component: {fileID: 8041200987710526796}
   - component: {fileID: 931208147735945396}
+  - component: {fileID: 4328989693205893132}
   - component: {fileID: 5105540053892191170}
   - component: {fileID: -1394671117463737779}
   - component: {fileID: 1238645827109150118}
@@ -326,7 +326,14 @@ MonoBehaviour:
   - {fileID: 931208147735945396}
   - {fileID: 5105540053892191170}
   - {fileID: -1394671117463737779}
-  - {fileID: 1238645827109150118}
+  - {fileID: 2615523800257740494}
+  - {fileID: 4737241017296882263}
+  - {fileID: 5898429543953796865}
+  - {fileID: 6972685328622460441}
+  - {fileID: 2533276181512865774}
+  - {fileID: 1833654922538381043}
+  - {fileID: 36192030086037934}
+  - {fileID: 5278693648806994293}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &2457758510500592477
 Rigidbody:
@@ -380,18 +387,6 @@ CharacterController:
   m_SkinWidth: 0.0001
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.85, z: 0}
---- !u!114 &8041200987710526796
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8212789482076507676}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf985aad6f3f68e488f9b8996cd15539, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InputSystem
 --- !u!114 &931208147735945396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,6 +399,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b7caa2cd3dfcaa46ae6e346140334da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
+--- !u!114 &4328989693205893132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8212789482076507676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c66976353be16234ebedfc4d1f02c1ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSystem
 --- !u!114 &5105540053892191170
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -416,7 +423,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37844be9eb5164e45921dde4fdea6f2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
-  skill: {fileID: 0}
   POV: {fileID: 0}
   paramlist: {fileID: 11400000, guid: c70fbc6d6d6193745ac6e0ee9fd8aee6, type: 2}
   _modelNum: 0
@@ -1701,7 +1707,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1103982698879521993, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_Layer

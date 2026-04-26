@@ -6,23 +6,14 @@ using Fusion;
 
 public class ItemSystem : NetworkBehaviour
 {
-    [Networked, Capacity(2)]
-    public NetworkArray<int> NetworkedItems { get; }
+    Item[] itemList = new Item[2];
+    
+    List<ItemSlot> slotList = new List<ItemSlot>();
 
-    [SerializeField] List<ItemSlot> slotList;
-    private int[] _prevItems = new int[] { -1, -1 };
-
-    public override void Spawned()
+    public void LinkHUD()
     {
-        if (Object.HasStateAuthority)
-        {
-            NetworkedItems.Set(0, -1);
-            NetworkedItems.Set(1, -1);
-        }
-        if (Object.HasInputAuthority)
-        {
-            slotList = new List<ItemSlot>(GameManager.Instance.itemSlots);
-        }
+        for (int i = 0; i < 2; i++)
+            slotList.Add(HUDManager.Instance.itemSlots[i]);
     }
 
     public bool GiveItem(int itemId)

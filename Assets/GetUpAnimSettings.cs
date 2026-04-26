@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class IdleAnimSettings : StateMachineBehaviour
+public class GetUpAnimSettings : StateMachineBehaviour
 {
     Player _player;
 
@@ -10,10 +10,7 @@ public class IdleAnimSettings : StateMachineBehaviour
         if (_player == null)
             _player = animator.gameObject.GetComponent<Player>();
 
-        _player.EnableMovement();
-        _player.ResetCombo();
-        _player.SetVulnerable();
-        _player.comboRegister = false;
+        _player.ResetHit();
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
@@ -23,10 +20,11 @@ public class IdleAnimSettings : StateMachineBehaviour
     //}
 
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
-    //override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
-    //{
-    //    
-    //}
+    override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    {
+        _player.EnableMovement();
+        _player.SetVulnerable();
+    }
 
     // OnStateMove is called right after Animator.OnAnimatorMove()
     //override public void OnStateMove(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
