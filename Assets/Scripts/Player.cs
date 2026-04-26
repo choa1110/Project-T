@@ -149,7 +149,6 @@ public class Player : NetworkBehaviour
             CurrentHP = stats.GetStat(StatType.MaxHP).Value;
             _curLife = life;
             _jumpCount = jumpAbiliy;
-            _buffSystem.ClearAllBuffs();
         }
     }
 

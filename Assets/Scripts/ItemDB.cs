@@ -17,17 +17,6 @@ public class ItemDB : NetworkBehaviour
             _instance = this;
     }
 
-    public Item GetItemByID(int id)
-    {
-        return itemList.Find(x => x.itemId == id);
-    }
-
-    public int GetRandomItemID()
-    {
-        int num = Random.Range(0, itemList.Count);
-        return itemList[num].itemId;
-    }
-
     public void UseItem(int itemID, Player user)
     {
         switch (itemID)
