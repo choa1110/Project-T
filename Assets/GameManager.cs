@@ -37,8 +37,19 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public List<Player> playerList = new List<Player>();
 
     [Networked] public float RoundTimer { get; set; }
-    public CardUI cardUI;
+    [Networked] public int CurrentRound { get; set; }
     bool _isCardUIOpened = false;
+
+    [Header("Item Box Spawner")]
+    public NetworkPrefabRef itemBoxPrefab;
+    public float boxSpawnInterval = 8f;
+    private float _boxSpawnTimer;
+
+    [Header("Item UI")]
+    public ItemSlot[] itemSlots;
+
+    [Header("Opponent UI")]
+    public OpponentData[] opponentSlots;
 
     [SerializeField] InputActionAsset inputActions;
 
@@ -88,10 +99,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
             _isCardUIOpened = false;
+
+            CurrentRound = 1;
         }
     }
-
-    [Networked] public int CurrentRound { get; set; } = 1 ;
 
     public override void FixedUpdateNetwork()
     {
@@ -103,24 +114,31 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 RoundTimer = 0;
                 _isCardUIOpened = true;
-                
-                //RPC_ShowCardUI(CurrentRound); 
+                BuffManager.Instance.StartBuffSelectionPhase(CurrentRound);
+            }
+        }
+        if (Object.HasStateAuthority)
+        {
+            _boxSpawnTimer -= Runner.DeltaTime;
+
+            if (_boxSpawnTimer <= 0)
+            {
+                _boxSpawnTimer = boxSpawnInterval;
+                SpawnRandomItemBox();
             }
         }
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_ShowCardUI(int rank)
+    private void SpawnRandomItemBox()
     {
-        if(cardUI != null)
-        {
-            cardUI.OpenCardSelection(rank);
-            Debug.Log("카드 선택 창 열림");
-        }
-        else
-        {
-            Debug.LogError("GameManager에 CardUI가 연결되어 있지 않습니다!");
-        }
+        float randomX = UnityEngine.Random.Range(-25f, 25f);
+        float randomZ = UnityEngine.Random.Range(-25f, 25f);
+        
+        Vector3 spawnPos = new Vector3(randomX, 1f, randomZ);
+
+        Runner.Spawn(itemBoxPrefab, spawnPos, Quaternion.identity);
+        
+        Debug.Log($"[서버] 아이템 상자 생성됨! 위치: {spawnPos}");
     }
 
     public void SetMainPlayer(Player player)
@@ -286,6 +304,33 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public void OnDisableKeyInput()
     {
         inputActions.Disable();
+    }
+
+    void Update()
+    {
+        UpdateOpponentNames();
+    }
+
+    void UpdateOpponentNames()
+    {
+        if (opponentSlots == null || opponentSlots.Length == 0) return;
+        if (RoomPlayer.Players == null) return;
+
+        // Get all other players
+        var others = RoomPlayer.Players.FindAll(p => !p.Object.HasInputAuthority);
+
+        for (int i = 0; i < opponentSlots.Length; i++)
+        {
+            if (i < others.Count)
+            {
+                opponentSlots[i].gameObject.SetActive(true);
+                opponentSlots[i].SetOpponentId(others[i].NickName);
+            }
+            else
+            {
+                opponentSlots[i].gameObject.SetActive(false);
+            }
+        }
     }
 
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)

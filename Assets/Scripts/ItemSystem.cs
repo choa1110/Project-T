@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
+using Fusion;
 
-public class ItemSystem : MonoBehaviour
+public class ItemSystem : NetworkBehaviour
 {
     Item[] itemList = new Item[2];
     
@@ -13,32 +16,63 @@ public class ItemSystem : MonoBehaviour
             slotList.Add(HUDManager.Instance.itemSlots[i]);
     }
 
-    public bool SetItem(Item item)
+    public bool GiveItem(int itemId)
     {
-        bool isRoom = false;
+        if(!Object.HasStateAuthority) return false;
 
-        for (int i = 0; i < 2; i++)
+        for(int i = 0; i < 2 ; i++)
         {
-            if (itemList[i] == null)
+            if(NetworkedItems[i] == -1)
             {
-                itemList[i] = item;
-                slotList[i].InputSlot(item.itemIcon);
-                isRoom = true;
-
-                break;
+                NetworkedItems.Set(i, itemId);
+                return true;
             }
         }
-
-        return isRoom;
+        return false;
     }
 
-    public void UseItem(Player user, int num)
+    public override void Render()
     {
-        if (itemList[num] == null) return;
+        if (Object.HasInputAuthority)
+        {
+            for(int i = 0; i<2; i++)
+            {
+                if(_prevItems[i] != NetworkedItems[i])
+                {
+                    _prevItems[i] = NetworkedItems[i];
 
-        ItemDB.Instance.UseItem(itemList[num].itemId, user);
-        itemList[num] = null;
+                    if(NetworkedItems[i] != -1)
+                    {
+                        Item itemData = ItemDB.Instance.GetItemByID(NetworkedItems[i]);
+                        slotList[i].InputSlot(itemData.itemIcon);
+                    }
+                    else
+                    {
+                        slotList[i].EmptySlot();
+                    }
+                }
+            }
+        }
+    }
 
-        slotList[num].EmptySlot();
+    public void RequestUseItem(int slotNum)
+    {
+        if(Object.HasInputAuthority && NetworkedItems[slotNum] != -1)
+        {
+            RPC_UseItem(slotNum);
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RPC_UseItem(int slotNum)
+    {
+        int itemId = NetworkedItems[slotNum];
+
+        if (itemId != -1)
+        {
+            ItemDB.Instance.UseItem(itemId, GetComponent<Player>());
+            
+            NetworkedItems.Set(slotNum, -1);
+        }
     }
 }

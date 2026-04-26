@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 8179739894742072705}
   - component: {fileID: 6846640950882887324}
   - component: {fileID: 8628251030496797281}
+  - component: {fileID: -2262010544258259776}
+  - component: {fileID: 8395643633668080241}
   m_Layer: 0
   m_Name: RandomBox
   m_TagString: Untagged
