@@ -34,6 +34,30 @@ public class Player : NetworkBehaviour
 
     public List<GameObject> modelList;
 
+    [Networked, OnChangedRender(nameof(OnModelNumChanged))] public int ModelNum { get; set; }
+
+    public void OnModelNumChanged()
+    {
+        for (int i = 0; i < modelList.Count; i++)
+        {
+            modelList[i].SetActive(i == ModelNum);
+        }
+
+        _info = modelList[ModelNum].GetComponent<CharacterInfo>();
+        if (_info != null)
+        {
+            _anim.avatar = _info.avatar;
+
+            // Update attack areas owner if necessary, although they might already be set
+            foreach (AttackArea area in _info.fists)
+            {
+                area.SetOwner(gameObject);
+                if (!attackAreas.Contains(area))
+                    attackAreas.Add(area);
+            }
+        }
+    }
+
     public UnityEvent onHit;
     public UnityEvent<float> onDamage;
 
@@ -113,21 +137,19 @@ public class Player : NetworkBehaviour
 
         _buffSystem = GetComponent<BuffSystem>();
 
-        modelList[_modelNum].SetActive(true);
-        _info = modelList[_modelNum].GetComponent<CharacterInfo>();
-        _anim.avatar = _info.avatar;
-
-        foreach (AttackArea area in _info.fists)
-        {
-            attackAreas.Add(area);
-            area.SetOwner(gameObject);
-        }
-
         stats.InitalizeStats();
     }
 
     public override void Spawned()
     {
+        if (Object.HasStateAuthority)
+        {
+            ModelNum = UnityEngine.Random.Range(0, modelList.Count);
+        }
+
+        // Ensure visuals are updated immediately upon spawning/syncing
+        OnModelNumChanged();
+
         if (Object.HasInputAuthority)
         {
             string myName = DataManager.Instance.UserNickName;
