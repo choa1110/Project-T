@@ -1,13 +1,15 @@
 using System.Collections.Generic;
-using UnityEngine;
+using Fusion;
 
-public class ItemSystem : MonoBehaviour
+public class ItemSystem : NetworkBehaviour
 {
-    Item[] itemList = new Item[2];
-    
+    [Networked, Capacity(2)]
+    NetworkArray<int> ItemIDs => default;
+
+    Item[] _localItems = new Item[2];
     List<ItemSlot> slotList = new List<ItemSlot>();
 
-    public void LinkHUD()
+    public void HUDLink()
     {
         for (int i = 0; i < 2; i++)
             slotList.Add(HUDManager.Instance.itemSlots[i]);
@@ -15,30 +17,55 @@ public class ItemSystem : MonoBehaviour
 
     public bool SetItem(Item item)
     {
-        bool isRoom = false;
+        if (!Object.HasStateAuthority) return false;
 
         for (int i = 0; i < 2; i++)
         {
-            if (itemList[i] == null)
+            if (ItemIDs[i] == 0)
             {
-                itemList[i] = item;
-                slotList[i].InputSlot(item.itemIcon);
-                isRoom = true;
+                ItemIDs.Set(i, item.itemId);
 
-                break;
+                return true;
             }
         }
 
-        return isRoom;
+        return false;
     }
 
-    public void UseItem(Player user, int num)
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void Rpc_RequestUseItem(int num, Player user)
     {
-        if (itemList[num] == null) return;
+        if (ItemIDs[num] == 0) return;
 
-        ItemDB.Instance.UseItem(itemList[num].itemId, user);
-        itemList[num] = null;
+        ItemDB.Instance.UseItem(ItemIDs[num], user);
+        ItemIDs.Set(num, 0);
+    }
 
-        slotList[num].EmptySlot();
+    public override void Render()
+    {
+        if (!Object.HasInputAuthority) return;
+
+        for (int i = 0; i < 2; i++)
+        {
+            int currentId = ItemIDs[i];
+
+            if (_localItems[i] == null || _localItems[i].itemId != currentId)
+                UpdateSlotUI(i, currentId);
+        }
+    }
+
+    void UpdateSlotUI(int index, int id)
+    {
+        if (id == 0)
+        {
+            _localItems[index] = null;
+            slotList[index].EmptySlot();
+        }
+        else
+        {
+            Item newItem = ItemDB.Instance.GetItem(id - 1);
+            _localItems[index] = newItem;
+            slotList[index].InputSlot(newItem.itemIcon);
+        }
     }
 }

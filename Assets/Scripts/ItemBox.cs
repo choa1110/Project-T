@@ -5,39 +5,29 @@ public class ItemBox : NetworkBehaviour
 {
     NetworkObject _networkObj;
 
-    [SerializeField] int from = 0;
-    [SerializeField] int to = 0;
+    [SerializeField] int from = 0, to = 0;
 
     void Awake()
     {
         _networkObj = GetComponent<NetworkObject>();
     }
 
-    void OnTriggerEnter(Collider other)
+    public void SetItemRange(int start, int end)
     {
-        Player target = other.GetComponent<Player>();
-
-        if (target == null) return;
-
-        Rpc_RequestSetItemToServer(target);
-
-        //if (Object.HasStateAuthority)
-        //{
-        //    Debug.Log("Helllooooo");
-        //    ItemSystem sys = other.GetComponent<ItemSystem>();
-        //
-        //    if (sys != null)
-        //    {
-        //        if (sys.SetItem(ItemDB.Instance.GetRandomItem(from, to)))
-        //            Runner.Despawn(_networkObj);
-        //    }
-        //}
+        from = start; to = end;
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void Rpc_RequestSetItemToServer(Player target)
+    void OnTriggerEnter(Collider other)
     {
-        if (target.item.SetItem(ItemDB.Instance.GetRandomItem(from, to)))
-            Runner.Despawn(_networkObj);
+        if (!Object.HasStateAuthority)
+            return;
+
+        Player target = other.GetComponent<Player>();
+
+        if (target != null)
+        {
+            if (target.item.SetItem(ItemDB.Instance.GetItem(Random.Range(from, to))))
+                Runner.Despawn(_networkObj);
+        }
     }
 }

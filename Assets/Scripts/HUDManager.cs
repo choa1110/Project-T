@@ -24,7 +24,31 @@ public class HUDManager : MonoBehaviour
             _instance = this;
     }
 
-    public void LinkOpponent(Player opponent, int num)
+    public void SetOpponentUI(Player mainChar)
+    {
+        List<Player> list = GameManager.Instance.playerList;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] == mainChar)
+                continue;
+
+            //if (mainChar.team == list[i].team)
+            //{
+            //    print("Same Team");
+            //    LinkOpponent(list[i], 0);
+            //    LinkOpponent(list[0], i);
+            //}
+            //else
+            //{
+            //    LinkOpponent(list[i], i);
+            //}
+
+            LinkOpponent(list[i], i);
+        }
+    }
+
+    void LinkOpponent(Player opponent, int num)
     {
         opponentDatas[num].gameObject.SetActive(true);
         opponentDatas[num].SetOpponentId("Player 2");

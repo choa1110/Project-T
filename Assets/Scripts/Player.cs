@@ -95,7 +95,6 @@ public class Player : NetworkBehaviour
         _anim = GetComponent<Animator>();
 
         _buffSystem = GetComponent<BuffSystem>();
-        item = GetComponent<ItemSystem>();
 
         modelList[_modelNum].SetActive(true);
         _info = modelList[_modelNum].GetComponent<CharacterInfo>();
@@ -123,21 +122,21 @@ public class Player : NetworkBehaviour
         SetupPlayer();
     }
 
-    private void SetupPlayer()
+    void SetupPlayer()
     {
+        GameManager.Instance.RegisterPlayer(this);
+
         if (Object.HasInputAuthority)
         {
             POV = FollowCamera.Instance;
             POV.target = this;
 
-            GameManager.Instance.SetMainPlayer(this);
-
             onDamage.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
-            item.LinkHUD();
+            item.HUDLink();
             _skill = HUDManager.Instance.skillInterface;
+
+            GameManager.Instance.WaitForRegister(this);
         }
-        else
-            GameManager.Instance.RegisterPlayer(this);
 
         RoundStart();
     }
@@ -204,13 +203,13 @@ public class Player : NetworkBehaviour
     {
         Buff selectedBuff = null;
 
-        switch(GameManager.Instance.CurrentRound){
+        switch (GameManager.Instance.CurrentRound){
             case 1: selectedBuff = BuffDB.Instance.GetRank1Buff(buffIndex); break;
             case 2: selectedBuff = BuffDB.Instance.GetRank2Buff(buffIndex); break;
             case 3: selectedBuff = BuffDB.Instance.GetRank3Buff(buffIndex); break;
         }
 
-        if(selectedBuff != null)
+        if (selectedBuff != null)
         {
             _buffSystem.ApplyBuff(selectedBuff);
             Debug.Log($"서버: {Object.InputAuthority} 플레이어에게 {selectedBuff.name} 버프 적용 완료");
@@ -338,10 +337,10 @@ public class Player : NetworkBehaviour
             return;
 
         if (data.buttons.IsSet(InputButton.UseItem1))
-            item.UseItem(this, 0);
+            item.Rpc_RequestUseItem(0, this);
 
         if (data.buttons.IsSet(InputButton.UseItem2))
-            item.UseItem(this, 1);
+            item.Rpc_RequestUseItem(1, this);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
