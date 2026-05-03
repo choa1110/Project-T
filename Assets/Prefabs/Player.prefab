@@ -323,6 +323,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 931208147735945396}
+  - {fileID: 4328989693205893132}
   - {fileID: 5105540053892191170}
   - {fileID: -1394671117463737779}
   - {fileID: 2615523800257740494}
@@ -410,6 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c66976353be16234ebedfc4d1f02c1ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSystem
+  _ItemIDs: 
 --- !u!114 &5105540053892191170
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -422,6 +424,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37844be9eb5164e45921dde4fdea6f2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
+  item: {fileID: 4328989693205893132}
   POV: {fileID: 0}
   paramlist: {fileID: 11400000, guid: c70fbc6d6d6193745ac6e0ee9fd8aee6, type: 2}
   _modelNum: 0

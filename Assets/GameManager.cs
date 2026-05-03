@@ -29,11 +29,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     static GameManager _instance;
     public static GameManager Instance { get => _instance; }
 
-    private NetworkRunner _runner;
+    private NetworkRunner _netRunner;
 
     public NetworkPrefabRef playerPrefab;
 
-    public Player mainPlayer;
     public List<Player> playerList = new List<Player>();
 
     [Networked] public float RoundTimer { get; set; }
@@ -56,11 +55,11 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (_instance == null)
             _instance = this;
 
-        _runner = FindFirstObjectByType<NetworkRunner>();
+        _netRunner = FindFirstObjectByType<NetworkRunner>();
 
-        if (_runner != null)
+        if (_netRunner != null)
         {
-            _runner.AddCallbacks(this);
+            _netRunner.AddCallbacks(this);
             Debug.Log("<color=green>GameManager: Runner 찾음! 콜백 등록 완료!</color>");
         }
         else
@@ -123,26 +122,21 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    public void SetMainPlayer(Player player)
-    {
-        mainPlayer = player;
-    }
-
     public void RegisterPlayer(Player reg)
     {
         playerList.Add(reg);
     }
 
-    public Player GetClosesetOpponent()
+    public Player GetClosesetOpponent(Player user)
     {
         Player target = null;
         float minDis = 987654321f;
 
         foreach (Player reg in playerList)
         {
-            if (true) //reg.team != mainPlayer.team
+            if (user != reg) //reg.team != mainPlayer.team
             {
-                float dis = Vector3.Distance(mainPlayer.transform.position, reg.transform.position);
+                float dis = Vector3.Distance(user.transform.position, reg.transform.position);
 
                 if (dis < minDis)
                 {
@@ -153,7 +147,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
 
         if (target == null)
-            return mainPlayer;
+            return user;
         else
             return target;
     }
@@ -167,31 +161,19 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 SpawnGameCharacter(runner, player);
             }
         }
-
-        gameObject.SetActive(true);
-        StartCoroutine(WaitForRegister(runner));
     }
 
-    IEnumerator WaitForRegister(NetworkRunner runner)
+    public void WaitForRegister(Player mainChar)
     {
-        while (mainPlayer == null || runner.ActivePlayers.Count() != playerList.Count + 1)
+        StartCoroutine(OnRegisterDone(mainChar));
+    }
+
+    IEnumerator OnRegisterDone(Player mainChar)
+    {
+        while (Runner.ActivePlayers.Count() > playerList.Count)
             yield return null;
 
-        SetOpponentUI();
-    }
-
-    void SetOpponentUI()
-    {
-        for (int i = 0; i < playerList.Count; i++)
-        {
-            if (mainPlayer.team == playerList[i].team)
-            {
-                HUDManager.Instance.LinkOpponent(playerList[i], 0);
-                HUDManager.Instance.LinkOpponent(playerList[0], i);
-            }
-            else
-                HUDManager.Instance.LinkOpponent(playerList[i], i);
-        }
+        HUDManager.Instance.SetOpponentUI(mainChar);
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)

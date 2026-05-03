@@ -32,9 +32,10 @@ public class ItemDB : NetworkBehaviour
         }
     }
 
-    public Item GetRandomItem(int from, int to)
+    public Item GetItem(int num)
     {
-        int num = Random.Range(from, to);
+        if (num < 0 || num > itemList.Count - 1)
+            return null;
 
         return itemList[num];
     }
@@ -45,12 +46,12 @@ public class ItemDB : NetworkBehaviour
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosesetOpponent());
+        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosesetOpponent(user));
     }
 
     void OnUse_MagnetPull(Player user)
     {
-        Player target = GameManager.Instance.GetClosesetOpponent();
+        Player target = GameManager.Instance.GetClosesetOpponent(user);
 
         Rpc_RequestMagnetToServer(user, target);
     }

@@ -104,7 +104,7 @@ GameObject:
   - component: {fileID: 5434279123391960021}
   - component: {fileID: 5776618384303607057}
   - component: {fileID: 633942945094741405}
-  - component: {fileID: 6616349578924760794}
+  - component: {fileID: -5077888936968701556}
   m_Layer: 0
   m_Name: Missile
   m_TagString: Untagged
@@ -154,7 +154,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!135 &2698207178301814132
@@ -197,7 +197,7 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 5776618384303607057}
   - {fileID: 633942945094741405}
-  - {fileID: 6616349578924760794}
+  - {fileID: -5077888936968701556}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &5776618384303607057
 MonoBehaviour:
@@ -214,7 +214,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 8
-  areaRadius: 0.5
+  areaRadius: 0.55
 --- !u!114 &633942945094741405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,8 +230,8 @@ MonoBehaviour:
   _NetworkedVelocity: {x: 0, y: 0, z: 0}
   param: {fileID: 11400000, guid: 2e754eb288db2204dbc87429de429d25, type: 2}
   speed: 10
-  turnSpeed: 90
---- !u!114 &6616349578924760794
+  turnSpeed: 100
+--- !u!114 &-5077888936968701556
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -240,14 +240,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 3668800957590035198}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Script: {fileID: 11500000, guid: 0a591d221a634417e9827eb58e17de84, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  m_EditorClassIdentifier: Fusion.Addons.Physics::Fusion.Addons.Physics.NetworkRigidbody3D
   _stateAuthorityChangeErrorCorrectionDelta: 0
   SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
+  SyncParent: 1
+  _interpolationTarget: {fileID: 0}
+  UsePreciseRotation: 0
+  UseRenderSleepThresholds: 1
+  RenderThresholds:
+    UseEnergy: 1
+    Position: 0.01
+    Rotation: 0.01
+    Scale: 0.01
 --- !u!1 &3762244851042077040
 GameObject:
   m_ObjectHideFlags: 0
