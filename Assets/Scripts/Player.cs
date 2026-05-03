@@ -75,6 +75,23 @@ public class Player : NetworkBehaviour
     [Networked] public float CurrentCoolDown { get; set; }
     [Networked] public float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
 
+    [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
+
+    public OpponentData linkedOpponentData;
+
+    void OnNickNameChanged()
+    {
+        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
+        {
+            HUDManager.Instance.charName.text = NickName.ToString();
+        }
+
+        if (linkedOpponentData != null)
+        {
+            linkedOpponentData.SetOpponentId(NickName.ToString());
+        }
+    }
+
     [SerializeField] private LayerMask _groundLayer;
 
     [Networked] public int ComboStep { get; set; }
@@ -112,7 +129,22 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
+        if (Object.HasInputAuthority)
+        {
+            string myName = DataManager.Instance.UserNickName;
+            if (string.IsNullOrEmpty(myName))
+            {
+                myName = DataManager.Instance.LoadNickName();
+            }
+            RPC_SetNickName(myName);
+        }
         StartCoroutine(WaitForSceneLoad());
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RPC_SetNickName(string name)
+    {
+        NickName = name;
     }
 
     IEnumerator WaitForSceneLoad()
@@ -132,6 +164,7 @@ public class Player : NetworkBehaviour
 
             GameManager.Instance.SetMainPlayer(this);
 
+            HUDManager.Instance.charName.text = NickName.ToString();
             onDamage.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
             item.LinkHUD();
             _skill = HUDManager.Instance.skillInterface;

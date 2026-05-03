@@ -30,11 +30,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-<<<<<<< HEAD
       "version": "1.8.28",
-=======
-      "version": "1.8.27",
->>>>>>> DongHoon/Network
       "depth": 2,
       "source": "registry",
       "dependencies": {

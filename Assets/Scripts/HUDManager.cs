@@ -27,7 +27,8 @@ public class HUDManager : MonoBehaviour
     public void LinkOpponent(Player opponent, int num)
     {
         opponentDatas[num].gameObject.SetActive(true);
-        opponentDatas[num].SetOpponentId("Player 2");
+        opponent.linkedOpponentData = opponentDatas[num];
+        opponentDatas[num].SetOpponentId(opponent.NickName.ToString());
         opponentDatas[num].SetTeamColor(opponent.team);
         opponent.onDamage.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
     }
