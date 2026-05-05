@@ -1,87 +1,71 @@
 using System.Collections.Generic;
-using UnityEngine;
-using System.Collections.Generic;
-using UnityEngine;
 using Fusion;
 
 public class ItemSystem : NetworkBehaviour
 {
     [Networked, Capacity(2)]
-    public NetworkArray<int> NetworkedItems { get; }
+    NetworkArray<int> ItemIDs => default;
 
-    [SerializeField] List<ItemSlot> slotList;
-    private int[] _prevItems = new int[] { -1, -1 };
+    Item[] _localItems = new Item[2];
+    List<ItemSlot> slotList = new List<ItemSlot>();
 
-    public override void Spawned()
+    public void HUDLink()
     {
-        if (Object.HasStateAuthority)
-        {
-            NetworkedItems.Set(0, -1);
-            NetworkedItems.Set(1, -1);
-        }
-        if (Object.HasInputAuthority)
-        {
-            slotList = new List<ItemSlot>(GameManager.Instance.itemSlots);
-        }
+        for (int i = 0; i < 2; i++)
+            slotList.Add(HUDManager.Instance.itemSlots[i]);
     }
 
-    public bool GiveItem(int itemId)
+    public bool SetItem(Item item)
     {
-        if(!Object.HasStateAuthority) return false;
+        if (!Object.HasStateAuthority) return false;
 
-        for(int i = 0; i < 2 ; i++)
+        for (int i = 0; i < 2; i++)
         {
-            if(NetworkedItems[i] == -1)
+            if (ItemIDs[i] == 0)
             {
-                NetworkedItems.Set(i, itemId);
+                ItemIDs.Set(i, item.itemId);
+
                 return true;
             }
         }
+
         return false;
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void Rpc_RequestUseItem(int num, Player user)
+    {
+        if (ItemIDs[num] == 0) return;
+
+        ItemDB.Instance.UseItem(ItemIDs[num], user);
+        ItemIDs.Set(num, 0);
     }
 
     public override void Render()
     {
-        if (Object.HasInputAuthority)
-        {
-            for(int i = 0; i<2; i++)
-            {
-                if(_prevItems[i] != NetworkedItems[i])
-                {
-                    _prevItems[i] = NetworkedItems[i];
+        if (!Object.HasInputAuthority) return;
 
-                    if(NetworkedItems[i] != -1)
-                    {
-                        Item itemData = ItemDB.Instance.GetItemByID(NetworkedItems[i]);
-                        slotList[i].InputSlot(itemData.itemIcon);
-                    }
-                    else
-                    {
-                        slotList[i].EmptySlot();
-                    }
-                }
-            }
+        for (int i = 0; i < 2; i++)
+        {
+            int currentId = ItemIDs[i];
+
+            if (_localItems[i] == null || _localItems[i].itemId != currentId)
+                UpdateSlotUI(i, currentId);
         }
     }
 
-    public void RequestUseItem(int slotNum)
+    void UpdateSlotUI(int index, int id)
     {
-        if(Object.HasInputAuthority && NetworkedItems[slotNum] != -1)
+        if (id == 0)
         {
-            RPC_UseItem(slotNum);
+            _localItems[index] = null;
+            slotList[index].EmptySlot();
         }
-    }
-
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_UseItem(int slotNum)
-    {
-        int itemId = NetworkedItems[slotNum];
-
-        if (itemId != -1)
+        else
         {
-            ItemDB.Instance.UseItem(itemId, GetComponent<Player>());
-            
-            NetworkedItems.Set(slotNum, -1);
+            Item newItem = ItemDB.Instance.GetItem(id - 1);
+            _localItems[index] = newItem;
+            slotList[index].InputSlot(newItem.itemIcon);
         }
     }
 }

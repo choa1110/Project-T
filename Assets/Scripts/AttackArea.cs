@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 
-public class AttackArea : MonoBehaviour
+public class AttackArea : NetworkBehaviour
 {
-    Player _ownerPlayer;
+    GameObject _owner;
+    Player _playerControl;
     AttackParameter _param;
 
     [SerializeField] LayerMask _attackLayer;
@@ -25,9 +26,11 @@ public class AttackArea : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, areaRadius);
     }
 
-    public void SetOwner(Player player)
+    public void SetOwner(GameObject player)
     {
-        _ownerPlayer = player;
+        _owner = player;
+
+        _playerControl = _owner.GetComponent<Player>();
     }
 
     public void SetAttackStatus(AttackParameter input, float damage, float knock)
@@ -39,9 +42,13 @@ public class AttackArea : MonoBehaviour
 
     void FixedUpdate()
     {
-        if(_ownerPlayer == null) return;
-        if (!_ownerPlayer.Object || !_ownerPlayer.Object.HasInputAuthority) return;
-        if (!_inAttack) return;
+        if(_owner == null || !_inAttack) return;
+
+        if (_playerControl != null)
+        {
+            if (!_playerControl.Object || !_playerControl.Object.HasInputAuthority)
+                return;
+        }
 
         _curPoint = transform.position;
 
@@ -85,7 +92,7 @@ public class AttackArea : MonoBehaviour
 
     void CheckCollides(Player target)
     {
-        if (target && target != _ownerPlayer && !_hit_objs.Contains(target))
+        if (target && target != _playerControl && !_hit_objs.Contains(target))
         {
             // 팀 킬 방지 로직인데 2vs2 만들 예정이므로 주석처리
             // if(_ownerPlayer.team == target.team)
@@ -93,20 +100,41 @@ public class AttackArea : MonoBehaviour
 
             _hit_objs.Add(target);
 
-            Vector3 tmpz = _ownerPlayer.transform.forward * _param.KnockbackDir.z;
-            Vector3 tmpx = _ownerPlayer.transform.right * _param.KnockbackDir.x;
-            Vector3 tmpy = _ownerPlayer.transform.up * _param.KnockbackDir.y;
+            Vector3 hitPos = _owner.transform.position;
+            hitPos.y += 1f;
 
-            Vector3 finalKnockDir = tmpz + tmpx + tmpy;
+            Vector3 tmpz = _owner.transform.forward * _param.KnockbackDir.z;
+            Vector3 tmpx = _owner.transform.right * _param.KnockbackDir.x;
+            Vector3 tmpy = _owner.transform.up * _param.KnockbackDir.y;
 
-            _ownerPlayer.Rpc_RequestHitToServer(
-                target.Object,
-                _ownerPlayer.transform.position,
-                _damPow,
-                finalKnockDir,
-                _knockPow,
-                _param.CameraShake
-            );
+            Vector3 knockDir = tmpz + tmpx + tmpy;
+
+            if (Object.HasInputAuthority)
+            {
+                Rpc_RequestHitToServer(
+                    target.Object,
+                    hitPos,
+                    _damPow,
+                    knockDir,
+                    _knockPow,
+                    _param.CameraShake
+                );
+            }
+            else if (Object.HasStateAuthority)
+            {
+                target.ApplyHit(hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
+            }
         }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    {
+        if (targetObject == null) return;
+
+        Player targetPlayer = targetObject.GetComponent<Player>();
+
+        if (targetPlayer != null)
+            targetPlayer.ApplyHit(hitPos, damage, knockDir, knockPow, camShake);
     }
 }

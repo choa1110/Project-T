@@ -11,11 +11,8 @@ public class ChatSceneUI : MonoBehaviour
     public TextMeshProUGUI roomNameText;
     
     [Header("플레이어 슬롯 (4개 연결)")]
-    // ★ 텍스트 하나 대신, 슬롯 4개를 배열로 관리합니다.
-    // 슬롯 1~4번의 'NameText'들을 순서대로 넣어주세요.
     public TextMeshProUGUI[] nameSlots;  
     
-    // 슬롯 1~4번의 'StateText'들을 순서대로 넣어주세요.
     public TextMeshProUGUI[] stateSlots; 
 
     [Header("버튼 연결")]
@@ -41,20 +38,19 @@ public class ChatSceneUI : MonoBehaviour
     {
         if (_runner == null) return;
 
-        UpdatePlayerSlots(); // ★ 슬롯 갱신 함수로 변경
+        UpdatePlayerSlots();
         UpdateButtons();    
     }
 
-    // ★ [핵심] 4개의 슬롯을 현재 인원수에 맞춰서 갱신
     void UpdatePlayerSlots()
     {
-        // 1. 현재 접속한 플레이어 리스트 가져오기
+        // 현재 접속한 플레이어 리스트 가져오기
         var players = RoomPlayer.Players; // (RoomPlayer.cs의 static 리스트)
 
-        // 2. 슬롯 4개를 순회하면서 채워넣기
+        // 슬롯 4개를 순회하면서 채워넣기
         for (int i = 0; i < 4; i++)
         {
-            // 배열 범위 체크 (혹시 연결 안 했을까봐)
+            // 배열 범위 체크
             if (i >= nameSlots.Length || i >= stateSlots.Length) break;
 
             if (i < players.Count) 
@@ -70,7 +66,7 @@ public class ChatSceneUI : MonoBehaviour
                 else 
                     stateSlots[i].text = "<color=red>WAIT</color>";
                 
-                // (선택) 배경 이미지가 있다면 활성화
+                // 배경 이미지가 있다면 활성화
                 if(nameSlots[i].text != null)
                     nameSlots[i].transform.parent.gameObject.SetActive(true);
             }

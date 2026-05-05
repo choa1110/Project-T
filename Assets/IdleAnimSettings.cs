@@ -12,6 +12,7 @@ public class IdleAnimSettings : StateMachineBehaviour
 
         _player.EnableMovement();
         _player.ResetCombo();
+        _player.SetVulnerable();
         _player.comboRegister = false;
     }
 

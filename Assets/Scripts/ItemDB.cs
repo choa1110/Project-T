@@ -2,31 +2,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 
-public class ItemDB : MonoBehaviour
+public class ItemDB : NetworkBehaviour
 {
     static ItemDB _instance;
     public static ItemDB Instance { get => _instance; }
 
     [SerializeField] List<Item> itemList;
 
-    
-    public NetworkPrefabRef missilePrefab;
+    public NetworkObject missile;
 
     void Awake()
     {
         if (_instance == null)
             _instance = this;
-    }
-
-    public Item GetItemByID(int id)
-    {
-        return itemList.Find(x => x.itemId == id);
-    }
-
-    public int GetRandomItemID()
-    {
-        int num = Random.Range(0, itemList.Count);
-        return itemList[num].itemId;
     }
 
     public void UseItem(int itemID, Player user)
@@ -44,9 +32,10 @@ public class ItemDB : MonoBehaviour
         }
     }
 
-    public Item SetRandomItem()
+    public Item GetItem(int num)
     {
-        int num = Random.Range(0, itemList.Count);
+        if (num < 0 || num > itemList.Count - 1)
+            return null;
 
         return itemList[num];
     }
@@ -57,18 +46,30 @@ public class ItemDB : MonoBehaviour
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        NetworkObject go = user.Runner.Spawn(missilePrefab, shootPosition, Quaternion.LookRotation(user.transform.forward));
-
-        HomingMissile hm = go.GetComponent<HomingMissile>();
-        if (hm != null) 
-        {
-            hm.SetTarget(user.GetClosestOpponent());
-        }
+        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosesetOpponent(user));
     }
 
     void OnUse_MagnetPull(Player user)
     {
-        Player target = user.GetClosestOpponent();
-        target.PulledToPoint(user);
+        Player target = GameManager.Instance.GetClosesetOpponent(user);
+
+        Rpc_RequestMagnetToServer(user, target);
+    }
+
+    // Rpc Request
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    void Rpc_RequestMissileToServer(Vector3 position, Quaternion rotation, Player target)
+    {
+        Runner.Spawn(missile, position, rotation, Runner.LocalPlayer, (runner, obj) => {
+            if (obj.TryGetBehaviour<HomingMissile>(out var missile))
+                missile.SetTarget(target);
+        });
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    void Rpc_RequestMagnetToServer(Player user, Player target)
+    {
+        if (target != null)
+            target.PulledToPoint(user);
     }
 }
