@@ -6,93 +6,100 @@ public class BuffManager : NetworkBehaviour
 {
     public static BuffManager Instance;
 
-    void Awake()
-    {
-        Instance = this;
-    }
+    [Networked] private int  _done  { get; set; }
+    [Networked] private int  _total { get; set; }
+    [Networked] public  bool IsSelectionPhase { get; set; }
 
-    // [Server] 라운드 종료 후 외부(GameManager 등)에서 호출
+    void Awake() { Instance = this; }
+
     public void StartBuffSelectionPhase(int rank)
     {
         if (!Object.HasStateAuthority) return;
-
+        _done = 0; _total = 0; IsSelectionPhase = true;
         Debug.Log($"[BuffManager] 버프 선택 페이즈 시작 (rank {rank})");
-
-        // 서버가 각 플레이어에게 서로 다른 랜덤 버프를 전송
-        foreach (var playerRef in Runner.ActivePlayers)
+        foreach (var pr in Runner.ActivePlayers)
         {
-            int[] options = GetRandomBuffIDs(3, rank);
-            RPC_ShowSelectionUI(playerRef, options);
+            _total++;
+            RPC_OpenUI(pr, BuildOptions(3, rank));
         }
+        if (_total == 0) PhaseEnd(true);
     }
 
-    // [RPC] Server -> Client (UI 표시)
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_ShowSelectionUI([RpcTarget] PlayerRef target, int[] options)
+    private void RPC_OpenUI([RpcTarget] PlayerRef target, int[] opts)
     {
-        if (Runner.LocalPlayer == target)
-        {
-            BuffSelectionUI.Instance.OpenSelection(options);
-        }
+        if (Runner.LocalPlayer != target) return;
+        GameManager.Instance?.OnDisableKeyInput();
+        if (opts == null || opts.Length == 0) { SendSelectionToServer(-1); return; }
+        BuffSelectionUI.Instance?.OpenSelection(opts);
     }
 
-    // [Client] UI에서 호출 -> 서버로 전달
-    public void SendSelectionToServer(int buffID)
-    {
-        RPC_SelectBuff(buffID);
-    }
+    public void SendSelectionToServer(int id) { RPC_Submit(id); }
 
-    // [RPC] Client -> Server (선택 완료, 버프적용)
     [Rpc(RpcSources.InputAuthority | RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_SelectBuff(int buffID, RpcInfo info = default)
+    private void RPC_Submit(int id, RpcInfo info = default)
     {
-        Player senderPlayer = FindPlayerByRef(info.Source);
-
-        if (senderPlayer != null)
+        if (!IsSelectionPhase) return;
+        if (id >= 0)
         {
-            Buff buff = BuffDatabase.Instance.GetBuffByID(buffID);
-            if (buff == null) return;
-
-            Debug.Log($"[BuffManager] {info.Source}에서 {buff.buffName} 선택");
-            senderPlayer.GetComponent<BuffSystem>().ApplyBuff(buff);
+            Player pl = Lookup(info.Source);
+            if (pl != null)
+            {
+                Buff b = BuffDatabase.Instance?.GetBuffByID(id);
+                if (b != null) { Debug.Log($"[BuffManager] {info.Source}: {b.buffName}"); pl.GetComponent<BuffSystem>().ApplyBuff(b); }
+                else Debug.LogWarning($"[BuffManager] buffID={id} 없음");
+            }
         }
+        _done++;
+        Debug.Log($"[BuffManager] {_done}/{_total} 완료");
+        if (_done >= _total) PhaseEnd(false);
     }
 
-    // PlayerRef로 Player 오브젝트 찾기
-    private Player FindPlayerByRef(PlayerRef playerRef)
+    private void PhaseEnd(bool immediate)
+    {
+        IsSelectionPhase = false;
+        Debug.Log($"[BuffManager] 페이즈 종료 (immediate={immediate}) -> 다음 라운드");
+        RPC_BroadcastEnd(immediate);
+        GameManager.Instance?.StartNextRound();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_BroadcastEnd(bool wasImmediate)
+    {
+        GameManager.Instance?.OnEnableKeyInput();
+        BuffSelectionUI.Instance?.ForceClose();
+        Debug.Log($"[BuffManager] 클라이언트 정리 (immediate={wasImmediate})");
+    }
+
+    private Player Lookup(PlayerRef pr)
     {
         foreach (var p in FindObjectsOfType<Player>())
-        {
-            if (p.GetComponent<NetworkObject>().InputAuthority == playerRef)
-                return p;
-        }
+            if (p.GetComponent<NetworkObject>().InputAuthority == pr) return p;
         return null;
     }
 
-    // rank에 맞는 버프 중 랜덤으로 count개 ID 뽑기 (중복 없음)
-    private int[] GetRandomBuffIDs(int count, int rank)
+    private int[] BuildOptions(int count, int rank)
     {
-        var allBuffs = BuffDatabase.Instance.allBuffs;
-
-        List<int> validIds = new List<int>();
-        for (int i = 0; i < allBuffs.Count; i++)
+        var db = BuffDatabase.Instance;
+        if (db == null || db.allBuffs == null || db.allBuffs.Count == 0)
         {
-            if (allBuffs[i].rank == rank)
-                validIds.Add(i);
-        }
-
-        if (validIds.Count == 0)
-        {
-            Debug.LogWarning($"[BuffManager] rank {rank} 버프가 BuffDatabase에 없습니다!");
+            Debug.LogWarning("[BuffManager] BuffDatabase 없음!");
             return new int[0];
         }
-
-        HashSet<int> selected = new HashSet<int>();
-        while (selected.Count < count && selected.Count < validIds.Count)
-            selected.Add(validIds[Random.Range(0, validIds.Count)]);
-
-        int[] result = new int[selected.Count];
-        selected.CopyTo(result);
-        return result;
+        var all = db.allBuffs;
+        var valid = new List<int>();
+        for (int i = 0; i < all.Count; i++)
+            if (all[i] != null && all[i].rank == rank) valid.Add(i);
+        if (valid.Count == 0)
+        {
+            Debug.LogWarning($"[BuffManager] rank {rank} 없음 -> 전체에서 선택");
+            for (int i = 0; i < all.Count; i++)
+                if (all[i] != null) valid.Add(i);
+        }
+        if (valid.Count == 0) return new int[0];
+        var sel = new HashSet<int>(); int tries = valid.Count * 10;
+        while (sel.Count < Mathf.Min(count, valid.Count) && tries-- > 0)
+            sel.Add(valid[Random.Range(0, valid.Count)]);
+        int[] res = new int[sel.Count]; sel.CopyTo(res); return res;
     }
 }

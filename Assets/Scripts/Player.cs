@@ -175,25 +175,24 @@ public class Player : NetworkBehaviour
     {
         onHit.Invoke();
     }
-
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RPC_SelectCard(int buffIndex)
     {
+        if (BuffDB.Instance == null) { Debug.LogWarning("[Player] BuffDB 없음"); return; }
+        int round = GameManager.Instance != null ? GameManager.Instance.CurrentRound : 1;
+        int safe = Mathf.Clamp(buffIndex, 0, 2);
         Buff selectedBuff = null;
-
-        switch(GameManager.Instance.CurrentRound){
-            case 1: selectedBuff = BuffDB.Instance.GetRank1Buff(buffIndex); break;
-            case 2: selectedBuff = BuffDB.Instance.GetRank2Buff(buffIndex); break;
-            case 3: selectedBuff = BuffDB.Instance.GetRank3Buff(buffIndex); break;
-        }
-
-        if(selectedBuff != null)
+        if (round == 1)      selectedBuff = BuffDB.Instance.GetRank1Buff(safe);
+        else if (round == 2) selectedBuff = BuffDB.Instance.GetRank2Buff(safe);
+        else if (round == 3) selectedBuff = BuffDB.Instance.GetRank3Buff(safe);
+        else { Debug.LogWarning($"[Player] RPC_SelectCard: 미지원 라운드 {round}"); return; }
+        if (selectedBuff != null)
         {
             _buffSystem.ApplyBuff(selectedBuff);
-            Debug.Log($"서버: {Object.InputAuthority} 플레이어에게 {selectedBuff.name} 버프 적용 완료");
+            Debug.Log($"[서버] {Object.InputAuthority} 버프 적용: {selectedBuff.name}");
         }
+        else Debug.LogWarning($"[Player] buffIndex={buffIndex} round={round} 버프 없음");
     }
-
     public override void FixedUpdateNetwork()
     {
         ApplyGravity();

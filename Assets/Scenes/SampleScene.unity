@@ -541,7 +541,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2
@@ -593,7 +593,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -1118,7 +1118,6 @@ GameObject:
   - component: {fileID: 565050840}
   - component: {fileID: 565050839}
   - component: {fileID: 565050838}
-  - component: {fileID: 565050842}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1184,6 +1183,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1202,6 +1202,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1563200532}
+  - {fileID: 1751041247}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1209,30 +1210,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &565050842
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 565050837}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c4fa0725763efb4ea39cc884da0746a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CardUI
-  cardPanel: {fileID: 1563200536}
-  cardUI: []
-  cardRank: 0
-  buffIndex: 0
-  cardButtons:
-  - {fileID: 1563200535}
-  - {fileID: 1563200534}
-  - {fileID: 1563200533}
-  cardTexts:
-  - {fileID: 1402651256}
-  - {fileID: 1402651255}
-  - {fileID: 1402651254}
 --- !u!1 &577213020
 GameObject:
   m_ObjectHideFlags: 0
@@ -1893,6 +1870,7 @@ GameObject:
   - component: {fileID: 851641442}
   - component: {fileID: 851641444}
   - component: {fileID: 851641445}
+  - component: {fileID: 851641446}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1916,10 +1894,10 @@ MonoBehaviour:
     RawGuidValue: ccb4a8796ce56e742a3d1a624488b116
   _RoundTimer: 0
   _CurrentRound: 1
-  cardUI: {fileID: 565050842}
   itemBoxPrefab:
     RawGuidValue: 2a77df2e54dd0fc4584eb42035e1dc8f
   boxSpawnInterval: 8
+  mapDB: {fileID: 0}
   itemSlots:
   - {fileID: 895089600}
   - {fileID: 1196452118}
@@ -1957,6 +1935,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 851641442}
+  - {fileID: 851641446}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &851641445
 MonoBehaviour:
@@ -1971,6 +1950,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   slotIcon: {fileID: 0}
+--- !u!114 &851641446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851641441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26791094f4d3251488ae4f3d969a78c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffManager
+  _IsSelectionPhase: 0
 --- !u!1 &895089596
 GameObject:
   m_ObjectHideFlags: 0
@@ -2844,39 +2836,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1402651254 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7183813440185810311, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
---- !u!114 &1402651255 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8808805443980760498, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
---- !u!114 &1402651256 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2857679617212890896, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &1426293268 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4669029008725487025, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
@@ -3612,44 +3571,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4968897223341152373, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
   m_PrefabInstance: {fileID: 1563200531}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1563200533 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1892377131473397631, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!114 &1563200534 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 274213097486995274, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!114 &1563200535 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6798639668647814632, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!1 &1563200536 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5738919092889270428, guid: 4ce6f5b97faeecb4d99ccd38f1eebb16, type: 3}
-  m_PrefabInstance: {fileID: 1563200531}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1572182894
 GameObject:
   m_ObjectHideFlags: 0
@@ -3837,6 +3758,98 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 2.220446e-16, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1751041246
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1751041247}
+  - component: {fileID: 1751041250}
+  - component: {fileID: 1751041249}
+  - component: {fileID: 1751041248}
+  m_Layer: 0
+  m_Name: BuffSelectionPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1751041247
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751041246}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1976664797}
+  m_Father: {fileID: 565050841}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -960, y: -540}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1751041248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751041246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68ce9a765a19a8c43854be293d5a7c70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffSelectionUI
+  panel: {fileID: 1751041246}
+  cardContainer: {fileID: 1976664797}
+  cardPrefab: {fileID: 3629838120557441964, guid: 7d683c94acaeac148879533e5d699a9e, type: 3}
+--- !u!114 &1751041249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751041246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1751041250
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751041246}
+  m_CullTransparentMesh: 1
 --- !u!1 &1759847988
 GameObject:
   m_ObjectHideFlags: 0
@@ -3914,6 +3927,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -4561,6 +4575,68 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillInterface
   skillIcon: {fileID: 40981076}
   fillBar: {fileID: 577213022}
+--- !u!1 &1976664796
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1976664797}
+  - component: {fileID: 1976664798}
+  m_Layer: 0
+  m_Name: CardContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1976664797
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976664796}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1751041247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1976664798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976664796}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1990219189
 GameObject:
   m_ObjectHideFlags: 0
