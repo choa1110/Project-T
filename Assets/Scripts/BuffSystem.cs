@@ -8,6 +8,7 @@ public class BuffSystem : NetworkBehaviour
     PlayerStats _playerStats;
 
     List<BuffFunction> _activeBuffs = new List<BuffFunction>();
+    List<string> _activeBuffNames   = new List<string>();
 
     void Awake()
     {
@@ -34,13 +35,22 @@ public class BuffSystem : NetworkBehaviour
 
         BuffFunction buff = new BuffFunction(data, _player);
         _activeBuffs.Add(buff);
+        _activeBuffNames.Add(data.buffName);
         
         Debug.Log($"[서버] {_player.Object.InputAuthority} 플레이어에게 {data.name} 버프 적용됨!");
     }
 
     private void RemoveBuff(BuffFunction buff)
     {
+        int idx = _activeBuffs.IndexOf(buff);
         buff.Remove();
         _activeBuffs.Remove(buff);
+        if (idx >= 0 && idx < _activeBuffNames.Count)
+            _activeBuffNames.RemoveAt(idx);
+    }
+
+    public List<string> GetActiveBuffNames()
+    {
+        return new List<string>(_activeBuffNames);
     }
 }

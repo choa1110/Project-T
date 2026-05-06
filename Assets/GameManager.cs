@@ -32,10 +32,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Networked] public float RoundTimer   { get; set; }
     [Networked] public int   CurrentRound { get; set; }
     bool _isCardUIOpened;
-
-    // ── 카드 UI ──────────────────────────────────────────────
-    public CardUI cardUI;
-
     // ── 아이템 박스 스포너 ───────────────────────────────────
     [Header("Item Box Spawner")]
     public NetworkPrefabRef itemBoxPrefab;
@@ -187,20 +183,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         HUDManager.Instance.SetOpponentUI(mainChar);
     }
-
-    // ════════════════════════════════════════════════════════
-    // RPC — 카드 UI
-    // ════════════════════════════════════════════════════════
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_ShowCardUI(int round)
-    {
-        if (cardUI != null)
-            cardUI.OpenCardSelection(round);
-        else
-            Debug.LogError("GameManager에 CardUI가 연결되어 있지 않습니다!");
-    }
-
-    // ════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════
     // 스폰 헬퍼
     // ════════════════════════════════════════════════════════
     void RunSpawnBox()

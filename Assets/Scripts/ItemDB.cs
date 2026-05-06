@@ -46,12 +46,12 @@ public class ItemDB : NetworkBehaviour
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosesetOpponent(user));
+        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosestOpponent(user));
     }
 
     void OnUse_MagnetPull(Player user)
     {
-        Player target = GameManager.Instance.GetClosesetOpponent(user);
+        Player target = GameManager.Instance.GetClosestOpponent(user);
 
         Rpc_RequestMagnetToServer(user, target);
     }
