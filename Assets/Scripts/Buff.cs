@@ -6,6 +6,7 @@ using UnityEngine;
 public class Buff : ScriptableObject
 {
     public string buffName;
+    public int buffNum;
     public int rank;
     public Sprite icon;
 

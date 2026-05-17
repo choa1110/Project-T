@@ -91,13 +91,13 @@ public class Player : NetworkBehaviour
     Vector3 MinimunKnockbackVelocity;
 
     // 끌어당기기(Pull) 관련 네트워크 변수
-    [Networked] public Player Puller { get; set; }
-    [Networked] public float PullTimer { get; set; }
-    [Networked] public Vector3 MagnetVelocity { get; set; }
+    [Networked] Player Puller { get; set; }
+    [Networked] float PullTimer { get; set; }
+    [Networked] Vector3 MagnetVelocity { get; set; }
 
     // 스킬 쿨타임 관련 네트워크 변수
-    [Networked] public float CurrentCoolDown { get; set; }
-    [Networked] public float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
+    [Networked] float CurrentCoolDown { get; set; }
+    [Networked] float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
 
     [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
 
@@ -219,40 +219,6 @@ public class Player : NetworkBehaviour
         _anim.SetInteger("Hit", HitState);
     }
 
-    //[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    //public void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
-    //{
-    //    if (targetObject == null) return;
-    //
-    //    Player targetPlayer = targetObject.GetComponent<Player>();
-    //    if (targetPlayer != null && !targetPlayer.IsDead && !targetPlayer.IsSuperarmour)
-    //    {
-    //        targetPlayer.onHit.Invoke();
-    //
-    //        targetPlayer.CurrentHP = Mathf.Clamp(targetPlayer.CurrentHP - damage, 0, targetPlayer.stats.GetStat(StatType.MaxHP).Value);
-    //
-    //        float weight = targetPlayer.stats.GetStat(StatType.Weight).Value;
-    //        float knockMultiplier = !targetPlayer._ncc.Grounded ? 1.5f : 1.0f;
-    //        float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, weight);
-    //        
-    //        Vector3 initialVel = knockDir.normalized * finalKnockPow;
-    //
-    //        targetPlayer.StartKnockback(initialVel);
-    //
-    //        targetPlayer.RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
-    //    }
-    //}
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
-    {
-        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
-        SetHit(hitPos, finalKnockPow);
-
-        if (Object.HasInputAuthority)
-            POV.CameraShake(camShake);
-    }
-
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RPC_SelectCard(int buffIndex)
     {
@@ -266,13 +232,14 @@ public class Player : NetworkBehaviour
 
         if (selectedBuff != null)
         {
-            _buffSystem.ApplyBuff(selectedBuff);
+            _buffSystem.Rpc_BroadcastApplyBuff(selectedBuff.rank, selectedBuff.buffNum);
             Debug.Log($"서버: {Object.InputAuthority} 플레이어에게 {selectedBuff.name} 버프 적용 완료");
         }
     }
 
     public override void FixedUpdateNetwork()
     {
+        PrintStats();
         ApplyGravity();
 
         if (IsDead) return;
@@ -319,6 +286,12 @@ public class Player : NetworkBehaviour
         _externalVelocity = Vector3.zero;
 
         _prevButtons = data.buttons;
+    }
+
+    void PrintStats()
+    {
+        Debug.Log("Speed : " + stats.GetStat(StatType.SpeedMove).Value);
+        Debug.Log("JumpHeight : " + stats.GetStat(StatType.JumpHeight).Value);
     }
 
     void ApplyGravity()
@@ -388,9 +361,6 @@ public class Player : NetworkBehaviour
 
     void ItemUse(NetworkInputData data)
     {
-        if (!Object.HasInputAuthority)
-            return;
-
         if (data.buttons.IsSet(InputButton.UseItem1))
             item.Rpc_RequestUseItem(0, this);
 
@@ -398,55 +368,52 @@ public class Player : NetworkBehaviour
             item.Rpc_RequestUseItem(1, this);
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_UseItemBuff(int itemIndex)
-    {
-        Buff itemBuff = BuffDB.Instance.GetItemBuff(itemIndex);
+    //[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    //public void RPC_UseItemBuff(int itemIndex)
+    //{
+    //    Buff itemBuff = BuffDB.Instance.GetItemBuff(itemIndex);
+    //
+    //    if(itemBuff != null)
+    //    {
+    //        GetComponent<BuffSystem>().Rpc_BroadcastApplyBuff(itemBuff.rank, itemBuff.buffNum);
+    //        Debug.Log($"[서버] {Object.InputAuthority} 플레이어가 {itemIndex}번 아이템 버프를 사용했습니다!");        
+    //    }
+    //}
 
-        if(itemBuff != null)
-        {
-            GetComponent<BuffSystem>().ApplyBuff(itemBuff);
-            Debug.Log($"[서버] {Object.InputAuthority} 플레이어가 {itemIndex}번 아이템 버프를 사용했습니다!");        
-        }
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_RequestSetAbility(int skillNum)
+    {
+        _ability = AbilityDB.Instance.SetAbility(skillNum);
+
+        CurrentCoolDown = _ability.coolTime / 2;
+        SkillDurationTimer = 0f;
+        
+        if (Object.HasInputAuthority)
+            _skill.SetSkill(_ability);
     }
 
     void ActivateSkill()
     {
-        if (!Object.HasInputAuthority)
-            return;
+        if (!Object.HasInputAuthority) return;
 
-        if (_ability != null)
-        {
-            if (CurrentCoolDown <= 0 && SkillDurationTimer <= 0)
-            {
-                AbilityDB.Instance.ActivateAbility(_ability.skillNum, this);
-
-                SkillDurationTimer = _ability.duration;
-                CurrentCoolDown = _ability.coolTime;
-                _skill.OnSkillUse();
-            }
-        }
+        if (_ability != null && CurrentCoolDown <= 0 && SkillDurationTimer <= 0)
+            Rpc_RequestSkill();
     }
 
-    // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)
-    void ProcessCoolDown()
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    void Rpc_RequestSkill()
     {
-        if (SkillDurationTimer > 0)
-        {
-            SkillDurationTimer -= Runner.DeltaTime;
-        }
-        else if (CurrentCoolDown > 0)
-        {
-            CurrentCoolDown = Mathf.Clamp(CurrentCoolDown - Runner.DeltaTime, 0, _ability.coolTime);
-            
-            // UI 업데이트는 로컬 플레이어 화면에서만
-            if (Object.HasInputAuthority && _skill != null)
-            {
-                _skill.CoolRate(_ability.coolTime - CurrentCoolDown);
-                if (CurrentCoolDown <= 0)
-                    _skill.OnCoolComplete();
-            }
-        }
+        AbilityDB.Instance.ActivateAbility(_ability.skillNum, this);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastSkillActivate()
+    {
+        SkillDurationTimer = _ability.duration;
+        CurrentCoolDown = _ability.coolTime;
+
+        if (Object.HasInputAuthority)
+            _skill.OnSkillUse();
     }
 
     public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
@@ -464,6 +431,16 @@ public class Player : NetworkBehaviour
         StartKnockback(kbDir * finalKnockPow);
 
         RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
+    {
+        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+        SetHit(hitPos, finalKnockPow);
+
+        if (Object.HasInputAuthority)
+            POV.CameraShake(camShake);
     }
 
     void SetHit(Vector3 hitPoint, float knockDis)
@@ -491,19 +468,31 @@ public class Player : NetworkBehaviour
         StartRotateVel(velocity);
     }
 
-    public void ApplyHeal(float amount)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastHeal(float amount)
     {
         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
         onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
     }
 
-    public void SetAbility(Ability ability)
+    // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)
+    void ProcessCoolDown()
     {
-        _ability = ability;
-        CurrentCoolDown = _ability.coolTime / 2;
-        SkillDurationTimer = 0f;
+        if (SkillDurationTimer > 0)
+            SkillDurationTimer -= Runner.DeltaTime;
+        else if (CurrentCoolDown > 0)
+        {
+            CurrentCoolDown = Mathf.Clamp(CurrentCoolDown - Runner.DeltaTime, 0, _ability.coolTime);
 
-        _skill.SetSkill(_ability);
+            // UI 업데이트는 로컬 플레이어 화면에서만
+            if (Object.HasInputAuthority && _skill != null)
+            {
+                _skill.CoolRate(_ability.coolTime - CurrentCoolDown);
+
+                if (CurrentCoolDown <= 0)
+                    _skill.OnCoolComplete();
+            }
+        }
     }
 
     void StartKnockback(Vector3 initialVel)
@@ -575,8 +564,8 @@ public class Player : NetworkBehaviour
                 MagnetVelocity += pullVel * Runner.DeltaTime;
                 MagnetVelocity = Vector3.ClampMagnitude(MagnetVelocity, 15f);
             }
-            else
-                MagnetVelocity = Vector3.Lerp(MagnetVelocity, Vector3.zero, 3f * Runner.DeltaTime);
+                
+            MagnetVelocity = Vector3.Lerp(MagnetVelocity, Vector3.zero, 3f * Runner.DeltaTime);
 
             _externalVelocity += MagnetVelocity;
         }

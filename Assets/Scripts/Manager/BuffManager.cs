@@ -64,7 +64,7 @@ public class BuffManager : NetworkBehaviour
             Debug.Log($"[BuffManager] {info.Source}���� {buff.buffName} ������");
 
             // 2. ���� ���� ���� (���� �������� �����)
-            senderPlayer.GetComponent<BuffSystem>().ApplyBuff(buff);
+            senderPlayer.GetComponent<BuffSystem>().Rpc_BroadcastApplyBuff(buff.rank, buff.buffNum);
         }
     }
 

@@ -3,30 +3,36 @@ using Fusion;
 
 public class HomingMissile : NetworkBehaviour
 {
-    NetworkObject _networkObj;
-    Rigidbody _rb;
-    AttackArea _attackArea;
+    [SerializeField] NetworkObject _networkObj;
+    [SerializeField] Rigidbody _rb;
 
     [Networked] Player _target { get; set; }
 
     public AttackParameters param;
+    AttackParameter _param;
+
     public float speed;
     public float turnSpeed;
+    public float areaRadius;
+
+    [SerializeField] LayerMask _attackLayer;
+
+    [SerializeField] float _damPow;
+    [SerializeField] float _knockPow;
+
+    void OnDrawGizmos()
+    {
+        Gizmos.DrawWireSphere(transform.position, areaRadius);
+    }
 
     void Awake()
     {
-        _networkObj = GetComponent<NetworkObject>();
-        _rb = GetComponent<Rigidbody>();
-        _attackArea = GetComponent<AttackArea>();
+        _param = param.parameters[0];
     }
 
     public void SetTarget(Player player)
     {
         _target = player;
-
-        _attackArea.SetOwner(gameObject);
-        _attackArea.SetAttackStatus(param.parameters[0], 10, 20);
-        _attackArea.AttackStart();
     }
 
     public override void FixedUpdateNetwork()
@@ -46,7 +52,32 @@ public class HomingMissile : NetworkBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (Object.HasStateAuthority)
-            Runner.Despawn(_networkObj);
+        if (!Object.HasStateAuthority) return;
+
+        Collider[] overlaps = Physics.OverlapSphere(transform.position, areaRadius, _attackLayer);
+
+        if (overlaps.Length > 0)
+        {
+            foreach (Collider collider in overlaps)
+            {
+                if (collider.transform.TryGetComponent<Player>(out Player target))
+                    CheckCollides(target);
+            }
+        }
+
+        Runner.Despawn(_networkObj);
+    }
+
+    void CheckCollides(Player target)
+    {
+        Vector3 targetDir = (target.transform.position - transform.position).normalized;
+        Quaternion rotation = Quaternion.LookRotation(targetDir);
+
+        Vector3 tmpz = targetDir * _param.KnockbackDir.z;
+        Vector3 tmpx = rotation * Vector3.right * _param.KnockbackDir.x;
+        Vector3 tmpy = rotation * Vector3.up * _param.KnockbackDir.y;
+
+        Vector3 knockDir = tmpz + tmpx + tmpy;
+        target.ApplyHit(transform.position, _damPow, knockDir, _knockPow, _param.CameraShake);
     }
 }

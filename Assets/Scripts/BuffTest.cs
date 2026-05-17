@@ -1,19 +1,20 @@
 using UnityEngine;
 using Fusion;
 
-public class TempAbilityApplyer : NetworkBehaviour
+public class BuffItem : NetworkBehaviour
 {
     [SerializeField] NetworkObject _networkObj;
 
-    public Ability ability;
+    [SerializeField] int buffNum;
+    [SerializeField] int buffRank;
 
     void OnTriggerEnter(Collider other)
     {
         if (!Object.HasStateAuthority) return;
 
-        if (other.TryGetComponent<Player>(out Player sys))
+        if (other.TryGetComponent<BuffSystem>(out BuffSystem sys))
         {
-            sys.Rpc_RequestSetAbility(ability.skillNum);
+            sys.Rpc_BroadcastApplyBuff(buffRank, buffNum);
             Runner.Despawn(_networkObj);
         }
     }

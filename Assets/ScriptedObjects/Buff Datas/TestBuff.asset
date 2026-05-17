@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db46384528646364da42ca202fa6bf76, type: 3}
-  m_Name: Heavy
+  m_Name: TestBuff
   m_EditorClassIdentifier: Assembly-CSharp::Buff
-  buffName: Heavy
-  buffNum: 0
+  buffName: TestBuff
+  buffNum: 1
   rank: 1
   icon: {fileID: 0}
-  discription: Increases weight by 20%
+  discription: 
   isInfinite: 1
   isConditional: 0
   duration: 0
   conditions: []
   effects:
-  - {fileID: 11400000, guid: 39759cd77f6908a458bea6717339e2b5, type: 2}
+  - {fileID: 11400000, guid: fb4578a096433054caee7502b74f9d17, type: 2}

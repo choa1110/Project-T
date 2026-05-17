@@ -12,7 +12,7 @@ public class ApplyAbilityEffect : BuffEffect
     {
         targetPlayer = target;
 
-        targetPlayer.SetAbility(ability);
+        targetPlayer.Rpc_RequestSetAbility(ability.skillNum);
     }
 
     public override void Remove() {}
