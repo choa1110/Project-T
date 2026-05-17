@@ -12,11 +12,11 @@ public enum ExtraStatType
 
 public class Player : NetworkBehaviour
 {
-    NetworkCharacterController _ncc;
-    Animator _anim;
+    [SerializeField] NetworkCharacterController _ncc;
+    [SerializeField] Animator _anim;
 
-    BuffSystem _buffSystem;
-    public ItemSystem item;
+    [SerializeField] BuffSystem _buffSystem;
+    [SerializeField] ItemSystem _item;
 
     CharacterInfo _info;
 
@@ -35,32 +35,12 @@ public class Player : NetworkBehaviour
     public List<GameObject> modelList;
 
     [Networked, OnChangedRender(nameof(OnModelNumChanged))] public int ModelNum { get; set; }
-
-    public void OnModelNumChanged()
-    {
-        for (int i = 0; i < modelList.Count; i++)
-        {
-            modelList[i].SetActive(i == ModelNum);
-        }
-
-        _info = modelList[ModelNum].GetComponent<CharacterInfo>();
-        if (_info != null)
-        {
-            _anim.avatar = _info.avatar;
-
-            // Update attack areas owner if necessary, although they might already be set
-            foreach (AttackArea area in _info.fists)
-            {
-                area.SetOwner(gameObject);
-                if (!attackAreas.Contains(area))
-                    attackAreas.Add(area);
-            }
-        }
-    }
+    [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
 
     public UnityEvent onHit;
-    public UnityEvent<float> onDamage;
+    public UnityEvent<float> onHPChange;
 
+    // 운동량 관련 변수
     [Networked] Vector3 _horVelocity { get; set; }
     [Networked] float _verVelocity { get; set; }
     [Networked] Vector3 _externalVelocity { get; set; }
@@ -99,22 +79,7 @@ public class Player : NetworkBehaviour
     [Networked] float CurrentCoolDown { get; set; }
     [Networked] float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
 
-    [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
-
     public OpponentData linkedOpponentData;
-
-    void OnNickNameChanged()
-    {
-        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
-        {
-            HUDManager.Instance.charName.text = NickName.ToString();
-        }
-
-        if (linkedOpponentData != null)
-        {
-            linkedOpponentData.SetOpponentId(NickName.ToString());
-        }
-    }
 
     [SerializeField] private LayerMask _groundLayer;
 
@@ -132,12 +97,42 @@ public class Player : NetworkBehaviour
 
     void Awake()
     {
-        _ncc = GetComponent<NetworkCharacterController>();
-        _anim = GetComponent<Animator>();
-
-        _buffSystem = GetComponent<BuffSystem>();
-
         stats.InitalizeStats();
+    }
+
+    public void OnModelNumChanged()
+    {
+        for (int i = 0; i < modelList.Count; i++)
+        {
+            modelList[i].SetActive(i == ModelNum);
+        }
+
+        _info = modelList[ModelNum].GetComponent<CharacterInfo>();
+        if (_info != null)
+        {
+            _anim.avatar = _info.avatar;
+
+            // Update attack areas owner if necessary, although they might already be set
+            foreach (AttackArea area in _info.fists)
+            {
+                area.SetOwner(gameObject);
+                if (!attackAreas.Contains(area))
+                    attackAreas.Add(area);
+            }
+        }
+    }
+
+    void OnNickNameChanged()
+    {
+        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
+        {
+            HUDManager.Instance.charName.text = NickName.ToString();
+        }
+
+        if (linkedOpponentData != null)
+        {
+            linkedOpponentData.SetOpponentId(NickName.ToString());
+        }
     }
 
     public override void Spawned()
@@ -186,8 +181,8 @@ public class Player : NetworkBehaviour
             POV.target = this;
 
             HUDManager.Instance.charName.text = NickName.ToString();
-            onDamage.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
-            item.HUDLink();
+            onHPChange.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
+            _item.HUDLink();
             _skill = HUDManager.Instance.skillInterface;
 
             GameManager.Instance.WaitForRegister(this);
@@ -239,7 +234,6 @@ public class Player : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        PrintStats();
         ApplyGravity();
 
         if (IsDead) return;
@@ -286,12 +280,6 @@ public class Player : NetworkBehaviour
         _externalVelocity = Vector3.zero;
 
         _prevButtons = data.buttons;
-    }
-
-    void PrintStats()
-    {
-        Debug.Log("Speed : " + stats.GetStat(StatType.SpeedMove).Value);
-        Debug.Log("JumpHeight : " + stats.GetStat(StatType.JumpHeight).Value);
     }
 
     void ApplyGravity()
@@ -362,10 +350,10 @@ public class Player : NetworkBehaviour
     void ItemUse(NetworkInputData data)
     {
         if (data.buttons.IsSet(InputButton.UseItem1))
-            item.Rpc_RequestUseItem(0, this);
+            _item.Rpc_RequestUseItem(0, this);
 
         if (data.buttons.IsSet(InputButton.UseItem2))
-            item.Rpc_RequestUseItem(1, this);
+            _item.Rpc_RequestUseItem(1, this);
     }
 
     //[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -436,7 +424,7 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
     {
-        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+        onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
         SetHit(hitPos, finalKnockPow);
 
         if (Object.HasInputAuthority)
@@ -472,7 +460,7 @@ public class Player : NetworkBehaviour
     public void Rpc_BroadcastHeal(float amount)
     {
         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
-        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+        onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
     }
 
     // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)

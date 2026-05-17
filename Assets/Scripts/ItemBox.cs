@@ -16,9 +16,9 @@ public class ItemBox : NetworkBehaviour
     {
         if (!Object.HasStateAuthority) return;
 
-        if (other.TryGetComponent<Player>(out Player target))
+        if (other.TryGetComponent<ItemSystem>(out ItemSystem sys))
         {
-            if (target.item.SetItem(ItemDB.Instance.GetItem(Random.Range(from, to))))
+            if (sys.SetItem(ItemDB.Instance.GetItem(Random.Range(from, to))))
                 Runner.Despawn(_networkObj);
         }
     }

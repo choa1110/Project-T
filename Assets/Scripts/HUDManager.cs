@@ -54,6 +54,6 @@ public class HUDManager : MonoBehaviour
         opponent.linkedOpponentData = opponentDatas[num];
         opponentDatas[num].SetOpponentId(opponent.NickName.ToString());
         opponentDatas[num].SetTeamColor(opponent.team);
-        opponent.onDamage.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
+        opponent.onHPChange.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
     }
 }
