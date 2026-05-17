@@ -113,6 +113,7 @@ public class AttackArea : NetworkBehaviour
             {
                 Rpc_RequestHitToServer(
                     target.Object,
+                    _playerControl.Object,
                     hitPos,
                     _damPow,
                     knockDir,
@@ -122,19 +123,20 @@ public class AttackArea : NetworkBehaviour
             }
             else if (Object.HasStateAuthority)
             {
-                target.ApplyHit(hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
+                target.ApplyHit(_playerControl, hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
             }
         }
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    void Rpc_RequestHitToServer(NetworkObject targetObject, NetworkObject attackerObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (targetObject == null) return;
 
         Player targetPlayer = targetObject.GetComponent<Player>();
+        Player attackerPlayer = attackerObject != null ? attackerObject.GetComponent<Player>() : null;
 
         if (targetPlayer != null)
-            targetPlayer.ApplyHit(hitPos, damage, knockDir, knockPow, camShake);
+            targetPlayer.ApplyHit(attackerPlayer, hitPos, damage, knockDir, knockPow, camShake);
     }
 }

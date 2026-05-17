@@ -47,8 +47,11 @@ public class ItemDB : NetworkBehaviour
         shootPosition += user.transform.forward;
 
         Runner.Spawn(missile, shootPosition, user.transform.rotation, Runner.LocalPlayer, (runner, obj) => {
-            if (obj.TryGetBehaviour<HomingMissile>(out var missile))
-                missile.SetTarget(GameManager.Instance.GetClosesetOpponent(user));
+            if (obj.TryGetBehaviour<HomingMissile>(out var missileBehaviour))
+            {
+                missileBehaviour.SetOwner(user);
+                missileBehaviour.SetTarget(GameManager.Instance.GetClosesetOpponent(user));
+            }
         });
     }
 

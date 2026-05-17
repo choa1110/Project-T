@@ -7,6 +7,7 @@ public class HomingMissile : NetworkBehaviour
     [SerializeField] Rigidbody _rb;
 
     [Networked] Player _target { get; set; }
+    [Networked] Player _owner { get; set; }
 
     public AttackParameters param;
     AttackParameter _param;
@@ -33,6 +34,11 @@ public class HomingMissile : NetworkBehaviour
     public void SetTarget(Player player)
     {
         _target = player;
+    }
+
+    public void SetOwner(Player player)
+    {
+        _owner = player;
     }
 
     public override void FixedUpdateNetwork()
@@ -70,6 +76,8 @@ public class HomingMissile : NetworkBehaviour
 
     void CheckCollides(Player target)
     {
+        if (target == _owner) return;
+
         Vector3 targetDir = (target.transform.position - transform.position).normalized;
         Quaternion rotation = Quaternion.LookRotation(targetDir);
 
@@ -78,6 +86,6 @@ public class HomingMissile : NetworkBehaviour
         Vector3 tmpy = rotation * Vector3.up * _param.KnockbackDir.y;
 
         Vector3 knockDir = tmpz + tmpx + tmpy;
-        target.ApplyHit(transform.position, _damPow, knockDir, _knockPow, _param.CameraShake);
+        target.ApplyHit(_owner, transform.position, _damPow, knockDir, _knockPow, _param.CameraShake);
     }
 }

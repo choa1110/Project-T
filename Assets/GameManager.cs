@@ -36,6 +36,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public List<Player> playerList = new List<Player>();
 
     [Networked] public float RoundTimer { get; set; }
+    [Networked] public int MaxRounds { get; set; }
+    [Networked] public int InitialLives { get; set; }
+    [Networked] public float RoundDuration { get; set; }
+    [Networked] TickTimer transitionTimer { get; set; }
+    [Networked] bool _isTransitioning { get; set; }
+
     public CardUI cardUI;
     bool _isCardUIOpened = false;
 
@@ -96,8 +102,19 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (Object.HasStateAuthority)
         {
-            RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
+            // Sync settings from SessionProperties
+            if (Runner.SessionInfo.Properties.TryGetValue("Rounds", out var rounds)) MaxRounds = (int)rounds;
+            else MaxRounds = 3;
+
+            if (Runner.SessionInfo.Properties.TryGetValue("Lives", out var lives)) InitialLives = (int)lives;
+            else InitialLives = 3;
+
+            if (Runner.SessionInfo.Properties.TryGetValue("Time", out var time)) RoundDuration = (int)time;
+            else RoundDuration = 120f;
+
+            RoundTimer = RoundDuration;
             _isCardUIOpened = false;
+            _isTransitioning = false;
             randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
         }
     }
@@ -108,6 +125,23 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (Object.HasStateAuthority)
         {
+            if (_isTransitioning)
+            {
+                if (transitionTimer.Expired(Runner))
+                {
+                    _isTransitioning = false;
+                    if (CurrentRound < MaxRounds)
+                    {
+                        StartNextRound();
+                    }
+                    else
+                    {
+                        DeclareWinner();
+                    }
+                }
+                return;
+            }
+
             if (RoundTimer > 0 && !_isCardUIOpened)
             {
                 RoundTimer -= Runner.DeltaTime;
@@ -117,7 +151,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                     RoundTimer = 0;
                     _isCardUIOpened = true;
 
-                    //RPC_ShowCardUI(CurrentRound); 
+                    EndRound();
                 }
             }
 
@@ -131,6 +165,85 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
             }
         }
+    }
+
+    void EndRound()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        // Calculate rankings for the round
+        var rankedPlayers = playerList
+            .OrderByDescending(p => p.IsDead ? -1 : (p.CurrentLives * 1000 + p.CurrentHP))
+            .ToList();
+
+        for (int i = 0; i < rankedPlayers.Count; i++)
+        {
+            int points = 0;
+            switch (i)
+            {
+                case 0: points = 10; break;
+                case 1: points = 8; break;
+                case 2: points = 5; break;
+                case 3: points = 3; break;
+            }
+            rankedPlayers[i].TotalScore += points;
+            Debug.Log($"[Round End] {rankedPlayers[i].NickName} ranked {i + 1} and got {points} points.");
+        }
+
+        // Show Card UI for upgrades
+        RPC_ShowCardUI(CurrentRound);
+        
+        // Start transition timer (e.g., 15 seconds to select cards)
+        transitionTimer = TickTimer.CreateFromSeconds(Runner, 15f);
+        _isTransitioning = true;
+    }
+
+    void DeclareWinner()
+    {
+        var winner = playerList.OrderByDescending(p => p.TotalScore).FirstOrDefault();
+        if (winner != null)
+        {
+            Debug.Log($"[Game Over] Winner is {winner.NickName} with {winner.TotalScore} points!");
+        }
+    }
+
+    public void StartNextRound()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        CurrentRound++;
+        RoundTimer = RoundDuration;
+        _isCardUIOpened = false;
+
+        foreach (var player in playerList)
+        {
+            player.RoundStart();
+            RPC_ResetPlayerVisuals(player.Object);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_ResetPlayerVisuals(NetworkObject playerObj)
+    {
+        if (playerObj == null) return;
+        Player p = playerObj.GetComponent<Player>();
+        if (p != null)
+        {
+            p.OnModelNumChanged(); // This re-enables the current model
+            p.GetComponent<NetworkCharacterController>().enabled = true;
+        }
+    }
+
+    public Player GetAlivePlayer(Player current)
+    {
+        var alivePlayers = playerList.Where(p => !p.IsDead).ToList();
+        if (alivePlayers.Count == 0) return null;
+
+        if (current == null || !alivePlayers.Contains(current))
+            return alivePlayers[0];
+
+        int index = alivePlayers.IndexOf(current);
+        return alivePlayers[(index + 1) % alivePlayers.Count];
     }
 
     bool CanSpawnRandomBox()
