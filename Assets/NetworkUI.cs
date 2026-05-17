@@ -22,6 +22,7 @@ public class NetworkUI : MonoBehaviour
 
     public void ReceiveMessage(string senderName, string message)
     {
+        if (this == null || !gameObject.activeInHierarchy) return;
         string formattedText = $"<color=yellow>[{senderName}]</color>: {message}";
         chatContent.text += formattedText + "\n";
         Invoke("ScrollToBottom", 0.1f);
