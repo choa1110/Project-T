@@ -15,15 +15,32 @@ public class BuffDB : MonoBehaviour
     {
         if (_instance == null)
             _instance = this;
+
+        rank1Buff.Sort((a, b) => a.buffNum.CompareTo(b.buffNum));
+        rank2Buff.Sort((a, b) => a.buffNum.CompareTo(b.buffNum));
+        rank3Buff.Sort((a, b) => a.buffNum.CompareTo(b.buffNum));
+        itemBuff.Sort((a, b) => a.buffNum.CompareTo(b.buffNum));
     }
 
-    public Buff GetRank1Buff(int index) { return rank1Buff[index]; }
-    public Buff GetRank2Buff(int index) { return rank2Buff[index]; }
-    public Buff GetRank3Buff(int index) { return rank3Buff[index]; }
+    public Buff GetBuff(int rank, int num)
+    {
+        switch (rank)
+        {
+            case 1:
+                return rank1Buff[num - 1];
+            case 2:
+                return rank2Buff[num - 1];
+            case 3:
+                return rank3Buff[num - 1];
+            case 4:
+                return itemBuff[num - 1];
+            default:
+                return null;
+        }
+    }
 
-    public Buff GetItemBuff(int index) { return itemBuff[index]; }
-    // public void ApplyItemBuffToPlayer(BuffSystem target, int num)
-    // {
-    //     target.ApplyBuff(itemBuff[num]);
-    // }
+    public Buff GetRank1Buff(int index) { return rank1Buff[index - 1]; }
+    public Buff GetRank2Buff(int index) { return rank2Buff[index - 1]; }
+    public Buff GetRank3Buff(int index) { return rank3Buff[index - 1]; }
+    public Buff GetItemBuff(int index) { return itemBuff[index - 1]; }
 }

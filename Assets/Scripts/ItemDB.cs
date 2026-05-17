@@ -46,30 +46,18 @@ public class ItemDB : NetworkBehaviour
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        Rpc_RequestMissileToServer(shootPosition, user.transform.rotation, GameManager.Instance.GetClosesetOpponent(user));
+        Runner.Spawn(missile, shootPosition, user.transform.rotation, Runner.LocalPlayer, (runner, obj) => {
+            if (obj.TryGetBehaviour<HomingMissile>(out var missile))
+                missile.SetTarget(GameManager.Instance.GetClosesetOpponent(user));
+        });
     }
 
     void OnUse_MagnetPull(Player user)
     {
         Player target = GameManager.Instance.GetClosesetOpponent(user);
-
-        Rpc_RequestMagnetToServer(user, target);
+        
+        target.PulledToPoint(user);
     }
 
     // Rpc Request
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void Rpc_RequestMissileToServer(Vector3 position, Quaternion rotation, Player target)
-    {
-        Runner.Spawn(missile, position, rotation, Runner.LocalPlayer, (runner, obj) => {
-            if (obj.TryGetBehaviour<HomingMissile>(out var missile))
-                missile.SetTarget(target);
-        });
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void Rpc_RequestMagnetToServer(Player user, Player target)
-    {
-        if (target != null)
-            target.PulledToPoint(user);
-    }
 }

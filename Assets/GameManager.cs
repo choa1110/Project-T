@@ -130,7 +130,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public Player GetClosesetOpponent(Player user)
     {
         Player target = null;
-        float minDis = 987654321f;
+        float minDis = float.PositiveInfinity;
 
         foreach (Player reg in playerList)
         {

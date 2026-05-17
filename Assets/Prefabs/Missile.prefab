@@ -100,11 +100,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1760713132744146408}
   - component: {fileID: 2235301647503907253}
-  - component: {fileID: 2698207178301814132}
+  - component: {fileID: 713290842708037114}
   - component: {fileID: 5434279123391960021}
-  - component: {fileID: 5776618384303607057}
-  - component: {fileID: 633942945094741405}
   - component: {fileID: -5077888936968701556}
+  - component: {fileID: 633942945094741405}
   m_Layer: 0
   m_Name: Missile
   m_TagString: Untagged
@@ -121,7 +120,7 @@ Transform:
   m_GameObject: {fileID: 3668800957590035198}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.23917, y: 1.9272, z: -0.4467}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -157,8 +156,8 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!135 &2698207178301814132
-SphereCollider:
+--- !u!136 &713290842708037114
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -175,8 +174,10 @@ SphereCollider:
   m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1
+  serializedVersion: 2
+  m_Radius: 0.3
+  m_Height: 2
+  m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &5434279123391960021
 MonoBehaviour:
@@ -195,42 +196,9 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 5776618384303607057}
-  - {fileID: 633942945094741405}
   - {fileID: -5077888936968701556}
+  - {fileID: 633942945094741405}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &5776618384303607057
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3668800957590035198}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4bad42830181344e81c047524864879, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AttackArea
-  _attackLayer:
-    serializedVersion: 2
-    m_Bits: 8
-  areaRadius: 0.55
---- !u!114 &633942945094741405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3668800957590035198}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cee714e64cd60324780c50aa01129a9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GuidedMissile
-  _NetworkedVelocity: {x: 0, y: 0, z: 0}
-  param: {fileID: 11400000, guid: 2e754eb288db2204dbc87429de429d25, type: 2}
-  speed: 10
-  turnSpeed: 100
 --- !u!114 &-5077888936968701556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,6 +222,29 @@ MonoBehaviour:
     Position: 0.01
     Rotation: 0.01
     Scale: 0.01
+--- !u!114 &633942945094741405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3668800957590035198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cee714e64cd60324780c50aa01129a9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GuidedMissile
+  _networkObj: {fileID: 5434279123391960021}
+  _rb: {fileID: 2235301647503907253}
+  param: {fileID: 11400000, guid: 2e754eb288db2204dbc87429de429d25, type: 2}
+  speed: 10
+  turnSpeed: 100
+  areaRadius: 0.7
+  _attackLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  _damPow: 10
+  _knockPow: 20
 --- !u!1 &3762244851042077040
 GameObject:
   m_ObjectHideFlags: 0
