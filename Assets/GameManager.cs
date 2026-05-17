@@ -39,6 +39,17 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public CardUI cardUI;
     bool _isCardUIOpened = false;
 
+    [Header("Random Box Settings")]
+    public NetworkPrefabRef randomBoxPrefab;
+    [SerializeField] float randomBoxSpawnInterval = 10f;
+    [SerializeField] Vector2 mapBoundsX = new Vector2(-15f, 15f);
+    [SerializeField] Vector2 mapBoundsZ = new Vector2(-15f, 15f);
+    [SerializeField] float spawnHeight = 1f;
+    [SerializeField] int maxRandomBoxes = 5;
+    [SerializeField] Vector2Int randomBoxItemRange = new Vector2Int(0, 2);
+
+    [Networked] TickTimer randomBoxTimer { get; set; }
+
     [SerializeField] InputActionAsset inputActions;
 
     InputAction move;
@@ -87,6 +98,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
             _isCardUIOpened = false;
+            randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
         }
     }
 
@@ -94,18 +106,59 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public override void FixedUpdateNetwork()
     {
-        if (Object.HasStateAuthority && RoundTimer > 0 && !_isCardUIOpened)
+        if (Object.HasStateAuthority)
         {
-            RoundTimer -= Runner.DeltaTime;
-
-            if (RoundTimer <= 0)
+            if (RoundTimer > 0 && !_isCardUIOpened)
             {
-                RoundTimer = 0;
-                _isCardUIOpened = true;
-                
-                //RPC_ShowCardUI(CurrentRound); 
+                RoundTimer -= Runner.DeltaTime;
+
+                if (RoundTimer <= 0)
+                {
+                    RoundTimer = 0;
+                    _isCardUIOpened = true;
+
+                    //RPC_ShowCardUI(CurrentRound); 
+                }
+            }
+
+            // Random Box Spawning Logic
+            if (randomBoxTimer.Expired(Runner))
+            {
+                if (CanSpawnRandomBox())
+                {
+                    SpawnRandomBox();
+                }
+                randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
             }
         }
+    }
+
+    bool CanSpawnRandomBox()
+    {
+        int count = 0;
+        foreach (var obj in Runner.GetAllNetworkObjects())
+        {
+            if (obj.GetComponent<ItemBox>() != null) count++;
+        }
+        return count < maxRandomBoxes;
+    }
+
+    void SpawnRandomBox()
+    {
+        if (randomBoxPrefab == null) return;
+
+        float x = UnityEngine.Random.Range(mapBoundsX.x, mapBoundsX.y);
+        float z = UnityEngine.Random.Range(mapBoundsZ.x, mapBoundsZ.y);
+        Vector3 pos = new Vector3(x, spawnHeight, z);
+
+        NetworkObject box = Runner.Spawn(randomBoxPrefab, pos, Quaternion.identity);
+        ItemBox itemBox = box.GetComponent<ItemBox>();
+        if (itemBox != null)
+        {
+            itemBox.SetItemRange(randomBoxItemRange.x, randomBoxItemRange.y);
+        }
+        
+        Debug.Log($"[GameManager] Spawned RandomBox at {pos}");
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
