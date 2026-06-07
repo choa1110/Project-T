@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 124197387008072612}
   - component: {fileID: 5515593399897839786}
   - component: {fileID: 2770239816391547390}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   - component: {fileID: 5434279123391960021}
   - component: {fileID: -5077888936968701556}
   - component: {fileID: 633942945094741405}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Missile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -256,7 +256,7 @@ GameObject:
   - component: {fileID: 4221894274383950803}
   - component: {fileID: 5923461465509340078}
   - component: {fileID: 3423075181116587317}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -346,7 +346,7 @@ GameObject:
   - component: {fileID: 5987692096232849799}
   - component: {fileID: 6695535196489954719}
   - component: {fileID: 8112880893346798108}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}

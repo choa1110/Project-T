@@ -1968,7 +1968,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8628251030496797281, guid: 2a77df2e54dd0fc4584eb42035e1dc8f, type: 3}
       propertyPath: from
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2458,7 +2458,10 @@ MonoBehaviour:
   itemList:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
+  - {fileID: 11400000, guid: 09629d3c34f30d044a8153317f355f08, type: 2}
+  - {fileID: 11400000, guid: 2c81b70536c146b4cb469b9550e20814, type: 2}
   missile: {fileID: 5434279123391960021, guid: 3d7456119c758dc499915b74e758828d, type: 3}
+  trap: {fileID: 4288186331035176017, guid: 476531a29418c074fad9f34f125ab4d8, type: 3}
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0

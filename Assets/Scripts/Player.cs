@@ -95,6 +95,8 @@ public class Player : NetworkBehaviour
     NetworkButtons _curButtons;
     NetworkButtons _prevButtons;
 
+    public GameObject barrier;
+
     void Awake()
     {
         stats.InitalizeStats();
@@ -266,15 +268,15 @@ public class Player : NetworkBehaviour
                 _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
                 _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
             }
+
+            if (_curButtons.IsSet(InputButton.Attack))
+                Combo();
+
+            ItemUse(data);
+
+            if (_curButtons.IsSet(InputButton.Skill))
+                ActivateSkill();
         }
-
-        if (_curButtons.IsSet(InputButton.Attack))
-            Combo();
-
-        ItemUse(data);
-
-        if (_curButtons.IsSet(InputButton.Skill))
-            ActivateSkill();
 
         _ncc.Move(_horVelocity + Vector3.up * _verVelocity + _externalVelocity);
         _externalVelocity = Vector3.zero;
@@ -349,24 +351,14 @@ public class Player : NetworkBehaviour
 
     void ItemUse(NetworkInputData data)
     {
+        if (!Object.HasInputAuthority) return;
+
         if (data.buttons.IsSet(InputButton.UseItem1))
             _item.Rpc_RequestUseItem(0, this);
 
         if (data.buttons.IsSet(InputButton.UseItem2))
             _item.Rpc_RequestUseItem(1, this);
     }
-
-    //[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    //public void RPC_UseItemBuff(int itemIndex)
-    //{
-    //    Buff itemBuff = BuffDB.Instance.GetItemBuff(itemIndex);
-    //
-    //    if(itemBuff != null)
-    //    {
-    //        GetComponent<BuffSystem>().Rpc_BroadcastApplyBuff(itemBuff.rank, itemBuff.buffNum);
-    //        Debug.Log($"[서버] {Object.InputAuthority} 플레이어가 {itemIndex}번 아이템 버프를 사용했습니다!");        
-    //    }
-    //}
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void Rpc_RequestSetAbility(int skillNum)
@@ -562,6 +554,12 @@ public class Player : NetworkBehaviour
             MagnetVelocity = Vector3.zero;
             Puller = null;
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastActivateBarrier()
+    {
+        barrier.SetActive(true);
     }
 
     static float Sign(float v)
