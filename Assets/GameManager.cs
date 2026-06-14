@@ -252,7 +252,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
 
-        runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
+        NetworkObject playerCharacter = runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
+        runner.SetPlayerObject(player, playerCharacter);
         Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
     }
 

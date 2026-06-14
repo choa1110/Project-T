@@ -84,7 +84,7 @@ public class ItemDB : NetworkBehaviour
 
         Runner.Spawn(trap, setPosition, user.transform.rotation, Runner.LocalPlayer, (runner, obj) => {
             if (obj.TryGetBehaviour<SpikeTrap>(out var trap))
-                trap.SetVisableTeam(user.team);
+                trap.SetTrap(user.team);
         });
     }
 

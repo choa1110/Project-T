@@ -5,15 +5,17 @@ using UnityEngine;
 
 public class SpikeTrap : NetworkBehaviour
 {
-    [Networked] int visTeam { get; set; }
+    [Networked] int ownerTeam { get; set; }
 
+    [SerializeField] Collider hitCol;
     [SerializeField] List<MeshRenderer> mesh;
 
-    public void SetVisableTeam(int num)
+    public void SetTrap(int num)
     {
-        visTeam = num;
+        ownerTeam = num;
 
-        StartCoroutine(CloakDelay());
+        if (Object.HasStateAuthority)
+            StartCoroutine(SetupDelay());
     }
 
     void OnTriggerEnter(Collider other)
@@ -26,23 +28,19 @@ public class SpikeTrap : NetworkBehaviour
         {
             Vector3 knockPos = target.transform.position - transform.position;
 
-            target.ApplyHit(transform.position, 25, knockPos, 2, 5);
-            Rpc_RequestVisible(target.team);
+            target.ApplyHit(transform.position, 20, knockPos, 2, 5);
+            Rpc_BroadcastReveal(target.team);
         }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    void Rpc_RequestInvisible()
+    void Rpc_BroadcastConceal()
     {
-        Debug.Log("In Rpc");
-
         NetworkObject netPlayer = Runner.GetPlayerObject(Runner.LocalPlayer);
 
         if (netPlayer && netPlayer.TryGetComponent<Player>(out Player target))
         {
-            Debug.Log(target);
-
-            if (target.team != visTeam)
+            if (target.team != ownerTeam)
             {
                 foreach (MeshRenderer m in mesh)
                     m.enabled = false;
@@ -51,7 +49,7 @@ public class SpikeTrap : NetworkBehaviour
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    void Rpc_RequestVisible(int num)
+    void Rpc_BroadcastReveal(int num)
     {
         NetworkObject netPlayer = Runner.GetPlayerObject(Runner.LocalPlayer);
 
@@ -65,12 +63,11 @@ public class SpikeTrap : NetworkBehaviour
         }
     }
 
-    IEnumerator CloakDelay()
+    IEnumerator SetupDelay()
     {
-        Debug.Log("Coroutine");
         yield return new WaitForSeconds(1f);
 
-        if (Object.HasStateAuthority)
-            Rpc_RequestInvisible();
+        Rpc_BroadcastConceal();
+        hitCol.enabled = true;
     }
 }

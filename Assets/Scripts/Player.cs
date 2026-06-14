@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Fusion;
 using System.Collections;
+using UnityEngine.UIElements;
 
 public enum ExtraStatType
 {
@@ -27,7 +28,7 @@ public class Player : NetworkBehaviour
     public AttackParameters paramlist;
 
     [SerializeField] int _modelNum;
-    public int team;
+    [Networked] public int team { get; set; }
     public PlayerStats stats;
     [SerializeField] int life;
     [SerializeField] int jumpAbiliy;
@@ -59,6 +60,7 @@ public class Player : NetworkBehaviour
 
     // 체력 및 스탯 변수
     [Networked] public float CurrentHP { get; set; }
+
     int _curLife;
 
     List<AttackArea> attackAreas = new List<AttackArea>();
@@ -142,6 +144,7 @@ public class Player : NetworkBehaviour
         if (Object.HasStateAuthority)
         {
             ModelNum = UnityEngine.Random.Range(0, modelList.Count);
+            TmpRandomTeam();
         }
 
         // Ensure visuals are updated immediately upon spawning/syncing
@@ -157,6 +160,11 @@ public class Player : NetworkBehaviour
             RPC_SetNickName(myName);
         }
         StartCoroutine(WaitForSceneLoad());
+    }
+
+    void TmpRandomTeam()
+    {
+        team = Random.Range(0, 10);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -207,7 +215,7 @@ public class Player : NetworkBehaviour
     {
         _anim.SetFloat("MoveSpeedRate", stats.GetStatRate(StatType.SpeedMove));
         _anim.SetFloat("AtkSpeedRate", stats.GetStatRate(StatType.AtkSpeed));
-        
+
         _anim.SetFloat("SpeedX", _blendSpeedX);
         _anim.SetFloat("SpeedY", _blendSpeedY);
         _anim.SetBool("Jump", jumpedThisFrame);
@@ -221,7 +229,7 @@ public class Player : NetworkBehaviour
     {
         Buff selectedBuff = null;
 
-        switch (GameManager.Instance.CurrentRound){
+        switch (GameManager.Instance.CurrentRound) {
             case 1: selectedBuff = BuffDB.Instance.GetRank1Buff(buffIndex); break;
             case 2: selectedBuff = BuffDB.Instance.GetRank2Buff(buffIndex); break;
             case 3: selectedBuff = BuffDB.Instance.GetRank3Buff(buffIndex); break;
@@ -367,7 +375,7 @@ public class Player : NetworkBehaviour
 
         CurrentCoolDown = _ability.coolTime / 2;
         SkillDurationTimer = 0f;
-        
+
         if (Object.HasInputAuthority)
             _skill.SetSkill(_ability);
     }
@@ -399,15 +407,14 @@ public class Player : NetworkBehaviour
     public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
-
         onHit.Invoke();
 
-        CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
-    
+        ChangeHP(-damage);
+
         Vector3 kbDir = knockDir.normalized;
         float knockMultiplier = !_ncc.Grounded ? 1.5f : 1.0f;
         float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, stats.GetStat(StatType.Weight).Value);
-    
+
         StartKnockback(kbDir * finalKnockPow);
 
         RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
@@ -416,7 +423,6 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
     {
-        onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
         SetHit(hitPos, finalKnockPow);
 
         if (Object.HasInputAuthority)
@@ -448,10 +454,20 @@ public class Player : NetworkBehaviour
         StartRotateVel(velocity);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void Rpc_BroadcastHeal(float amount)
+    public void ApplyHeal(float ratio)
+    {
+        ChangeHP(stats.GetStat(StatType.MaxHP).Value * ratio);
+    }
+
+    void ChangeHP(float amount)
     {
         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
+        Rpc_BroadcastHpChange();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastHpChange()
+    {
         onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
     }
 

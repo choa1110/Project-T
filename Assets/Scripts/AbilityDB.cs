@@ -38,7 +38,7 @@ public class AbilityDB : MonoBehaviour
 
     void OnUse_HealingHands(Player user)
     {
-        user.Rpc_BroadcastHeal(50);
+        user.ApplyHeal(0.2f);
     }
 
     // Rpc Request

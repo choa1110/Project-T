@@ -962,9 +962,9 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
-  m_Size: {x: 1.5, y: 0.5, z: 1.5}
+  m_Size: {x: 1.3, y: 0.5, z: 1.3}
   m_Center: {x: 0, y: 0.25, z: 0}
 --- !u!114 &4288186331035176017
 MonoBehaviour:
@@ -1015,6 +1015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee00780fa377ce34498718520da927bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpikeTrap
+  hitCol: {fileID: 193532457099325920}
   mesh:
   - {fileID: 8493632719706511523}
   - {fileID: 5636423519768952687}
