@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 [System.Serializable]
@@ -11,4 +10,7 @@ public class Ability : ScriptableObject
 
     public float coolTime;
     public float duration;
+
+    [TextAreaAttribute]
+    public string discription;
 }

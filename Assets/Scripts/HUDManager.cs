@@ -72,6 +72,6 @@ public class HUDManager : MonoBehaviour
 
         opponentDatas[num].SetOpponentId(displayName);
         opponentDatas[num].SetTeamColor(opponent.team);
-        opponent.onDamage.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
+        opponent.onHPChange.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
     }
 }

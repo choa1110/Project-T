@@ -7,7 +7,7 @@ public class BuffSystem : NetworkBehaviour
     Player _player;
     PlayerStats _playerStats;
 
-    public List<BuffFunction> _activeBuffs = new List<BuffFunction>();
+    List<BuffFunction> _activeBuffs = new List<BuffFunction>();
 
     void Awake()
     {

@@ -12,11 +12,11 @@ public enum ExtraStatType
 
 public class Player : NetworkBehaviour
 {
-    NetworkCharacterController _ncc;
-    Animator _anim;
+    [SerializeField] NetworkCharacterController _ncc;
+    [SerializeField] Animator _anim;
 
-    BuffSystem _buffSystem;
-    public ItemSystem item;
+    [SerializeField] BuffSystem _buffSystem;
+    [SerializeField] ItemSystem _item;
 
     CharacterInfo _info;
 
@@ -60,8 +60,9 @@ public class Player : NetworkBehaviour
     }
 
     public UnityEvent onHit;
-    public UnityEvent<float> onDamage;
+    public UnityEvent<float> onHPChange;
 
+    // 운동량 관련 변수
     [Networked] Vector3 _horVelocity { get; set; }
     [Networked] float _verVelocity { get; set; }
     [Networked] Vector3 _externalVelocity { get; set; }
@@ -103,22 +104,7 @@ public class Player : NetworkBehaviour
     [Networked] float CurrentCoolDown { get; set; }
     [Networked] float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
 
-    [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
-
     public OpponentData linkedOpponentData;
-
-    void OnNickNameChanged()
-    {
-        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
-        {
-            HUDManager.Instance.charName.text = NickName.ToString();
-        }
-
-        if (linkedOpponentData != null)
-        {
-            linkedOpponentData.SetOpponentId(NickName.ToString());
-        }
-    }
 
     [SerializeField] private LayerMask _groundLayer;
 
@@ -134,14 +120,51 @@ public class Player : NetworkBehaviour
     NetworkButtons _curButtons;
     NetworkButtons _prevButtons;
 
+    public GameObject barrier;
+
+    [SerializeField] ParticleSystem hitEffect;
+    [SerializeField] Blast shockBlast;
+
     void Awake()
     {
-        _ncc = GetComponent<NetworkCharacterController>();
-        _anim = GetComponent<Animator>();
-
-        _buffSystem = GetComponent<BuffSystem>();
-
         stats.InitalizeStats();
+
+        shockBlast.SetOwner(this);
+    }
+
+    public void OnModelNumChanged()
+    {
+        for (int i = 0; i < modelList.Count; i++)
+        {
+            modelList[i].SetActive(i == ModelNum);
+        }
+
+        _info = modelList[ModelNum].GetComponent<CharacterInfo>();
+        if (_info != null)
+        {
+            _anim.avatar = _info.avatar;
+
+            // Update attack areas owner if necessary, although they might already be set
+            foreach (AttackArea area in _info.fists)
+            {
+                area.SetOwner(gameObject);
+                if (!attackAreas.Contains(area))
+                    attackAreas.Add(area);
+            }
+        }
+    }
+
+    void OnNickNameChanged()
+    {
+        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
+        {
+            HUDManager.Instance.charName.text = NickName.ToString();
+        }
+
+        if (linkedOpponentData != null)
+        {
+            linkedOpponentData.SetOpponentId(NickName.ToString());
+        }
     }
 
     public override void Spawned()
@@ -165,6 +188,11 @@ public class Player : NetworkBehaviour
             RPC_SetNickName(myName);
         }
         StartCoroutine(WaitForSceneLoad());
+    }
+
+    void TmpRandomTeam()
+    {
+        team = Random.Range(0, 10);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -191,8 +219,8 @@ public class Player : NetworkBehaviour
             POV.target = this;
 
             HUDManager.Instance.charName.text = NickName.ToString();
-            onDamage.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
-            item.HUDLink();
+            onHPChange.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
+            _item.HUDLink();
             _skill = HUDManager.Instance.skillInterface;
 
             GameManager.Instance.WaitForRegister(this);
@@ -222,7 +250,7 @@ public class Player : NetworkBehaviour
     {
         _anim.SetFloat("MoveSpeedRate", stats.GetStatRate(StatType.SpeedMove));
         _anim.SetFloat("AtkSpeedRate", stats.GetStatRate(StatType.AtkSpeed));
-        
+
         _anim.SetFloat("SpeedX", _blendSpeedX);
         _anim.SetFloat("SpeedY", _blendSpeedY);
         _anim.SetBool("Jump", jumpedThisFrame);
@@ -236,7 +264,7 @@ public class Player : NetworkBehaviour
     {
         Buff selectedBuff = null;
 
-        switch (GameManager.Instance.CurrentRound){
+        switch (GameManager.Instance.CurrentRound) {
             case 1: selectedBuff = BuffDB.Instance.GetRank1Buff(buffIndex); break;
             case 2: selectedBuff = BuffDB.Instance.GetRank2Buff(buffIndex); break;
             case 3: selectedBuff = BuffDB.Instance.GetRank3Buff(buffIndex); break;
@@ -251,7 +279,6 @@ public class Player : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        // PrintStats();
         ApplyGravity();
 
         NetworkInputData data = default;
@@ -309,27 +336,21 @@ public class Player : NetworkBehaviour
                 _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
                 _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
             }
+
+            if (_curButtons.IsSet(InputButton.Attack))
+                Combo();
+
+            ItemUse(data);
+
+            if (_curButtons.IsSet(InputButton.Skill))
+                ActivateSkill();
         }
-
-        if (_curButtons.IsSet(InputButton.Attack))
-            Combo();
-
-        ItemUse(data);
-
-        if (_curButtons.IsSet(InputButton.Skill))
-            ActivateSkill();
 
         _ncc.Move(_horVelocity + Vector3.up * _verVelocity + _externalVelocity);
         _externalVelocity = Vector3.zero;
 
         _prevButtons = data.buttons;
     }
-
-    // void PrintStats()
-    // {
-    //     Debug.Log("Speed : " + stats.GetStat(StatType.SpeedMove).Value);
-    //     Debug.Log("JumpHeight : " + stats.GetStat(StatType.JumpHeight).Value);
-    // }
 
     void ApplyGravity()
     {
@@ -398,33 +419,25 @@ public class Player : NetworkBehaviour
 
     void ItemUse(NetworkInputData data)
     {
+        if (!Object.HasInputAuthority) return;
+
         if (data.buttons.IsSet(InputButton.UseItem1))
-            item.Rpc_RequestUseItem(0, this);
+            _item.Rpc_RequestUseItem(0, this);
 
         if (data.buttons.IsSet(InputButton.UseItem2))
-            item.Rpc_RequestUseItem(1, this);
+            _item.Rpc_RequestUseItem(1, this);
     }
-
-    //[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    //public void RPC_UseItemBuff(int itemIndex)
-    //{
-    //    Buff itemBuff = BuffDB.Instance.GetItemBuff(itemIndex);
-    //
-    //    if(itemBuff != null)
-    //    {
-    //        GetComponent<BuffSystem>().Rpc_BroadcastApplyBuff(itemBuff.rank, itemBuff.buffNum);
-    //        Debug.Log($"[서버] {Object.InputAuthority} 플레이어가 {itemIndex}번 아이템 버프를 사용했습니다!");        
-    //    }
-    //}
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void Rpc_RequestSetAbility(int skillNum)
     {
+        if (_ability != null) return;
+
         _ability = AbilityDB.Instance.SetAbility(skillNum);
 
         CurrentCoolDown = _ability.coolTime / 2;
         SkillDurationTimer = 0f;
-        
+
         if (Object.HasInputAuthority)
             _skill.SetSkill(_ability);
     }
@@ -456,6 +469,26 @@ public class Player : NetworkBehaviour
     public void ApplyHit(Player attacker, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
+        onHit.Invoke();
+
+        ChangeHP(-damage);
+
+        Vector3 kbDir = knockDir.normalized;
+        float knockMultiplier = !_ncc.Grounded ? 1.5f : 1.0f;
+        float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, stats.GetStat(StatType.Weight).Value);
+
+        StartKnockback(kbDir * finalKnockPow);
+
+        RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+    }
+
+    public void ApplyHit(Player attacker, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    {
+        if (IsDead || IsSuperarmour) return;
+
+        if (attacker != null && attacker != this)
+        {
+        }
 
         if (attacker != null && attacker != this)
         {
@@ -477,7 +510,7 @@ public class Player : NetworkBehaviour
         Vector3 kbDir = knockDir.normalized;
         float knockMultiplier = !_ncc.Grounded ? 1.5f : 1.0f;
         float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, stats.GetStat(StatType.Weight).Value);
-    
+
         StartKnockback(kbDir * finalKnockPow);
 
         RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
@@ -558,8 +591,10 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
     {
-        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
         SetHit(hitPos, finalKnockPow);
+
+        hitEffect.transform.position = transform.position + Vector3.up * 0.85f + (hitPos - transform.position).normalized * 0.3f;
+        hitEffect.Play();
 
         if (Object.HasInputAuthority)
             POV.CameraShake(camShake);
@@ -590,11 +625,35 @@ public class Player : NetworkBehaviour
         StartRotateVel(velocity);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void Rpc_BroadcastHeal(float amount)
+    public void ApplyHeal(float ratio)
+    {
+        ChangeHP(stats.GetStat(StatType.MaxHP).Value * ratio);
+    }
+
+    void ChangeHP(float amount)
     {
         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
-        onDamage.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+        Rpc_BroadcastHpChange();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastHpChange()
+    {
+        onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+    }
+
+    public void ActivateShock()
+    {
+        shockBlast.SetBlastStrength(stats.GetStat(StatType.PowDam).Value, stats.GetStat(StatType.PowKnock).Value);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastBlink()
+    {
+        if (POV)
+            POV.ToggleSoft();
+
+        _ncc.Teleport(transform.position + transform.forward.normalized * 5f);
     }
 
     // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)
@@ -696,6 +755,12 @@ public class Player : NetworkBehaviour
             MagnetVelocity = Vector3.zero;
             Puller = null;
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastActivateBarrier()
+    {
+        barrier.SetActive(true);
     }
 
     static float Sign(float v)

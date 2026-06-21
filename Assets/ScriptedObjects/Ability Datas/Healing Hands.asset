@@ -17,3 +17,4 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 5853bc00e6bfda84ea9030e0486a1c44, type: 3}
   coolTime: 10
   duration: 0
+  discription: Restores 20% of Player's health

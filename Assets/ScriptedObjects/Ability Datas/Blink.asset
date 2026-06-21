@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d9809782fc15e74c86f19eeab01cc21, type: 3}
-  m_Name: Gravity Field
+  m_Name: Blink
   m_EditorClassIdentifier: Assembly-CSharp::Ability
-  skillName: Gravity Field
-  skillNum: 0
-  coolTime: 30
-  isInstant: 0
-  duration: 5
+  skillName: Blink
+  skillNum: 3
+  icon: {fileID: 21300000, guid: 662ae237300fee247a43823401881e39, type: 3}
+  coolTime: 5
+  duration: 0
+  discription: Teleports short distance forward

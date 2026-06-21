@@ -895,7 +895,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
-  serializedVersion: 13
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2
@@ -947,7 +947,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShapeRadius: 0
+  m_ShadowRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -1490,7 +1490,6 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1969,7 +1968,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8628251030496797281, guid: 2a77df2e54dd0fc4584eb42035e1dc8f, type: 3}
       propertyPath: from
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1985,7 +1984,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 712963635}
-  - component: {fileID: 712963636}
   - component: {fileID: 712963634}
   m_Layer: 0
   m_Name: AbilityDB
@@ -2008,6 +2006,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDB
   abilityList:
   - {fileID: 11400000, guid: 1b4d44be074f4234ca34fc313f429c44, type: 2}
+  - {fileID: 11400000, guid: 9c12912950550dd49bd4da225883768f, type: 2}
+  - {fileID: 11400000, guid: 06d9300d4adccda4b8fd8af733c94fd9, type: 2}
 --- !u!4 &712963635
 Transform:
   m_ObjectHideFlags: 0
@@ -2023,25 +2023,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &712963636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 712963633}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 4129227583
-  ObjectInterest: 1
-  Flags: 262145
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 712963634}
-  ForceRemoteRenderTimeframe: 0
 --- !u!1 &734181101
 GameObject:
   m_ObjectHideFlags: 0
@@ -2300,6 +2281,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8660582988051432950, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
+      propertyPath: ability
+      value: 
+      objectReference: {fileID: 11400000, guid: 06d9300d4adccda4b8fd8af733c94fd9, type: 2}
     - target: {fileID: 8824343201074621211, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
       propertyPath: m_Name
       value: TempAbilityApplyer (1)
@@ -2479,7 +2464,10 @@ MonoBehaviour:
   itemList:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
+  - {fileID: 11400000, guid: 09629d3c34f30d044a8153317f355f08, type: 2}
+  - {fileID: 11400000, guid: 2c81b70536c146b4cb469b9550e20814, type: 2}
   missile: {fileID: 5434279123391960021, guid: 3d7456119c758dc499915b74e758828d, type: 3}
+  trap: {fileID: 4288186331035176017, guid: 476531a29418c074fad9f34f125ab4d8, type: 3}
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0
@@ -4691,7 +4679,6 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
-  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -5047,8 +5034,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8628251030496797281, guid: 2a77df2e54dd0fc4584eb42035e1dc8f, type: 3}
+      propertyPath: to
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8628251030496797281, guid: 2a77df2e54dd0fc4584eb42035e1dc8f, type: 3}
       propertyPath: from
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5688,6 +5679,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8660582988051432950, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
+      propertyPath: ability
+      value: 
+      objectReference: {fileID: 11400000, guid: 9c12912950550dd49bd4da225883768f, type: 2}
     - target: {fileID: 8824343201074621211, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
       propertyPath: m_Name
       value: TempAbilityApplyer

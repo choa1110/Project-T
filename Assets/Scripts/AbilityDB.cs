@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Fusion;
 
-public class AbilityDB : NetworkBehaviour
+public class AbilityDB : MonoBehaviour
 {
     static AbilityDB _instance;
     public static AbilityDB Instance { get => _instance; }
@@ -32,6 +31,12 @@ public class AbilityDB : NetworkBehaviour
             case 1:
                 OnUse_HealingHands(user);
                 break;
+            case 2:
+                OnUse_ShockBlast(user);
+                break;
+            case 3:
+                OnUse_Blink(user);
+                break;
         }
 
         user.Rpc_BroadcastSkillActivate();
@@ -39,14 +44,18 @@ public class AbilityDB : NetworkBehaviour
 
     void OnUse_HealingHands(Player user)
     {
-        user.Rpc_BroadcastHeal(50);
-        //Rpc_RequestHealToServer(user, 50);
+        user.ApplyHeal(0.2f);
+    }
+
+    void OnUse_ShockBlast(Player user)
+    {
+        user.ActivateShock();
+    }
+    
+    void OnUse_Blink(Player user)
+    {
+        user.Rpc_BroadcastBlink();
     }
 
     // Rpc Request
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void Rpc_RequestHealToServer(Player user, int amount)
-    {
-        user.Rpc_BroadcastHeal(amount);
-    }
 }
