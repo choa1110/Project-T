@@ -322,9 +322,60 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer)
         {
+            // Shuffle model indices [0, 1, 2, 3] to assign unique models to each player
+            List<int> modelIndices = new List<int> { 0, 1, 2, 3 };
+            for (int i = 0; i < modelIndices.Count; i++)
+            {
+                int temp = modelIndices[i];
+                int randomIndex = UnityEngine.Random.Range(i, modelIndices.Count);
+                modelIndices[i] = modelIndices[randomIndex];
+                modelIndices[randomIndex] = temp;
+            }
+
+            int gameModeVal = 0;
+            if (runner.SessionInfo != null && runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+            {
+                gameModeVal = (int)gmProp;
+            }
+
+            int spawnIndex = 0;
             foreach (var player in runner.ActivePlayers)
             {
-                SpawnGameCharacter(runner, player);
+                // Find this player's RoomPlayer from the lobby list to map their chosen team and index
+                RoomPlayer roomPlayer = RoomPlayer.Players.Find(rp => rp.Object != null && rp.Object.InputAuthority == player);
+                
+                int assignedIndex = spawnIndex;
+                if (roomPlayer != null)
+                {
+                    int lobbyIndex = RoomPlayer.Players.IndexOf(roomPlayer);
+                    if (lobbyIndex != -1)
+                    {
+                        assignedIndex = lobbyIndex;
+                    }
+                }
+
+                int assignedModel = modelIndices[assignedIndex % modelIndices.Count];
+                
+                // Determine team
+                int assignedTeam = 0;
+                if (gameModeVal == 1) // Team Match (2 vs 2)
+                {
+                    if (roomPlayer != null)
+                    {
+                        assignedTeam = roomPlayer.Team; // Directly use their chosen team from RoomPlayer
+                    }
+                    else
+                    {
+                        assignedTeam = (assignedIndex < 2) ? 0 : 1; // Fallback
+                    }
+                }
+                else // Solo mode
+                {
+                    assignedTeam = assignedIndex % 3; // Cycle colors: 0 (Blue), 1 (Red), 2 (Green)
+                }
+
+                SpawnGameCharacter(runner, player, assignedModel, assignedTeam);
+                spawnIndex++;
             }
         }
     }
@@ -350,7 +401,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         //}
     }
 
-    void SpawnGameCharacter(NetworkRunner runner, PlayerRef player)
+    void SpawnGameCharacter(NetworkRunner runner, PlayerRef player, int assignedModelNum = -1, int assignedTeam = 0)
     {
         if (runner.GetPlayerObject(player) != null)
         {
@@ -365,8 +416,21 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
 
-        runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
-        Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
+        if (assignedModelNum == -1)
+        {
+            assignedModelNum = UnityEngine.Random.Range(0, 4);
+        }
+
+        runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player, (runner, obj) => {
+            Player p = obj.GetComponent<Player>();
+            if (p != null)
+            {
+                p.ModelNum = assignedModelNum;
+                p.IsModelAssigned = true;
+                p.team = assignedTeam; // Assign networked team property
+            }
+        });
+        Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos}) (모델: {assignedModelNum}) (팀: {assignedTeam})");
     }
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)

@@ -21,6 +21,7 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
     public TMP_Dropdown roundsDropdown; // 1, 3, 5
     public TMP_Dropdown livesDropdown;  // 1, 2, 3
     public TMP_InputField timeInput;    // Manual input for seconds
+    public TMP_Dropdown gameModeDropdown; // Solo, Team (2vs2)
 
     private NetworkRunner _runner;
 
@@ -86,6 +87,9 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
         customProperties.Add("Lives", lives);
         customProperties.Add("Time", time);
 
+        int gameModeVal = gameModeDropdown != null ? gameModeDropdown.value : 0;
+        customProperties.Add("GameMode", gameModeVal);
+
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Host,
@@ -106,6 +110,7 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
         // 2. 새로운 버튼 생성
         foreach (SessionInfo session in sessionList)
         {
+            if (!session.IsVisible || !session.IsOpen) continue;
             if (session.PlayerCount >= session.MaxPlayers) continue;
 
             var btnObj = Instantiate(roomItemPrefab, roomListContent);

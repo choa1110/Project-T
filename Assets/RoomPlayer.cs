@@ -9,10 +9,17 @@ public class RoomPlayer : NetworkBehaviour
     [Networked] public string NickName { get; set; } // 닉네임 공유
     [Networked] public NetworkBool IsReady { get; set; } // 레디 상태 공유
     [Networked] public NetworkBool IsLeader { get; set; } // 방장 정보
+    [Networked] public int Team { get; set; } // 팀 정보 (0: RED, 1: BLUE)
     
     public override void Spawned()
     {
         Players.Add(this);
+
+        if (Object.HasStateAuthority)
+        {
+            // Default Team assignment based on join order (first two -> RED (0), next two -> BLUE (1))
+            Team = (Players.Count <= 2) ? 0 : 1;
+        }
 
         if (Object.HasInputAuthority)
         {
@@ -57,5 +64,13 @@ public class RoomPlayer : NetworkBehaviour
     public void RPC_SetReady(bool state)
     {
         IsReady = state;
+    }
+
+    // 팀 변경 요청
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RPC_ToggleTeam()
+    {
+        Team = (Team == 0) ? 1 : 0;
+        Debug.Log($"[RoomPlayer] {NickName} toggled team to {Team}");
     }
 }

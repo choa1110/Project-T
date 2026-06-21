@@ -27,7 +27,7 @@ public class Player : NetworkBehaviour
     public AttackParameters paramlist;
 
     [SerializeField] int _modelNum;
-    public int team;
+    [Networked] public int team { get; set; }
     public PlayerStats stats;
     [SerializeField] int life = 3;
     [SerializeField] int jumpAbiliy;
@@ -35,6 +35,7 @@ public class Player : NetworkBehaviour
     public List<GameObject> modelList;
 
     [Networked, OnChangedRender(nameof(OnModelNumChanged))] public int ModelNum { get; set; }
+    [Networked] public NetworkBool IsModelAssigned { get; set; }
 
     public void OnModelNumChanged()
     {
@@ -145,9 +146,10 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (Object.HasStateAuthority)
+        if (Object.HasStateAuthority && !IsModelAssigned)
         {
             ModelNum = UnityEngine.Random.Range(0, modelList.Count);
+            IsModelAssigned = true;
         }
 
         // Ensure visuals are updated immediately upon spawning/syncing

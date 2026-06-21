@@ -94,9 +94,14 @@ public class AttackArea : NetworkBehaviour
     {
         if (target && target != _playerControl && !_hit_objs.Contains(target))
         {
-            // 팀 킬 방지 로직인데 2vs2 만들 예정이므로 주석처리
-            // if(_ownerPlayer.team == target.team)
-            //     return;
+            // Prevent team kills if it's a team game mode
+            if (Runner.SessionInfo != null && Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gameModeProp))
+            {
+                if ((int)gameModeProp == 1 && _playerControl != null && _playerControl.team == target.team)
+                {
+                    return;
+                }
+            }
 
             _hit_objs.Add(target);
 
