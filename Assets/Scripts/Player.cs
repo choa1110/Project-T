@@ -29,13 +29,35 @@ public class Player : NetworkBehaviour
     [SerializeField] int _modelNum;
     [Networked] public int team { get; set; }
     public PlayerStats stats;
-    [SerializeField] int life;
+    [SerializeField] int life = 3;
     [SerializeField] int jumpAbiliy;
 
     public List<GameObject> modelList;
 
     [Networked, OnChangedRender(nameof(OnModelNumChanged))] public int ModelNum { get; set; }
-    [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
+    [Networked] public NetworkBool IsModelAssigned { get; set; }
+
+    public void OnModelNumChanged()
+    {
+        for (int i = 0; i < modelList.Count; i++)
+        {
+            modelList[i].SetActive(i == ModelNum);
+        }
+
+        _info = modelList[ModelNum].GetComponent<CharacterInfo>();
+        if (_info != null)
+        {
+            _anim.avatar = _info.avatar;
+
+            // Update attack areas owner if necessary, although they might already be set
+            foreach (AttackArea area in _info.fists)
+            {
+                area.SetOwner(gameObject);
+                if (!attackAreas.Contains(area))
+                    attackAreas.Add(area);
+            }
+        }
+    }
 
     public UnityEvent onHit;
     public UnityEvent<float> onHPChange;
@@ -59,8 +81,10 @@ public class Player : NetworkBehaviour
 
     // 체력 및 스탯 변수
     [Networked] public float CurrentHP { get; set; }
-
-    int _curLife;
+    [Networked] public int CurrentLives { get; set; }
+    [Networked] public int TotalScore { get; set; }
+    [Networked] public Player LastAttacker { get; set; }
+    [Networked] float LastAttackedTimer { get; set; }
 
     List<AttackArea> attackAreas = new List<AttackArea>();
 
@@ -145,10 +169,10 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (Object.HasStateAuthority)
+        if (Object.HasStateAuthority && !IsModelAssigned)
         {
             ModelNum = UnityEngine.Random.Range(0, modelList.Count);
-            TmpRandomTeam();
+            IsModelAssigned = true;
         }
 
         // Ensure visuals are updated immediately upon spawning/syncing
@@ -209,9 +233,16 @@ public class Player : NetworkBehaviour
     {
         if (Object.HasStateAuthority)
         {
+            // Use InitialLives from GameManager (synced from Host settings)
+            int startLives = GameManager.Instance.InitialLives;
+            if (startLives <= 0) startLives = 3;
+
             CurrentHP = stats.GetStat(StatType.MaxHP).Value;
-            _curLife = life;
+            CurrentLives = startLives;
             _jumpCount = jumpAbiliy;
+            IsDead = false;
+            
+            Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}) and {CurrentHP} HP.");
         }
     }
 
@@ -250,7 +281,32 @@ public class Player : NetworkBehaviour
     {
         ApplyGravity();
 
-        if (IsDead) return;
+        NetworkInputData data = default;
+
+        if (IsDead)
+        {
+            if (GetInput(out data))
+            {
+                _curButtons = data.buttons.GetPressed(_prevButtons);
+                if (_curButtons.IsSet(InputButton.Attack))
+                {
+                    CycleSpectatorTarget();
+                }
+                _prevButtons = data.buttons;
+            }
+            return;
+        }
+
+        // Environmental death check
+        if (Object.HasStateAuthority && transform.position.y < -10f)
+        {
+            Debug.Log($"[Environmental Death] {NickName} fell at Y={transform.position.y}");
+            HandleDeath(LastAttackedTimer > 0 ? LastAttacker : null);
+            return;
+        }
+
+        if (LastAttackedTimer > 0)
+            LastAttackedTimer -= Runner.DeltaTime;
 
         _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
 
@@ -262,7 +318,7 @@ public class Player : NetworkBehaviour
         ProcessPulling();
         ProcessCoolDown();
 
-        if (GetInput(out NetworkInputData data))
+        if (GetInput(out data))
         {
             _curButtons = data.buttons.GetPressed(_prevButtons);
 
@@ -410,7 +466,7 @@ public class Player : NetworkBehaviour
             _skill.OnSkillUse();
     }
 
-    public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    public void ApplyHit(Player attacker, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
         onHit.Invoke();
@@ -434,13 +490,20 @@ public class Player : NetworkBehaviour
         {
         }
 
+        if (attacker != null && attacker != this)
+        {
+            LastAttacker = attacker;
+            LastAttackedTimer = 5f;
+        }
+
         onHit.Invoke();
 
-        ChangeHP(-damage);
-
+        CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
+    
         if (Object.HasStateAuthority && CurrentHP <= 0)
         {
             Debug.Log($"[HP Death] {NickName} reached 0 HP.");
+            HandleDeath(attacker);
             return;
         }
 
@@ -451,6 +514,78 @@ public class Player : NetworkBehaviour
         StartKnockback(kbDir * finalKnockPow);
 
         RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+    }
+
+    void HandleDeath(Player killer)
+    {
+        if (!Object.HasStateAuthority) return;
+
+        CurrentLives--;
+        Debug.Log($"[HandleDeath] {NickName} died. Remaining Lives: {CurrentLives}");
+
+        if (killer != null && killer != this)
+        {
+            killer.TotalScore += 3; // 3 points for elimination
+            Debug.Log($"{killer.NickName} eliminated {NickName}!");
+        }
+
+        if (CurrentLives > 0)
+        {
+            // Respawn
+            CurrentHP = stats.GetStat(StatType.MaxHP).Value;
+            
+            // Reset velocities
+            _horVelocity = Vector3.zero;
+            _verVelocity = 0f;
+            _externalVelocity = Vector3.zero;
+            CurrentKnockbackVelocity = Vector3.zero;
+
+            // Random spawn position within reasonable bounds (adjust based on map)
+            float randomX = UnityEngine.Random.Range(-10f, 10f);
+            float randomZ = UnityEngine.Random.Range(-10f, 10f);
+            Vector3 spawnPos = new Vector3(randomX, 5f, randomZ);
+            
+            _ncc.Teleport(spawnPos);
+            
+            LastAttacker = null;
+            LastAttackedTimer = 0f;
+            
+            Debug.Log($"{NickName} respawned at {spawnPos}.");
+        }
+        else
+        {
+            IsDead = true;
+            Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
+            RPC_SetSpectatorMode();
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_SetSpectatorMode()
+    {
+        Debug.Log($"[SpectatorMode] Disabling visuals for {NickName}");
+        foreach (var model in modelList)
+        {
+            model.SetActive(false);
+        }
+        _ncc.enabled = false;
+
+        if (Object.HasInputAuthority)
+        {
+            // Initial spectator target
+            CycleSpectatorTarget();
+        }
+    }
+
+    void CycleSpectatorTarget()
+    {
+        if (!Object.HasInputAuthority) return;
+
+        Player nextTarget = GameManager.Instance.GetAlivePlayer(POV.target as Player);
+        if (nextTarget != null)
+        {
+            POV.target = nextTarget;
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

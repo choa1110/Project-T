@@ -27,24 +27,18 @@ public class HUDManager : MonoBehaviour
     public void SetOpponentUI(Player mainChar)
     {
         List<Player> list = GameManager.Instance.playerList;
+        int displayIndex = 0;
 
         for (int i = 0; i < list.Count; i++)
         {
             if (list[i] == mainChar)
                 continue;
 
-            //if (mainChar.team == list[i].team)
-            //{
-            //    print("Same Team");
-            //    LinkOpponent(list[i], 0);
-            //    LinkOpponent(list[0], i);
-            //}
-            //else
-            //{
-            //    LinkOpponent(list[i], i);
-            //}
-
-            LinkOpponent(list[i], i);
+            if (displayIndex < opponentDatas.Count)
+            {
+                LinkOpponent(list[i], displayIndex);
+                displayIndex++;
+            }
         }
     }
 
@@ -52,7 +46,31 @@ public class HUDManager : MonoBehaviour
     {
         opponentDatas[num].gameObject.SetActive(true);
         opponent.linkedOpponentData = opponentDatas[num];
-        opponentDatas[num].SetOpponentId(opponent.NickName.ToString());
+        
+        string displayName = opponent.NickName.ToString();
+
+        // Check if GameMode is Team Match (1)
+        bool isTeamMatch = false;
+        if (GameManager.Instance.Runner.SessionInfo != null && 
+            GameManager.Instance.Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+        {
+            isTeamMatch = (int)gmProp == 1;
+        }
+
+        if (isTeamMatch)
+        {
+            var myPlayer = GameManager.Instance.playerList.Find(p => p.Object.HasInputAuthority);
+            if (myPlayer != null && myPlayer.team == opponent.team)
+            {
+                displayName = $"[TEAM] {displayName}";
+            }
+            else
+            {
+                displayName = $"[ENEMY] {displayName}";
+            }
+        }
+
+        opponentDatas[num].SetOpponentId(displayName);
         opponentDatas[num].SetTeamColor(opponent.team);
         opponent.onHPChange.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
     }

@@ -36,6 +36,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public List<Player> playerList = new List<Player>();
 
     [Networked] public float RoundTimer { get; set; }
+    [Networked] public int MaxRounds { get; set; }
+    [Networked] public int InitialLives { get; set; }
+    [Networked] public float RoundDuration { get; set; }
+    [Networked] TickTimer transitionTimer { get; set; }
+    [Networked] bool _isTransitioning { get; set; }
+
     public CardUI cardUI;
     bool _isCardUIOpened = false;
 
@@ -96,8 +102,19 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (Object.HasStateAuthority)
         {
-            RoundTimer = 10f; //test는 30초로 , 180초로 수정해야됌
+            // Sync settings from SessionProperties
+            if (Runner.SessionInfo.Properties.TryGetValue("Rounds", out var rounds)) MaxRounds = (int)rounds;
+            else MaxRounds = 3;
+
+            if (Runner.SessionInfo.Properties.TryGetValue("Lives", out var lives)) InitialLives = (int)lives;
+            else InitialLives = 3;
+
+            if (Runner.SessionInfo.Properties.TryGetValue("Time", out var time)) RoundDuration = (int)time;
+            else RoundDuration = 120f;
+
+            RoundTimer = RoundDuration;
             _isCardUIOpened = false;
+            _isTransitioning = false;
             randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
         }
     }
@@ -108,6 +125,23 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (Object.HasStateAuthority)
         {
+            if (_isTransitioning)
+            {
+                if (transitionTimer.Expired(Runner))
+                {
+                    _isTransitioning = false;
+                    if (CurrentRound < MaxRounds)
+                    {
+                        StartNextRound();
+                    }
+                    else
+                    {
+                        DeclareWinner();
+                    }
+                }
+                return;
+            }
+
             if (RoundTimer > 0 && !_isCardUIOpened)
             {
                 RoundTimer -= Runner.DeltaTime;
@@ -117,7 +151,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                     RoundTimer = 0;
                     _isCardUIOpened = true;
 
-                    //RPC_ShowCardUI(CurrentRound); 
+                    EndRound();
                 }
             }
 
@@ -131,6 +165,85 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
             }
         }
+    }
+
+    void EndRound()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        // Calculate rankings for the round
+        var rankedPlayers = playerList
+            .OrderByDescending(p => p.IsDead ? -1 : (p.CurrentLives * 1000 + p.CurrentHP))
+            .ToList();
+
+        for (int i = 0; i < rankedPlayers.Count; i++)
+        {
+            int points = 0;
+            switch (i)
+            {
+                case 0: points = 10; break;
+                case 1: points = 8; break;
+                case 2: points = 5; break;
+                case 3: points = 3; break;
+            }
+            rankedPlayers[i].TotalScore += points;
+            Debug.Log($"[Round End] {rankedPlayers[i].NickName} ranked {i + 1} and got {points} points.");
+        }
+
+        // Show Card UI for upgrades
+        RPC_ShowCardUI(CurrentRound);
+        
+        // Start transition timer (e.g., 15 seconds to select cards)
+        transitionTimer = TickTimer.CreateFromSeconds(Runner, 15f);
+        _isTransitioning = true;
+    }
+
+    void DeclareWinner()
+    {
+        var winner = playerList.OrderByDescending(p => p.TotalScore).FirstOrDefault();
+        if (winner != null)
+        {
+            Debug.Log($"[Game Over] Winner is {winner.NickName} with {winner.TotalScore} points!");
+        }
+    }
+
+    public void StartNextRound()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        CurrentRound++;
+        RoundTimer = RoundDuration;
+        _isCardUIOpened = false;
+
+        foreach (var player in playerList)
+        {
+            player.RoundStart();
+            RPC_ResetPlayerVisuals(player.Object);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_ResetPlayerVisuals(NetworkObject playerObj)
+    {
+        if (playerObj == null) return;
+        Player p = playerObj.GetComponent<Player>();
+        if (p != null)
+        {
+            p.OnModelNumChanged(); // This re-enables the current model
+            p.GetComponent<NetworkCharacterController>().enabled = true;
+        }
+    }
+
+    public Player GetAlivePlayer(Player current)
+    {
+        var alivePlayers = playerList.Where(p => !p.IsDead).ToList();
+        if (alivePlayers.Count == 0) return null;
+
+        if (current == null || !alivePlayers.Contains(current))
+            return alivePlayers[0];
+
+        int index = alivePlayers.IndexOf(current);
+        return alivePlayers[(index + 1) % alivePlayers.Count];
     }
 
     bool CanSpawnRandomBox()
@@ -209,9 +322,60 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer)
         {
+            // Shuffle model indices [0, 1, 2, 3] to assign unique models to each player
+            List<int> modelIndices = new List<int> { 0, 1, 2, 3 };
+            for (int i = 0; i < modelIndices.Count; i++)
+            {
+                int temp = modelIndices[i];
+                int randomIndex = UnityEngine.Random.Range(i, modelIndices.Count);
+                modelIndices[i] = modelIndices[randomIndex];
+                modelIndices[randomIndex] = temp;
+            }
+
+            int gameModeVal = 0;
+            if (runner.SessionInfo != null && runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+            {
+                gameModeVal = (int)gmProp;
+            }
+
+            int spawnIndex = 0;
             foreach (var player in runner.ActivePlayers)
             {
-                SpawnGameCharacter(runner, player);
+                // Find this player's RoomPlayer from the lobby list to map their chosen team and index
+                RoomPlayer roomPlayer = RoomPlayer.Players.Find(rp => rp.Object != null && rp.Object.InputAuthority == player);
+                
+                int assignedIndex = spawnIndex;
+                if (roomPlayer != null)
+                {
+                    int lobbyIndex = RoomPlayer.Players.IndexOf(roomPlayer);
+                    if (lobbyIndex != -1)
+                    {
+                        assignedIndex = lobbyIndex;
+                    }
+                }
+
+                int assignedModel = modelIndices[assignedIndex % modelIndices.Count];
+                
+                // Determine team
+                int assignedTeam = 0;
+                if (gameModeVal == 1) // Team Match (2 vs 2)
+                {
+                    if (roomPlayer != null)
+                    {
+                        assignedTeam = roomPlayer.Team; // Directly use their chosen team from RoomPlayer
+                    }
+                    else
+                    {
+                        assignedTeam = (assignedIndex < 2) ? 0 : 1; // Fallback
+                    }
+                }
+                else // Solo mode
+                {
+                    assignedTeam = assignedIndex % 3; // Cycle colors: 0 (Blue), 1 (Red), 2 (Green)
+                }
+
+                SpawnGameCharacter(runner, player, assignedModel, assignedTeam);
+                spawnIndex++;
             }
         }
     }
@@ -237,7 +401,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         //}
     }
 
-    void SpawnGameCharacter(NetworkRunner runner, PlayerRef player)
+    void SpawnGameCharacter(NetworkRunner runner, PlayerRef player, int assignedModelNum = -1, int assignedTeam = 0)
     {
         if (runner.GetPlayerObject(player) != null)
         {
@@ -252,9 +416,21 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
 
-        NetworkObject playerCharacter = runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
-        runner.SetPlayerObject(player, playerCharacter);
-        Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos})");
+        if (assignedModelNum == -1)
+        {
+            assignedModelNum = UnityEngine.Random.Range(0, 4);
+        }
+
+        runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player, (runner, obj) => {
+            Player p = obj.GetComponent<Player>();
+            if (p != null)
+            {
+                p.ModelNum = assignedModelNum;
+                p.IsModelAssigned = true;
+                p.team = assignedTeam; // Assign networked team property
+            }
+        });
+        Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos}) (모델: {assignedModelNum}) (팀: {assignedTeam})");
     }
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)

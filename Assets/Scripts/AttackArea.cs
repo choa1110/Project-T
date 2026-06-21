@@ -94,9 +94,14 @@ public class AttackArea : NetworkBehaviour
     {
         if (target && target != _playerControl && !_hit_objs.Contains(target))
         {
-            // 팀 킬 방지 로직인데 2vs2 만들 예정이므로 주석처리
-            // if(_ownerPlayer.team == target.team)
-            //     return;
+            // Prevent team kills if it's a team game mode
+            if (Runner.SessionInfo != null && Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gameModeProp))
+            {
+                if ((int)gameModeProp == 1 && _playerControl != null && _playerControl.team == target.team)
+                {
+                    return;
+                }
+            }
 
             _hit_objs.Add(target);
 
@@ -113,6 +118,7 @@ public class AttackArea : NetworkBehaviour
             {
                 Rpc_RequestHitToServer(
                     target.Object,
+                    _playerControl.Object,
                     hitPos,
                     _damPow,
                     knockDir,
@@ -122,19 +128,20 @@ public class AttackArea : NetworkBehaviour
             }
             else if (Object.HasStateAuthority)
             {
-                target.ApplyHit(hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
+                target.ApplyHit(_playerControl, hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
             }
         }
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    void Rpc_RequestHitToServer(NetworkObject targetObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    void Rpc_RequestHitToServer(NetworkObject targetObject, NetworkObject attackerObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (targetObject == null) return;
 
         Player targetPlayer = targetObject.GetComponent<Player>();
+        Player attackerPlayer = attackerObject != null ? attackerObject.GetComponent<Player>() : null;
 
         if (targetPlayer != null)
-            targetPlayer.ApplyHit(hitPos, damage, knockDir, knockPow, camShake);
+            targetPlayer.ApplyHit(attackerPlayer, hitPos, damage, knockDir, knockPow, camShake);
     }
 }

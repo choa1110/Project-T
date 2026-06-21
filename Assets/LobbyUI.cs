@@ -17,6 +17,12 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
     public Transform roomListContent;  
     public Button roomItemPrefab;      
 
+    [Header("Room Settings")]
+    public TMP_Dropdown roundsDropdown; // 1, 3, 5
+    public TMP_Dropdown livesDropdown;  // 1, 2, 3
+    public TMP_InputField timeInput;    // Manual input for seconds
+    public TMP_Dropdown gameModeDropdown; // Solo, Team (2vs2)
+
     private NetworkRunner _runner;
 
     void Start()
@@ -62,12 +68,35 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
         string rName = roomNameInput.text;
         if (string.IsNullOrEmpty(rName)) return;
 
+        // Get values from dropdowns
+        int rounds = roundsDropdown != null ? int.Parse(roundsDropdown.options[roundsDropdown.value].text) : 3;
+        int lives = livesDropdown != null ? int.Parse(livesDropdown.options[livesDropdown.value].text) : 3;
+        
+        // Parse time from InputField
+        int time = 120; // Default
+        if (timeInput != null && !string.IsNullOrEmpty(timeInput.text))
+        {
+            if (int.TryParse(timeInput.text, out int parsedTime))
+            {
+                time = parsedTime;
+            }
+        }
+
+        var customProperties = new Dictionary<string, SessionProperty>();
+        customProperties.Add("Rounds", rounds);
+        customProperties.Add("Lives", lives);
+        customProperties.Add("Time", time);
+
+        int gameModeVal = gameModeDropdown != null ? gameModeDropdown.value : 0;
+        customProperties.Add("GameMode", gameModeVal);
+
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Host,
             SessionName = rName,
             Scene = SceneRef.FromIndex(1), 
             PlayerCount = 4,
+            SessionProperties = customProperties,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
     }
@@ -81,6 +110,7 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
         // 2. 새로운 버튼 생성
         foreach (SessionInfo session in sessionList)
         {
+            if (!session.IsVisible || !session.IsOpen) continue;
             if (session.PlayerCount >= session.MaxPlayers) continue;
 
             var btnObj = Instantiate(roomItemPrefab, roomListContent);
