@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db46384528646364da42ca202fa6bf76, type: 3}
   m_Name: Phoenix
   m_EditorClassIdentifier: Assembly-CSharp::Buff
-  buffName: 
-  buffNum: 0
-  rank: 0
+  buffName: Pheonix
+  buffNum: 111
+  rank: 3
   icon: {fileID: 0}
-  discription: 
-  isInfinite: 0
+  discription: Grants an extra life
+  isInfinite: 1
   isConditional: 0
   duration: 0
   conditions: []
-  effects: []
+  effects:
+  - {fileID: 11400000, guid: c6b7247cf29fdd5418c5a5a25f8260ee, type: 2}

@@ -104,7 +104,23 @@ public class Player : NetworkBehaviour
     [Networked] float CurrentCoolDown { get; set; }
     [Networked] float SkillDurationTimer { get; set; } // 스킬 지속시간 체크용
 
+    [Networked, OnChangedRender(nameof(OnNickNameChanged))] public NetworkString<_32> NickName { get; set; }
+
     public OpponentData linkedOpponentData;
+
+    void OnNickNameChanged()
+    {
+        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
+        {
+            HUDManager.Instance.charName.text = NickName.ToString();
+        }
+
+        if (linkedOpponentData != null)
+        {
+            linkedOpponentData.SetOpponentId(NickName.ToString());
+        }
+    }
+
 
     [SerializeField] private LayerMask _groundLayer;
 
@@ -130,41 +146,6 @@ public class Player : NetworkBehaviour
         stats.InitalizeStats();
 
         shockBlast.SetOwner(this);
-    }
-
-    public void OnModelNumChanged()
-    {
-        for (int i = 0; i < modelList.Count; i++)
-        {
-            modelList[i].SetActive(i == ModelNum);
-        }
-
-        _info = modelList[ModelNum].GetComponent<CharacterInfo>();
-        if (_info != null)
-        {
-            _anim.avatar = _info.avatar;
-
-            // Update attack areas owner if necessary, although they might already be set
-            foreach (AttackArea area in _info.fists)
-            {
-                area.SetOwner(gameObject);
-                if (!attackAreas.Contains(area))
-                    attackAreas.Add(area);
-            }
-        }
-    }
-
-    void OnNickNameChanged()
-    {
-        if (Object.HasInputAuthority && HUDManager.Instance != null && HUDManager.Instance.charName != null)
-        {
-            HUDManager.Instance.charName.text = NickName.ToString();
-        }
-
-        if (linkedOpponentData != null)
-        {
-            linkedOpponentData.SetOpponentId(NickName.ToString());
-        }
     }
 
     public override void Spawned()
@@ -466,7 +447,7 @@ public class Player : NetworkBehaviour
             _skill.OnSkillUse();
     }
 
-    public void ApplyHit(Player attacker, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
         onHit.Invoke();
@@ -488,18 +469,14 @@ public class Player : NetworkBehaviour
 
         if (attacker != null && attacker != this)
         {
-        }
-
-        if (attacker != null && attacker != this)
-        {
             LastAttacker = attacker;
             LastAttackedTimer = 5f;
         }
 
         onHit.Invoke();
 
-        CurrentHP = Mathf.Clamp(CurrentHP - damage, 0, stats.GetStat(StatType.MaxHP).Value);
-    
+        ChangeHP(-damage);
+
         if (Object.HasStateAuthority && CurrentHP <= 0)
         {
             Debug.Log($"[HP Death] {NickName} reached 0 HP.");
