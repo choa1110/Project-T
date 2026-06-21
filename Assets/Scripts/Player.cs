@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using Fusion;
 using System.Collections;
-using UnityEngine.UIElements;
 
 public enum ExtraStatType
 {
@@ -99,9 +98,14 @@ public class Player : NetworkBehaviour
 
     public GameObject barrier;
 
+    [SerializeField] ParticleSystem hitEffect;
+    [SerializeField] Blast shockBlast;
+
     void Awake()
     {
         stats.InitalizeStats();
+
+        shockBlast.SetOwner(this);
     }
 
     public void OnModelNumChanged()
@@ -371,6 +375,8 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void Rpc_RequestSetAbility(int skillNum)
     {
+        if (_ability != null) return;
+
         _ability = AbilityDB.Instance.SetAbility(skillNum);
 
         CurrentCoolDown = _ability.coolTime / 2;
@@ -420,10 +426,40 @@ public class Player : NetworkBehaviour
         RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
     }
 
+    public void ApplyHit(Player attacker, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
+    {
+        if (IsDead || IsSuperarmour) return;
+
+        if (attacker != null && attacker != this)
+        {
+        }
+
+        onHit.Invoke();
+
+        ChangeHP(-damage);
+
+        if (Object.HasStateAuthority && CurrentHP <= 0)
+        {
+            Debug.Log($"[HP Death] {NickName} reached 0 HP.");
+            return;
+        }
+
+        Vector3 kbDir = knockDir.normalized;
+        float knockMultiplier = !_ncc.Grounded ? 1.5f : 1.0f;
+        float finalKnockPow = (knockPow * knockMultiplier) / Mathf.Max(0.01f, stats.GetStat(StatType.Weight).Value);
+
+        StartKnockback(kbDir * finalKnockPow);
+
+        RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
     {
         SetHit(hitPos, finalKnockPow);
+
+        hitEffect.transform.position = transform.position + Vector3.up * 0.85f + (hitPos - transform.position).normalized * 0.3f;
+        hitEffect.Play();
 
         if (Object.HasInputAuthority)
             POV.CameraShake(camShake);
@@ -469,6 +505,20 @@ public class Player : NetworkBehaviour
     public void Rpc_BroadcastHpChange()
     {
         onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+    }
+
+    public void ActivateShock()
+    {
+        shockBlast.SetBlastStrength(stats.GetStat(StatType.PowDam).Value, stats.GetStat(StatType.PowKnock).Value);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastBlink()
+    {
+        if (POV)
+            POV.ToggleSoft();
+
+        _ncc.Teleport(transform.position + transform.forward.normalized * 5f);
     }
 
     // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)

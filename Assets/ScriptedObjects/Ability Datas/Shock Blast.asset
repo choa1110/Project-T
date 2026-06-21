@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d9809782fc15e74c86f19eeab01cc21, type: 3}
-  m_Name: Healing Hands
+  m_Name: Shock Blast
   m_EditorClassIdentifier: Assembly-CSharp::Ability
-  skillName: Healing Hands
-  skillNum: 1
-  icon: {fileID: 21300000, guid: 5853bc00e6bfda84ea9030e0486a1c44, type: 3}
-  coolTime: 10
+  skillName: Shock Blast
+  skillNum: 2
+  icon: {fileID: 1626139632, guid: fa4afc23ec0e99c498acf212626525e2, type: 3}
+  coolTime: 30
   duration: 0
-  discription: Restores 20% of Player's health
+  discription: Releases a shockwave that damages and knocks back nearby enemies

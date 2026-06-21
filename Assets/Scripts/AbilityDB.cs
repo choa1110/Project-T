@@ -31,6 +31,12 @@ public class AbilityDB : MonoBehaviour
             case 1:
                 OnUse_HealingHands(user);
                 break;
+            case 2:
+                OnUse_ShockBlast(user);
+                break;
+            case 3:
+                OnUse_Blink(user);
+                break;
         }
 
         user.Rpc_BroadcastSkillActivate();
@@ -39,6 +45,16 @@ public class AbilityDB : MonoBehaviour
     void OnUse_HealingHands(Player user)
     {
         user.ApplyHeal(0.2f);
+    }
+
+    void OnUse_ShockBlast(Player user)
+    {
+        user.ActivateShock();
+    }
+    
+    void OnUse_Blink(Player user)
+    {
+        user.Rpc_BroadcastBlink();
     }
 
     // Rpc Request

@@ -2006,6 +2006,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDB
   abilityList:
   - {fileID: 11400000, guid: 1b4d44be074f4234ca34fc313f429c44, type: 2}
+  - {fileID: 11400000, guid: 9c12912950550dd49bd4da225883768f, type: 2}
+  - {fileID: 11400000, guid: 06d9300d4adccda4b8fd8af733c94fd9, type: 2}
 --- !u!4 &712963635
 Transform:
   m_ObjectHideFlags: 0
@@ -2279,6 +2281,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8660582988051432950, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
+      propertyPath: ability
+      value: 
+      objectReference: {fileID: 11400000, guid: 06d9300d4adccda4b8fd8af733c94fd9, type: 2}
     - target: {fileID: 8824343201074621211, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
       propertyPath: m_Name
       value: TempAbilityApplyer (1)
@@ -5673,6 +5679,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8660582988051432950, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
+      propertyPath: ability
+      value: 
+      objectReference: {fileID: 11400000, guid: 9c12912950550dd49bd4da225883768f, type: 2}
     - target: {fileID: 8824343201074621211, guid: 98d14ab93bd5927418060dbe29fc5fb5, type: 3}
       propertyPath: m_Name
       value: TempAbilityApplyer

@@ -1,6 +1,5 @@
 using UnityEngine;
 using Fusion;
-using System.Collections.Generic;
 
 public class Barrier : NetworkBehaviour
 {
