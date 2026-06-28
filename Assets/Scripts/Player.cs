@@ -675,7 +675,10 @@ public class Player : NetworkBehaviour
         _info.mesh.enabled = true;
 
         if (POV)
+        {
             POV.ToggleSoft();
+            POV.target = this;
+        }
 
         _ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
     }
