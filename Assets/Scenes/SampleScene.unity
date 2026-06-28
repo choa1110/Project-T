@@ -2585,6 +2585,9 @@ MonoBehaviour:
     RawGuidValue: ccb4a8796ce56e742a3d1a624488b116
   playerList: []
   _RoundTimer: 0
+  _MaxRounds: 0
+  _InitialLives: 0
+  _RoundDuration: 0
   cardUI: {fileID: 565050842}
   randomBoxPrefab:
     RawGuidValue: 2a77df2e54dd0fc4584eb42035e1dc8f

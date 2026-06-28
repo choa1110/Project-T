@@ -574,6 +574,7 @@ MonoBehaviour:
   _anim: {fileID: 2830943943605825183}
   _buffSystem: {fileID: 931208147735945396}
   _item: {fileID: 4328989693205893132}
+  spawnTrans: {fileID: 0}
   POV: {fileID: 0}
   paramlist: {fileID: 11400000, guid: c70fbc6d6d6193745ac6e0ee9fd8aee6, type: 2}
   _modelNum: 0
@@ -597,10 +598,8 @@ MonoBehaviour:
   - {fileID: 9063024666672490011}
   - {fileID: 634605891072362354}
   _ModelNum: 0
-  _NickName:
-    _length: 0
-    _data:
-      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _IsModelAssigned:
+    _value: 0
   onHit:
     m_PersistentCalls:
       m_Calls: []
@@ -609,6 +608,13 @@ MonoBehaviour:
       m_Calls: []
   _IsDead: 0
   _CurrentHP: 0
+  _CurrentLives: 0
+  _TotalScore: 0
+  _LastAttacker: {fileID: 0}
+  _NickName:
+    _length: 0
+    _data:
+      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   linkedOpponentData: {fileID: 0}
   _groundLayer:
     serializedVersion: 2
@@ -1440,6 +1446,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: f81a4eda03ca4704c94cb4a1ec3e507b, type: 3}
+  mesh: {fileID: 2043209950353097778}
   icon: {fileID: 0}
   fists:
   - {fileID: 5278693648806994293}
@@ -1452,6 +1459,11 @@ Transform:
 --- !u!4 &1042329123381354758 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8468768740199064795, guid: f81a4eda03ca4704c94cb4a1ec3e507b, type: 3}
+  m_PrefabInstance: {fileID: 292728907477563939}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &2043209950353097778 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1753320807660469777, guid: f81a4eda03ca4704c94cb4a1ec3e507b, type: 3}
   m_PrefabInstance: {fileID: 292728907477563939}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &3877339532606330584 stripped
@@ -1744,6 +1756,10 @@ PrefabInstance:
     - target: {fileID: -3814702860800317867, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -3814702860800317867, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -3693710536190870860, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_Layer
@@ -2161,6 +2177,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 8539615454391856635, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8560006187373318958, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -2227,6 +2247,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
+  mesh: {fileID: 6012281148180160583}
   icon: {fileID: 0}
   fists:
   - {fileID: 4737241017296882263}
@@ -2234,6 +2255,11 @@ MonoBehaviour:
 --- !u!4 &3598288508549454863 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1441880368365818291, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
+  m_PrefabInstance: {fileID: 2732883272038616508}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &6012281148180160583 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8539615454391856635, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
   m_PrefabInstance: {fileID: 2732883272038616508}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &8179857283316957518 stripped
@@ -2920,10 +2946,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 84e7c2a21aecc2842877b031d1ce3557, type: 3}
+  mesh: {fileID: 6700605026899188642}
   icon: {fileID: 0}
   fists:
   - {fileID: 6972685328622460441}
   - {fileID: 5898429543953796865}
+--- !u!137 &6700605026899188642 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -1618015599788178402, guid: 84e7c2a21aecc2842877b031d1ce3557, type: 3}
+  m_PrefabInstance: {fileID: 3852534430871592892}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8832816164563822717 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5756308580566808513, guid: 84e7c2a21aecc2842877b031d1ce3557, type: 3}
@@ -3796,6 +3828,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 8459149366153056259}
   m_SourcePrefab: {fileID: 100100000, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
+--- !u!137 &477354862203859065 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -605493852317963469, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
+  m_PrefabInstance: {fileID: 8144545776674069322}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1202620337429280489 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7041287755698089379, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
@@ -3834,6 +3871,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
+  mesh: {fileID: 477354862203859065}
   icon: {fileID: 0}
   fists:
   - {fileID: 1833654922538381043}

@@ -19,6 +19,7 @@ public class Player : NetworkBehaviour
     [SerializeField] ItemSystem _item;
 
     CharacterInfo _info;
+    public Transform spawnTrans;
 
     Ability _ability;
     SkillInterface _skill;
@@ -28,8 +29,9 @@ public class Player : NetworkBehaviour
 
     [SerializeField] int _modelNum;
     [Networked] public int team { get; set; }
+
     public PlayerStats stats;
-    [SerializeField] int life = 3;
+    [SerializeField] int life;
     [SerializeField] int jumpAbiliy;
 
     public List<GameObject> modelList;
@@ -93,6 +95,7 @@ public class Player : NetworkBehaviour
     [Networked] float KnockbackTimer { get; set; }
     [Networked] Quaternion RotateVelTarget { get; set; }
     [Networked] float RotateVelTimer { get; set; }
+    [Networked] float RespawnTimer { get; set; }
     Vector3 MinimunKnockbackVelocity;
 
     // 끌어당기기(Pull) 관련 네트워크 변수
@@ -120,7 +123,6 @@ public class Player : NetworkBehaviour
             linkedOpponentData.SetOpponentId(NickName.ToString());
         }
     }
-
 
     [SerializeField] private LayerMask _groundLayer;
 
@@ -169,11 +171,6 @@ public class Player : NetworkBehaviour
             RPC_SetNickName(myName);
         }
         StartCoroutine(WaitForSceneLoad());
-    }
-
-    void TmpRandomTeam()
-    {
-        team = Random.Range(0, 10);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -234,10 +231,14 @@ public class Player : NetworkBehaviour
 
         _anim.SetFloat("SpeedX", _blendSpeedX);
         _anim.SetFloat("SpeedY", _blendSpeedY);
+        _anim.SetBool("isDead", IsDead);
         _anim.SetBool("Jump", jumpedThisFrame);
         _anim.SetBool("Airborne", !_ncc.Grounded);
         _anim.SetInteger("ComboStep", ComboStep);
         _anim.SetInteger("Hit", HitState);
+
+        if (!Object.HasInputAuthority && !Object.HasStateAuthority)
+            _anim.Update(Time.deltaTime);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -275,6 +276,12 @@ public class Player : NetworkBehaviour
                 }
                 _prevButtons = data.buttons;
             }
+
+            RespawnTimer -= Runner.DeltaTime;
+
+            if (RespawnTimer <= 0)
+                Respawn();
+
             return;
         }
 
@@ -327,6 +334,7 @@ public class Player : NetworkBehaviour
                 ActivateSkill();
         }
 
+        ComboMove();
         _ncc.Move(_horVelocity + Vector3.up * _verVelocity + _externalVelocity);
         _externalVelocity = Vector3.zero;
 
@@ -395,6 +403,34 @@ public class Player : NetworkBehaviour
             ComboStep = Mathf.Clamp(ComboStep + 1, 0, 3);
 
             comboRegister = true;
+        }
+    }
+
+    void ComboMove()
+    {
+        if (ComboStep != 0)
+        {
+            if (Object.HasStateAuthority || Object.HasInputAuthority)
+            {
+                if (Runner.IsForward)
+                {
+                    _anim.Update(Runner.DeltaTime);
+
+                    // 3. 이번 네트워크 틱에 발생한 애니메이션 이동량 가로채기
+                    Vector3 deltaPosition = _anim.deltaPosition;
+                    Quaternion deltaRotation = _anim.deltaRotation;
+
+                    // 4. 이동량을 속도로 변환하여 NCC에 전달
+                    Vector3 velocity = deltaPosition / (Runner.DeltaTime / 10f);
+
+                    // 캐릭터 컨트롤러 이동 처리
+                    _ncc.Move(velocity);
+                    transform.rotation *= deltaRotation;
+
+                    // 5. 루트 모션 중복 적용 방지
+                    _anim.ApplyBuiltinRootMotion();
+                }
+            }
         }
     }
 
@@ -559,6 +595,7 @@ public class Player : NetworkBehaviour
         if (!Object.HasInputAuthority) return;
 
         Player nextTarget = GameManager.Instance.GetAlivePlayer(POV.target as Player);
+
         if (nextTarget != null)
         {
             POV.target = nextTarget;
@@ -611,12 +648,36 @@ public class Player : NetworkBehaviour
     {
         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
         Rpc_BroadcastHpChange();
+
+        if (CurrentHP <= 0)
+            OnDeath();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void Rpc_BroadcastHpChange()
     {
         onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
+    }
+
+    void OnDeath()
+    {
+        IsDead = true;
+
+        RespawnTimer = 5f;
+
+        //_info.mesh.enabled = false;
+    }
+
+    void Respawn()
+    {
+        ChangeHP(stats.GetStat(StatType.MaxHP).Value);
+        IsDead = false;
+        _info.mesh.enabled = true;
+
+        if (POV)
+            POV.ToggleSoft();
+
+        _ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
     }
 
     public void ActivateShock()
