@@ -421,7 +421,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             assignedModelNum = UnityEngine.Random.Range(0, 4);
         }
 
-        runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player, (runner, obj) => {
+        NetworkObject playerChar = runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player, (runner, obj) => {
             Player p = obj.GetComponent<Player>();
             if (p != null)
             {
@@ -430,6 +430,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 p.team = assignedTeam; // Assign networked team property
             }
         });
+
+        runner.SetPlayerObject(player, playerChar);
         Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos}) (모델: {assignedModelNum}) (팀: {assignedTeam})");
     }
 

@@ -54,7 +54,7 @@ public class Player : NetworkBehaviour
             // Update attack areas owner if necessary, although they might already be set
             foreach (AttackArea area in _info.fists)
             {
-                area.SetOwner(gameObject);
+                area.SetOwner(this);
                 if (!attackAreas.Contains(area))
                     attackAreas.Add(area);
             }
@@ -219,7 +219,7 @@ public class Player : NetworkBehaviour
             CurrentLives = startLives;
             _jumpCount = jumpAbiliy;
             IsDead = false;
-            
+
             Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}) and {CurrentHP} HP.");
         }
     }
@@ -237,7 +237,7 @@ public class Player : NetworkBehaviour
         _anim.SetInteger("ComboStep", ComboStep);
         _anim.SetInteger("Hit", HitState);
 
-        if (!Object.HasInputAuthority && !Object.HasStateAuthority)
+        if (ComboStep != 0 && ComboStep != 5 && !Object.HasInputAuthority && !Object.HasStateAuthority)
             _anim.Update(Time.deltaTime);
     }
 
@@ -263,6 +263,10 @@ public class Player : NetworkBehaviour
     {
         ApplyGravity();
 
+        ProcessKnockback();
+        ProcessRotateByVelocity();
+        ProcessCoolDown();
+
         NetworkInputData data = default;
 
         if (IsDead)
@@ -279,8 +283,8 @@ public class Player : NetworkBehaviour
 
             RespawnTimer -= Runner.DeltaTime;
 
-            if (RespawnTimer <= 0)
-                Respawn();
+            //if (RespawnTimer <= 0)
+            //    Respawn();
 
             return;
         }
@@ -301,10 +305,7 @@ public class Player : NetworkBehaviour
         if (_jumpStartTimer <= 0)
             jumpedThisFrame = false;
 
-        ProcessKnockback();
-        ProcessRotateByVelocity();
         ProcessPulling();
-        ProcessCoolDown();
 
         if (GetInput(out data))
         {
@@ -408,7 +409,7 @@ public class Player : NetworkBehaviour
 
     void ComboMove()
     {
-        if (ComboStep != 0)
+        if (ComboStep != 0 && ComboStep != 5)
         {
             if (Object.HasStateAuthority || Object.HasInputAuthority)
             {
@@ -416,18 +417,15 @@ public class Player : NetworkBehaviour
                 {
                     _anim.Update(Runner.DeltaTime);
 
-                    // 3. 이번 네트워크 틱에 발생한 애니메이션 이동량 가로채기
+                    // 이번 네트워크 틱에 발생한 애니메이션 이동량 가로채기
                     Vector3 deltaPosition = _anim.deltaPosition;
                     Quaternion deltaRotation = _anim.deltaRotation;
 
-                    // 4. 이동량을 속도로 변환하여 NCC에 전달
-                    Vector3 velocity = deltaPosition / (Runner.DeltaTime / 10f);
-
-                    // 캐릭터 컨트롤러 이동 처리
-                    _ncc.Move(velocity);
+                    // 이동량을 속도로 변환하여 NCC에 전달
+                    _horVelocity = deltaPosition / (Runner.DeltaTime / 10f);
                     transform.rotation *= deltaRotation;
 
-                    // 5. 루트 모션 중복 적용 방지
+                    // 루트 모션 중복 적용 방지
                     _anim.ApplyBuiltinRootMotion();
                 }
             }
