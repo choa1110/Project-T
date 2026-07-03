@@ -93,14 +93,20 @@ public class ChatManager : MonoBehaviour, IChatClientListener
     {
         currentChannel = "Lobby";
         chatClient.Subscribe(new string[] { currentChannel });
-        networkUI.ReceiveMessage("System", $"{myNickName}");
+        if (networkUI != null) 
+        {
+            networkUI.ReceiveMessage("System", $"{myNickName}");
+        }
     }
 
     public void OnGetMessages(string channelName, string[] senders, object[] messages)
     {
         for (int i = 0; i < senders.Length; i++)
         {
-            networkUI.ReceiveMessage(senders[i], messages[i].ToString());
+            if (networkUI != null) 
+            {
+                networkUI.ReceiveMessage(senders[i], messages[i].ToString());
+            }
         }
     }
 

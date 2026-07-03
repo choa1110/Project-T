@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class AbilityDB : MonoBehaviour
@@ -5,27 +6,56 @@ public class AbilityDB : MonoBehaviour
     static AbilityDB _instance;
     public static AbilityDB Instance { get => _instance; }
 
+    [SerializeField] List<Ability> abilityList;
+
     void Awake()
     {
         if (_instance == null)
             _instance = this;
+
+        abilityList.Sort((a, b) => a.skillNum.CompareTo(b.skillNum));
+    }
+
+    public Ability SetAbility(int num)
+    {
+        if (num < 1 || num > abilityList.Count)
+            return null;
+
+        return abilityList[num - 1];
     }
 
     public void ActivateAbility(int num, Player user)
     {
         switch (num)
         {
-            case 0:
-
-                break;
             case 1:
                 OnUse_HealingHands(user);
                 break;
+            case 2:
+                OnUse_ShockBlast(user);
+                break;
+            case 3:
+                OnUse_Blink(user);
+                break;
         }
+
+        user.Rpc_BroadcastSkillActivate();
     }
 
     void OnUse_HealingHands(Player user)
     {
-        user.ApplyHeal(100);
+        user.ApplyHeal(0.2f);
     }
+
+    void OnUse_ShockBlast(Player user)
+    {
+        user.ActivateShock();
+    }
+    
+    void OnUse_Blink(Player user)
+    {
+        user.Rpc_BroadcastBlink();
+    }
+
+    // Rpc Request
 }

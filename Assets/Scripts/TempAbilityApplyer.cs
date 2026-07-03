@@ -1,17 +1,20 @@
 using UnityEngine;
+using Fusion;
 
-public class TempAbilityApplyer : MonoBehaviour
+public class TempAbilityApplyer : NetworkBehaviour
 {
+    [SerializeField] NetworkObject _networkObj;
+
     public Ability ability;
 
     void OnTriggerEnter(Collider other)
     {
-        Player sys = other.GetComponent<Player>();
+        if (!Object.HasStateAuthority) return;
 
-        if (sys != null)
+        if (other.TryGetComponent<Player>(out Player sys))
         {
-            sys.SetAbility(ability);
-            Destroy(gameObject);
+            sys.Rpc_RequestSetAbility(ability.skillNum);
+            Runner.Despawn(_networkObj);
         }
     }
 }

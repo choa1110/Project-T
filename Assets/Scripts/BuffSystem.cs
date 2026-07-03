@@ -19,8 +19,6 @@ public class BuffSystem : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (!Object.HasStateAuthority) return;
-
         for (int i = _activeBuffs.Count - 1; i >= 0; i--)
         {
             _activeBuffs[i].UpdateTick(Runner.DeltaTime);
@@ -30,8 +28,11 @@ public class BuffSystem : NetworkBehaviour
         }
     }
 
-    public void ApplyBuff(Buff data)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastApplyBuff(int rank, int num)
     {
+        Buff data = BuffDB.Instance.GetBuff(rank, num);
+
         if (data == null) return;
 
         BuffFunction buff = new BuffFunction(data, _player);

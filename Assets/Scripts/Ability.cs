@@ -10,4 +10,7 @@ public class Ability : ScriptableObject
 
     public float coolTime;
     public float duration;
+
+    [TextAreaAttribute]
+    public string discription;
 }

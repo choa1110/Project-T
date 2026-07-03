@@ -27,7 +27,14 @@ public class ChatSceneUI : MonoBehaviour
         _runner = FindFirstObjectByType<NetworkRunner>();
         
         if (_runner != null && _runner.SessionInfo != null)
-            roomNameText.text = $"방: {_runner.SessionInfo.Name}";
+        {
+            string modeStr = "Solo";
+            if (_runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp) && (int)gmProp == 1)
+            {
+                modeStr = "2vs2 Team";
+            }
+            roomNameText.text = $"방: {_runner.SessionInfo.Name} ({modeStr})";
+        }
 
         if (leaveButton) leaveButton.onClick.AddListener(OnLeaveClicked);
         if (startButton) startButton.onClick.AddListener(OnStartClicked);
@@ -40,42 +47,108 @@ public class ChatSceneUI : MonoBehaviour
 
         UpdatePlayerSlots();
         UpdateButtons();    
+
+        // Press 'T' key to switch teams in Team Mode
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            ToggleMyTeam();
+        }
+    }
+
+    void ToggleMyTeam()
+    {
+        bool isTeamMatch = false;
+        if (_runner != null && _runner.SessionInfo != null && 
+            _runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+        {
+            isTeamMatch = (int)gmProp == 1;
+        }
+
+        if (isTeamMatch)
+        {
+            var myPlayer = RoomPlayer.Players.FirstOrDefault(p => p.Object.HasInputAuthority);
+            if (myPlayer != null)
+            {
+                myPlayer.RPC_ToggleTeam();
+            }
+        }
     }
 
     void UpdatePlayerSlots()
     {
-        // 현재 접속한 플레이어 리스트 가져오기
-        var players = RoomPlayer.Players; // (RoomPlayer.cs의 static 리스트)
+        var players = RoomPlayer.Players;
 
-        // 슬롯 4개를 순회하면서 채워넣기
+        bool isTeamMatch = false;
+        if (_runner != null && _runner.SessionInfo != null && 
+            _runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+        {
+            isTeamMatch = (int)gmProp == 1;
+        }
+
+        // Initialize slots as empty/placeholder
         for (int i = 0; i < 4; i++)
         {
-            // 배열 범위 체크
             if (i >= nameSlots.Length || i >= stateSlots.Length) break;
+            nameSlots[i].text = "빈 자리";
+            stateSlots[i].text = "-";
+        }
 
-            if (i < players.Count) 
-            {
-                var p = players[i];
-                nameSlots[i].text = p.NickName;
+        if (isTeamMatch)
+        {
+            int redCount = 0;
+            int blueCount = 0;
 
-                // 상태 표시 (방장 / 레디 / 대기)
-                if (p.IsLeader) 
-                    stateSlots[i].text = "<color=orange>HOST</color>";
-                else if (p.IsReady) 
-                    stateSlots[i].text = "<color=green>READY</color>";
-                else 
-                    stateSlots[i].text = "<color=red>WAIT</color>";
-                
-                // 배경 이미지가 있다면 활성화
-                if(nameSlots[i].text != null)
-                    nameSlots[i].transform.parent.gameObject.SetActive(true);
-            }
-            else
+            foreach (var p in players)
             {
-                nameSlots[i].text = "빈 자리";
-                stateSlots[i].text = "-";
+                if (p.Team == 0) // RED Team
+                {
+                    int slotIndex = 0 + redCount;
+                    if (slotIndex < 2 && slotIndex < nameSlots.Length)
+                    {
+                        nameSlots[slotIndex].text = $"<color=red>[RED]</color> {p.NickName}";
+                        stateSlots[slotIndex].text = GetStateText(p);
+                        if (nameSlots[slotIndex].transform.parent != null)
+                            nameSlots[slotIndex].transform.parent.gameObject.SetActive(true);
+                        redCount++;
+                    }
+                }
+                else // BLUE Team
+                {
+                    int slotIndex = 2 + blueCount;
+                    if (slotIndex < 4 && slotIndex < nameSlots.Length)
+                    {
+                        nameSlots[slotIndex].text = $"<color=blue>[BLUE]</color> {p.NickName}";
+                        stateSlots[slotIndex].text = GetStateText(p);
+                        if (nameSlots[slotIndex].transform.parent != null)
+                            nameSlots[slotIndex].transform.parent.gameObject.SetActive(true);
+                        blueCount++;
+                    }
+                }
             }
         }
+        else
+        {
+            // Solo match: display in join order
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (i >= nameSlots.Length || i >= stateSlots.Length) break;
+                var p = players[i];
+                nameSlots[i].text = p.NickName;
+                stateSlots[i].text = GetStateText(p);
+                if (nameSlots[i].transform.parent != null)
+                    nameSlots[i].transform.parent.gameObject.SetActive(true);
+            }
+        }
+    }
+
+    string GetStateText(RoomPlayer p)
+    {
+        if (p.IsLeader) 
+            return "<color=orange>HOST</color>";
+        else if (p.IsReady) 
+            return "<color=green>READY</color>";
+        else 
+            return "<color=red>WAIT</color>";
     }
 
     void UpdateButtons()
@@ -84,8 +157,26 @@ public class ChatSceneUI : MonoBehaviour
         {
             readyButton.gameObject.SetActive(false); 
             startButton.gameObject.SetActive(true);  
-            bool allReady = RoomPlayer.Players.Where(p => !p.Object.HasStateAuthority).All(p => p.IsReady);
-            startButton.interactable = allReady || RoomPlayer.Players.Count == 1; 
+
+            bool isTeamMatch = false;
+            if (_runner != null && _runner.SessionInfo != null && 
+                _runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+            {
+                isTeamMatch = (int)gmProp == 1;
+            }
+
+            bool allReady = RoomPlayer.Players.Where(p => !p.Object.HasInputAuthority).All(p => p.IsReady);
+
+            if (isTeamMatch)
+            {
+                // Team Match requires exactly 4 players, and all clients must be ready
+                startButton.interactable = (RoomPlayer.Players.Count == 4) && allReady;
+            }
+            else
+            {
+                // Solo match requires all clients to be ready (allows starting with 1 player for local testing)
+                startButton.interactable = allReady || RoomPlayer.Players.Count == 1; 
+            }
         }
         else 
         {
@@ -107,6 +198,43 @@ public class ChatSceneUI : MonoBehaviour
 
     public void OnStartClicked()
     {
+        bool isTeamMatch = false;
+        if (_runner != null && _runner.SessionInfo != null && 
+            _runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+        {
+            isTeamMatch = (int)gmProp == 1;
+        }
+
+        // Only start if all client players are ready
+        bool allReady = RoomPlayer.Players.Where(p => !p.Object.HasInputAuthority).All(p => p.IsReady);
+        
+        if (isTeamMatch)
+        {
+            if (RoomPlayer.Players.Count < 4)
+            {
+                Debug.LogWarning("Cannot start Team Match: Needs 4 players!");
+                return;
+            }
+            if (!allReady)
+            {
+                Debug.LogWarning("Cannot start Team Match: Not all players are ready!");
+                return;
+            }
+        }
+        else
+        {
+            if (!allReady && RoomPlayer.Players.Count > 1)
+            {
+                Debug.LogWarning("Cannot start game: Not all players are ready!");
+                return;
+            }
+        }
+
+        if (_runner.IsServer && _runner.SessionInfo != null)
+        {
+            _runner.SessionInfo.IsOpen = false;
+            _runner.SessionInfo.IsVisible = false;
+        }
         _runner.LoadScene(SceneRef.FromIndex(2));
     }
 
