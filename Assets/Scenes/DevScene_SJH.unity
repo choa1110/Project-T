@@ -1791,8 +1791,7 @@ MonoBehaviour:
   itemList:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
-  missilePrefab:
-    RawGuidValue: 3d7456119c758dc499915b74e758828d
+  missile: {fileID: 0}
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0
@@ -1891,6 +1890,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   playerPrefab:
     RawGuidValue: ccb4a8796ce56e742a3d1a624488b116
+  playerList: []
   _RoundTimer: 0
   _CurrentRound: 1
   itemBoxPrefab:
@@ -1933,6 +1933,7 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 851641442}
   - {fileID: 851641446}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &851641445

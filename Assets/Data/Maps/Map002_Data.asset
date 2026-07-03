@@ -12,8 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9710d291822f814b9216287f83c2147, type: 3}
   m_Name: Map002_Data
   m_EditorClassIdentifier: Assembly-CSharp::MapData
-  mapName: Map 002
-  description: "\uB450 \uBC88\uC9F8 \uB9F5"
-  thumbnail: {fileID: 0}
+  mapName: "\uC5BC\uC74C \uD589\uC131"
+  description: "\uC628\uD1B5 \uC5BC\uC74C\uC73C\uB85C \uB36E\uC778 \uD589\uC131.
+    \uBC14\uB2E5\uC774 \uBBF8\uB044\uB7EC\uC6CC \uAD00\uC131\uC774 \uBD99\uC73C\uB2C8
+    \uC774\uB3D9\uC5D0 \uC8FC\uC758\uD574\uC57C \uD55C\uB2E4."
+  thumbnail: {fileID: 21300000, guid: 6fec59a30815a89478bf3f7e5d3c05b5, type: 3}
   mapPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: ed8d017626ecb4a4887785eed11c3b78

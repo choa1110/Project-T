@@ -220,6 +220,7 @@ Transform:
   - {fileID: 7419549801399461457}
   - {fileID: 1481685289585516285}
   - {fileID: 6306695079380041913}
+  - {fileID: 3523664673305840863}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &-3181820073227594116
@@ -238,7 +239,8 @@ MonoBehaviour:
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
-  NetworkedBehaviours: []
+  NetworkedBehaviours:
+  - {fileID: 5288423527341356778}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &7628978015300548764
 MonoBehaviour:
@@ -429,6 +431,74 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6306695079380041913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7710386876182331780
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3523664673305840863}
+  - component: {fileID: 788522425226917516}
+  - component: {fileID: 5288423527341356778}
+  m_Layer: 0
+  m_Name: IceZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3523664673305840863
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7710386876182331780}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8718004080724188180}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &788522425226917516
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7710386876182331780}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 200, y: 6, z: 200}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5288423527341356778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7710386876182331780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89eaff042f88894448a47eff96097b04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IceGimmick
+  requireTrigger: 1
+  slipRefresh: 0.3
 --- !u!1 &8023276960537763503
 GameObject:
   m_ObjectHideFlags: 0
@@ -519,10 +589,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 835c627928601f14ab8c02028291358c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6251540023056591998}
   m_SourcePrefab: {fileID: 100100000, guid: 835c627928601f14ab8c02028291358c, type: 3}
 --- !u!4 &7419549801399461457 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 835c627928601f14ab8c02028291358c, type: 3}
   m_PrefabInstance: {fileID: 7024824073641345466}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7907293552895098091 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 835c627928601f14ab8c02028291358c, type: 3}
+  m_PrefabInstance: {fileID: 7024824073641345466}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &6251540023056591998
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7907293552895098091}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 7027636043351174211, guid: 835c627928601f14ab8c02028291358c, type: 3}

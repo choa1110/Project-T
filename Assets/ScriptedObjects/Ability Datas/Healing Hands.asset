@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ability
   skillName: Healing Hands
   skillNum: 1
-  icon: {fileID: 21300000, guid: 5853bc00e6bfda84ea9030e0486a1c44, type: 3}
+  icon: {fileID: 21300000, guid: 3089b027054b0bd42a0eb28fc2fa1551, type: 3}
   coolTime: 10
   duration: 0

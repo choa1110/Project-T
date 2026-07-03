@@ -383,7 +383,7 @@ CharacterController:
   m_Height: 1.7
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.102
   m_SkinWidth: 0.0001
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.85, z: 0}
@@ -1310,7 +1310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: f81a4eda03ca4704c94cb4a1ec3e507b, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 2cd4956ae4638964ab71d13d1cac5830, type: 3}
   fists:
   - {fileID: 5278693648806994293}
   - {fileID: 36192030086037934}
@@ -2003,7 +2003,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 761f8dfa87de85a468c7bb470366d0f6, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: bf00ecd7208098142840286c9deabe01, type: 3}
   fists:
   - {fileID: 4737241017296882263}
   - {fileID: 2615523800257740494}
@@ -2696,7 +2696,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 84e7c2a21aecc2842877b031d1ce3557, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: fbfffebf220c90142a35e1d95f309014, type: 3}
   fists:
   - {fileID: 6972685328622460441}
   - {fileID: 5898429543953796865}
@@ -3479,7 +3479,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   avatar: {fileID: 9000000, guid: 7a318391d7273754c8106514a8f88bb8, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4cd96a99f3393b64bb84c84fc37aa1fe, type: 3}
   fists:
   - {fileID: 1833654922538381043}
   - {fileID: 2533276181512865774}
