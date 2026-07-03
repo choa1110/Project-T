@@ -9,13 +9,23 @@ public class BuffManager : NetworkBehaviour
     [Networked] private int  _done  { get; set; }
     [Networked] private int  _total { get; set; }
     [Networked] public  bool IsSelectionPhase { get; set; }
+    [Networked] TickTimer _phaseTimeout { get; set; }
 
     void Awake() { Instance = this; }
+    public override void FixedUpdateNetwork()
+    {
+        if (Object.HasStateAuthority && IsSelectionPhase && _phaseTimeout.Expired(Runner))
+        {
+            Debug.Log("[BuffManager] 버프 선택 타임아웃 -> 강제 종료");
+            PhaseEnd(true);
+        }
+    }
 
     public void StartBuffSelectionPhase(int rank)
     {
         if (!Object.HasStateAuthority) return;
         _done = 0; _total = 0; IsSelectionPhase = true;
+        _phaseTimeout = TickTimer.CreateFromSeconds(Runner, 20f);
         Debug.Log($"[BuffManager] 버프 선택 페이즈 시작 (rank {rank})");
         foreach (var pr in Runner.ActivePlayers)
         {

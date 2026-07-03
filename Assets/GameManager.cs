@@ -34,6 +34,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Networked] public int   MaxRounds { get; set; }
     [Networked] public int   InitialLives { get; set; }
     [Networked] public float RoundDuration { get; set; }
+    [Networked] public bool GameOver { get; set; }
     bool _isCardUIOpened = false;
 
     // ── 맵 (HEAD) ──
@@ -107,6 +108,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public override void FixedUpdateNetwork()
     {
         if (!Object.HasStateAuthority) return;
+        if (GameOver) return;
 
         if (RoundTimer > 0 && !_isCardUIOpened)
         {
@@ -150,8 +152,18 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     void DeclareWinner()
     {
         var winner = playerList.OrderByDescending(p => p.TotalScore).FirstOrDefault();
-        if (winner != null)
-            Debug.Log($"[Game Over] Winner: {winner.NickName} ({winner.TotalScore}pts)");
+        string wname = winner != null ? winner.NickName.ToString() : "무승부";
+        int wscore = winner != null ? winner.TotalScore : 0;
+        GameOver = true;
+        Debug.Log($"[Game Over] Winner: {wname} ({wscore}pts)");
+        RPC_GameOver(wname, wscore);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RPC_GameOver(string winnerName, int winnerScore)
+    {
+        GameOverUI.Instance?.Show(winnerName, winnerScore);
+        Debug.Log($"[Game Over] 승자: {winnerName} ({winnerScore}점)");
     }
 
     // BuffManager.PhaseEnd 에서 호출됨
@@ -172,8 +184,9 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             player.RoundStart();
             RPC_ResetPlayerVisuals(player.Object);
-            // ⚠️[확인필요] 새 맵 스폰포인트로 재배치가 필요하면 여기서 처리
-            // (Player에 public 텔레포트가 없어 일단 미적용 — 낙사 방지 위해 테스트 요망)
+            // [머지-fix] 새 맵 스폰포인트로 재배치 (낙사 방지)
+            var ncc = player.GetComponent<NetworkCharacterController>();
+            if (ncc != null) ncc.Teleport(CalcSpawnPos(player.Object.InputAuthority.PlayerId));
         }
         Debug.Log($"[GM] 라운드 {CurrentRound} 시작");
     }
