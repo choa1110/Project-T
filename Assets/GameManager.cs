@@ -231,7 +231,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (!playerList.Contains(player)) playerList.Add(player);
     }
 
-    public Player GetClosestOpponent(Player user)
+    public Player GetClosesetOpponent(Player user)
     {
         Player target = null;
         float minDist = float.MaxValue;

@@ -46,7 +46,7 @@ public class BuffManager : NetworkBehaviour
             if (pl != null)
             {
                 Buff b = BuffDatabase.Instance?.GetBuffByID(id);
-                if (b != null) { Debug.Log($"[BuffManager] {info.Source}: {b.buffName}"); pl.GetComponent<BuffSystem>().ApplyBuff(b); }
+                if (b != null) { Debug.Log($"[BuffManager] {info.Source}: {b.buffName}"); pl.GetComponent<BuffSystem>().Rpc_BroadcastApplyBuff(b.rank, b.buffNum); }
                 else Debug.LogWarning($"[BuffManager] buffID={id} 없음");
             }
         }

@@ -147,5 +147,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74984e12fa33fe6439f5521422fc9094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TempAbilityApplyer
-  _networkObj: {fileID: -5695456738903884966}
+  _networkObj: {fileID: 0}
   ability: {fileID: 11400000, guid: 1b4d44be074f4234ca34fc313f429c44, type: 2}

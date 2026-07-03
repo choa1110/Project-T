@@ -222,7 +222,7 @@ public class Player : NetworkBehaviour
         if (selectedBuff != null)
         {
             // [머지] 버프 스택을 HEAD로 통일 → ApplyBuff 사용
-            _buffSystem.ApplyBuff(selectedBuff);
+            _buffSystem.Rpc_BroadcastApplyBuff(selectedBuff.rank, selectedBuff.buffNum);
             Debug.Log($"[서버] {Object.InputAuthority} 버프 적용: {selectedBuff.name}");
         }
         else Debug.LogWarning($"[Player] buffIndex={buffIndex} 버프 없음");
