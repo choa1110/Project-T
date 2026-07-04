@@ -66,19 +66,17 @@ public class AttackArea : NetworkBehaviour
 
     public void AttackStart()
     {
-        if (Object.HasStateAuthority)
-        {
-            _hit_objs.Clear();
+        Debug.Log("Start " + this);
 
-            _inAttack = true;
-            _prevPoint = transform.position;
-        }
+        _hit_objs.Clear();
+
+        _inAttack = true;
+        _prevPoint = transform.position;
     }
 
     public void AttackEnd()
     {
-        if (Object.HasStateAuthority)
-            _inAttack = false;
+        _inAttack = false;
     }
 
     void CheckCollides(Player target)
