@@ -674,7 +674,36 @@ public class Player : NetworkBehaviour
             POV.target = this;
         }
 
-        _ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
+        float randomX = UnityEngine.Random.Range(-10f, 10f);
+        float randomZ = UnityEngine.Random.Range(-10f, 10f);
+        Vector3 spawnPos = new Vector3(randomX, 5f, randomZ);
+
+        _ncc.Teleport(spawnPos);
+
+        //_ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
+    }
+
+    void HandleDeath()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        if (LastAttacker != null)
+        {
+            LastAttacker.TotalScore += 3; // 3 points for elimination
+            Debug.Log($"{LastAttacker.NickName} eliminated {NickName}!");
+            LastAttacker = null;
+        }
+
+        if (CurrentLives <= 0)
+        {
+            Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
+            RPC_SetSpectatorMode();
+        }
+    }
+
+    public void PlayerInvisible()
+    {
+        _info.mesh.enabled = false;
     }
 
     public void ActivateShock()
