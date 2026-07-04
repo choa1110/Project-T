@@ -643,7 +643,15 @@ public class Player : NetworkBehaviour
         if (LastAttacker != null)
         {
             LastAttacker.TotalScore += 3; // 3 points for elimination
-            Debug.Log($"{LastAttacker.NickName} eliminated {NickName}!");
+
+            int curRound = GameManager.Instance.CurrentRound;
+            if (curRound >= 1 && curRound <= GameManager.Instance.MaxRounds)
+            {
+                int currentKills = LastAttacker.RoundEliminations.Get(curRound - 1);
+                LastAttacker.RoundEliminations.Set(curRound - 1, currentKills + 1);
+            }
+
+            Debug.Log($"{LastAttacker.NickName} eliminated {NickName}! Round eliminations: {LastAttacker.RoundEliminations.Get(curRound - 1)}");
             LastAttacker = null;
         }
 
