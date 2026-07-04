@@ -65,6 +65,13 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
     // 방 만들기
     public async void OnCreateRoomConfirm()
     {
+        // Safeguard: Save nickname from input field before starting game to prevent OnEndEdit loss
+        var nickInput = GameObject.Find("Nickname Field")?.GetComponent<TMPro.TMP_InputField>();
+        if (nickInput != null && !string.IsNullOrEmpty(nickInput.text))
+        {
+            DataManager.Instance.SetNickName(nickInput.text);
+        }
+
         string rName = roomNameInput.text;
         if (string.IsNullOrEmpty(rName)) return;
 
@@ -124,6 +131,13 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
             {
                 entry.SetInfo(session.Name, session.PlayerCount, session.MaxPlayers, async () => 
                 {
+                    // Safeguard: Save nickname before joining
+                    var nickInput = GameObject.Find("Nickname Field")?.GetComponent<TMPro.TMP_InputField>();
+                    if (nickInput != null && !string.IsNullOrEmpty(nickInput.text))
+                    {
+                        DataManager.Instance.SetNickName(nickInput.text);
+                    }
+
                     // 클릭 시 실행될 내용
                     Debug.Log($"{session.Name} 방 입장 시도");
                     await _runner.StartGame(new StartGameArgs()

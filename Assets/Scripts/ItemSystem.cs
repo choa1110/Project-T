@@ -15,6 +15,16 @@ public class ItemSystem : NetworkBehaviour
             slotList.Add(HUDManager.Instance.itemSlots[i]);
     }
 
+    public void ResetItems()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        for (int i = 0; i < 2; i++)
+        {
+            ItemIDs.Set(i, 0);
+        }
+    }
+
     public bool SetItem(Item item)
     {
         if (!Object.HasStateAuthority) return false;

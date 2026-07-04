@@ -98,6 +98,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         OnEnableKeyInput();
     }
 
+    void OnDestroy()
+    {
+        if (_instance == this)
+            _instance = null;
+    }
+
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
@@ -119,7 +125,25 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    [Networked] public int CurrentRound { get; set; } = 1 ;
+    [Networked, OnChangedRender(nameof(OnCurrentRoundChanged))] public int CurrentRound { get; set; } = 1;
+
+    void OnCurrentRoundChanged()
+    {
+        if (ScoreDisplayUI.Instance != null)
+        {
+            ScoreDisplayUI.Instance.HideAll();
+        }
+        if (cardUI != null && cardUI.cardPanel != null)
+        {
+            cardUI.cardPanel.SetActive(false);
+        }
+
+        var timerDisplay = FindFirstObjectByType<TimerDisplay>();
+        if (timerDisplay != null)
+        {
+            timerDisplay.UpdateDisplay(RoundDuration);
+        }
+    }
 
     public override void FixedUpdateNetwork()
     {
@@ -190,10 +214,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             Debug.Log($"[Round End] {rankedPlayers[i].NickName} ranked {i + 1} and got {points} points.");
         }
 
-        // Show Card UI for upgrades
-        RPC_ShowCardUI(CurrentRound);
+        // Show Interim Score UI
+        RPC_ShowInterimScoreUI(CurrentRound);
         
-        // Start transition timer (e.g., 15 seconds to select cards)
+        // Start transition timer (e.g., 15 seconds to select cards / view scores)
         transitionTimer = TickTimer.CreateFromSeconds(Runner, 15f);
         _isTransitioning = true;
     }
@@ -205,6 +229,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             Debug.Log($"[Game Over] Winner is {winner.NickName} with {winner.TotalScore} points!");
         }
+        RPC_ShowFinalRankingsUI();
     }
 
     public void StartNextRound()
@@ -285,6 +310,36 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         else
         {
             Debug.LogError("GameManager에 CardUI가 연결되어 있지 않습니다!");
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_ShowInterimScoreUI(int roundNum)
+    {
+        if (ScoreDisplayUI.Instance != null)
+        {
+            ScoreDisplayUI.Instance.ShowInterimScores(roundNum);
+        }
+        else
+        {
+            Debug.LogError("GameManager: ScoreDisplayUI.Instance is null! Showing CardUI immediately.");
+            if (cardUI != null)
+            {
+                cardUI.OpenCardSelection(roundNum);
+            }
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_ShowFinalRankingsUI()
+    {
+        if (ScoreDisplayUI.Instance != null)
+        {
+            ScoreDisplayUI.Instance.ShowFinalRankings();
+        }
+        else
+        {
+            Debug.LogError("GameManager: ScoreDisplayUI.Instance is null!");
         }
     }
 

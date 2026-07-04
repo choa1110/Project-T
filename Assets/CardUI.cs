@@ -33,11 +33,28 @@ public class CardUI : MonoBehaviour
     }
     void SetupRandomCards(int rank)
     {
+        int count = BuffDB.Instance.GetBuffCount(rank);
+        if (count == 0)
+        {
+            count = BuffDB.Instance.GetBuffCount(1); // Fallback to Rank 1 count
+        }
+        if (count == 0) count = 1; // Absolute fallback
+
         for (int i = 0; i < 3; i++)
         {
-            currentIndices[i] = Random.Range(0, 3);
+            // Pick a random buff index (0 to count-1)
+            currentIndices[i] = Random.Range(0, count);
 
-            cardTexts[i].text = $"Rank {rank}\nBuff {currentIndices[i]}";
+            // Fetch the actual buff to show user-friendly labels
+            Buff b = BuffDB.Instance.GetBuff(rank, currentIndices[i] + 1);
+            if (b != null)
+            {
+                cardTexts[i].text = $"{b.buffName}\n<size=14><color=grey>{b.discription}</color></size>";
+            }
+            else
+            {
+                cardTexts[i].text = $"Rank {rank}\nBuff {currentIndices[i]}";
+            }
 
             int buttonNumber = i; 
             cardButtons[i].onClick.RemoveAllListeners();
@@ -51,7 +68,7 @@ public class CardUI : MonoBehaviour
 
         if(myPlayer != null)
         {
-            myPlayer.RPC_SelectCard(buttonNumber);
+            myPlayer.RPC_SelectCard(selectedIndex + 1);
         }
 
         cardPanel.SetActive(false);

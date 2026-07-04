@@ -27,6 +27,15 @@ public class ChatSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     void SpawnPlayer(PlayerRef player)
     {
+        // Prevent duplicate spawning
+        foreach (var rp in RoomPlayer.Players)
+        {
+            if (rp != null && rp.Object != null && rp.Object.InputAuthority == player)
+            {
+                return;
+            }
+        }
+
         _runner.SpawnAsync(sessionPlayerPrefab, Vector3.zero, Quaternion.identity, player);
         Debug.Log($"{player}번 플레이어 ChatScene 스폰 완료");
     }
@@ -51,7 +60,16 @@ public class ChatSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, System.ArraySegment<byte> data) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, System.ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadDone(NetworkRunner runner)
+    {
+        if (runner.IsServer)
+        {
+            foreach (var player in runner.ActivePlayers)
+            {
+                SpawnPlayer(player);
+            }
+        }
+    }
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }

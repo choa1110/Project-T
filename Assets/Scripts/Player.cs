@@ -85,6 +85,7 @@ public class Player : NetworkBehaviour
     [Networked] public float CurrentHP { get; set; }
     [Networked] public int CurrentLives { get; set; }
     [Networked] public int TotalScore { get; set; }
+    [Networked, Capacity(5)] public NetworkArray<int> RoundEliminations => default;
     [Networked] public Player LastAttacker { get; set; }
     [Networked] float LastAttackedTimer { get; set; }
 
@@ -220,7 +221,12 @@ public class Player : NetworkBehaviour
             _jumpCount = jumpAbiliy;
             IsDead = false;
 
-            Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}) and {CurrentHP} HP.");
+            if (_item != null)
+            {
+                _item.ResetItems();
+            }
+
+            Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}), {CurrentHP} HP, and items reset.");
         }
     }
 
@@ -540,7 +546,13 @@ public class Player : NetworkBehaviour
         if (killer != null && killer != this)
         {
             killer.TotalScore += 3; // 3 points for elimination
-            Debug.Log($"{killer.NickName} eliminated {NickName}!");
+            int curRound = GameManager.Instance.CurrentRound;
+            if (curRound >= 1 && curRound <= 5)
+            {
+                int currentKills = killer.RoundEliminations.Get(curRound - 1);
+                killer.RoundEliminations.Set(curRound - 1, currentKills + 1);
+            }
+            Debug.Log($"{killer.NickName} eliminated {NickName}! Round eliminations: {killer.RoundEliminations.Get(curRound - 1)}");
         }
 
         if (CurrentLives > 0)
