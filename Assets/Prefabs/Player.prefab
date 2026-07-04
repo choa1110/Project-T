@@ -47,7 +47,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &1348579297048544718
 GameObject:
   m_ObjectHideFlags: 0
@@ -95,7 +95,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &1556197728934557906
 GameObject:
   m_ObjectHideFlags: 0
@@ -143,7 +143,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &1851554523629717823
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,7 +191,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &3438548303340242054
 GameObject:
   m_ObjectHideFlags: 0
@@ -239,7 +239,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &4396100058943217075
 GameObject:
   m_ObjectHideFlags: 0
@@ -590,7 +590,7 @@ MonoBehaviour:
     staDrainRate: 10
     jumpHeight: 2
     weight: 1
-  life: 0
+  life: 2
   jumpAbiliy: 2
   modelList:
   - {fileID: 2966833161691279597}
@@ -672,7 +672,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &8663999853385384984
 GameObject:
   m_ObjectHideFlags: 0
@@ -720,7 +720,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1 &9148548006747161708
 GameObject:
   m_ObjectHideFlags: 0
@@ -768,7 +768,7 @@ MonoBehaviour:
   _attackLayer:
     serializedVersion: 2
     m_Bits: 128
-  areaRadius: 0.35
+  _areaRadius: 0
 --- !u!1001 &292728907477563939
 PrefabInstance:
   m_ObjectHideFlags: 0

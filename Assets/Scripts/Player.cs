@@ -102,7 +102,7 @@ public class Player : NetworkBehaviour
     // 끌어당기기(Pull) 관련 네트워크 변수
     [Networked] Player Puller { get; set; }
     [Networked] float PullTimer { get; set; }
-    [Networked] Vector3 MagnetVelocity { get; set; }
+    [Networked] Vector3 PullVelocity { get; set; }
 
     // 스킬 쿨타임 관련 네트워크 변수
     [Networked] float CurrentCoolDown { get; set; }
@@ -213,7 +213,7 @@ public class Player : NetworkBehaviour
         if (Object.HasStateAuthority)
         {
             // Use InitialLives from GameManager (synced from Host settings)
-            int startLives = GameManager.Instance.InitialLives;
+            int startLives = life;
             if (startLives <= 0) startLives = 3;
 
             CurrentHP = stats.GetStat(StatType.MaxHP).Value;
@@ -287,24 +287,21 @@ public class Player : NetworkBehaviour
                 _prevButtons = data.buttons;
             }
 
-            RespawnTimer -= Runner.DeltaTime;
+            if (CurrentLives > 0)
+            {
+                RespawnTimer -= Runner.DeltaTime;
 
-            //if (RespawnTimer <= 0)
-            //    Respawn();
+                if (RespawnTimer <= 0)
+                    Respawn();
+            }
 
-            return;
-        }
-
-        // Environmental death check
-        if (Object.HasStateAuthority && transform.position.y < -10f)
-        {
-            Debug.Log($"[Environmental Death] {NickName} fell at Y={transform.position.y}");
-            HandleDeath(LastAttackedTimer > 0 ? LastAttacker : null);
             return;
         }
 
         if (LastAttackedTimer > 0)
             LastAttackedTimer -= Runner.DeltaTime;
+        else
+            LastAttacker = null;
 
         _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
 
@@ -493,6 +490,7 @@ public class Player : NetworkBehaviour
     public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
+
         onHit.Invoke();
 
         ChangeHP(-damage);
@@ -510,22 +508,15 @@ public class Player : NetworkBehaviour
     {
         if (IsDead || IsSuperarmour) return;
 
+        onHit.Invoke();
+
         if (attacker != null && attacker != this)
         {
             LastAttacker = attacker;
             LastAttackedTimer = 5f;
         }
 
-        onHit.Invoke();
-
         ChangeHP(-damage);
-
-        if (Object.HasStateAuthority && CurrentHP <= 0)
-        {
-            Debug.Log($"[HP Death] {NickName} reached 0 HP.");
-            HandleDeath(attacker);
-            return;
-        }
 
         Vector3 kbDir = knockDir.normalized;
         float knockMultiplier = !_ncc.Grounded ? 1.5f : 1.0f;
@@ -536,10 +527,11 @@ public class Player : NetworkBehaviour
         RPC_BroadcastHitEffect(hitPos, finalKnockPow, camShake);
     }
 
-    void HandleDeath(Player killer)
+    public void ApplyDeath()
     {
-        if (!Object.HasStateAuthority) return;
+        ChangeHP(-stats.GetStat(StatType.MaxHP).Value);
 
+<<<<<<< Updated upstream
         CurrentLives--;
         Debug.Log($"[HandleDeath] {NickName} died. Remaining Lives: {CurrentLives}");
 
@@ -584,6 +576,9 @@ public class Player : NetworkBehaviour
             Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
             RPC_SetSpectatorMode();
         }
+=======
+        Invoke("PlayerInvisible", 1f);
+>>>>>>> Stashed changes
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -594,6 +589,7 @@ public class Player : NetworkBehaviour
         {
             model.SetActive(false);
         }
+
         _ncc.enabled = false;
 
         if (Object.HasInputAuthority)
@@ -618,38 +614,13 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_BroadcastHitEffect(Vector3 hitPos, float finalKnockPow, float camShake)
     {
-        SetHit(hitPos, finalKnockPow);
+        SetHitAnim(hitPos, finalKnockPow);
 
         hitEffect.transform.position = transform.position + Vector3.up * 0.85f + (hitPos - transform.position).normalized * 0.3f;
         hitEffect.Play();
 
         if (Object.HasInputAuthority)
             POV.CameraShake(camShake);
-    }
-
-    void SetHit(Vector3 hitPoint, float knockDis)
-    {
-        Vector3 velocity = transform.position - hitPoint;
-        velocity.y = 0;
-
-        if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
-        {
-            if (knockDis > 20f)
-                HitState = 4;
-            else
-                HitState = 2;
-        }
-        else
-        {
-            if (knockDis > 20f)
-                HitState = 3;
-            else
-                HitState = 1;
-
-            velocity *= -1;
-        }
-
-        StartRotateVel(velocity);
     }
 
     public void ApplyHeal(float ratio)
@@ -676,15 +647,25 @@ public class Player : NetworkBehaviour
     {
         IsDead = true;
 
-        RespawnTimer = 5f;
+        CurrentLives--;
+        Debug.Log($"{NickName} died. Remaining Lives: {CurrentLives}");
 
-        //_info.mesh.enabled = false;
+        HandleDeath();
+
+        RespawnTimer = 5f;
     }
 
     void Respawn()
     {
         ChangeHP(stats.GetStat(StatType.MaxHP).Value);
         IsDead = false;
+
+        _horVelocity = Vector3.zero;
+        _verVelocity = 0f;
+        _externalVelocity = Vector3.zero;
+        KnockbackTimer = 0f;
+        PullTimer = 0f;
+
         _info.mesh.enabled = true;
 
         if (POV)
@@ -775,7 +756,7 @@ public class Player : NetworkBehaviour
     {
         Puller = puller;
         PullTimer = duration;
-        MagnetVelocity = Vector3.zero;
+        PullVelocity = Vector3.zero;
     }
 
     void ProcessPulling()
@@ -796,17 +777,17 @@ public class Player : NetworkBehaviour
                 float distanceFactor = Mathf.Clamp01(distance / 2f);
 
                 Vector3 pullVel = dir * 30f * distanceFactor;
-                MagnetVelocity += pullVel * Runner.DeltaTime;
-                MagnetVelocity = Vector3.ClampMagnitude(MagnetVelocity, 15f);
+                PullVelocity += pullVel * Runner.DeltaTime;
+                PullVelocity = Vector3.ClampMagnitude(PullVelocity, 15f);
             }
                 
-            MagnetVelocity = Vector3.Lerp(MagnetVelocity, Vector3.zero, 3f * Runner.DeltaTime);
+            PullVelocity = Vector3.Lerp(PullVelocity, Vector3.zero, 3f * Runner.DeltaTime);
 
-            _externalVelocity += MagnetVelocity;
+            _externalVelocity += PullVelocity;
         }
         else
         {
-            MagnetVelocity = Vector3.zero;
+            PullVelocity = Vector3.zero;
             Puller = null;
         }
     }
@@ -865,6 +846,31 @@ public class Player : NetworkBehaviour
 
         foreach (AttackArea area in attackAreas)
             area.SetAttackStatus(paramlist.parameters[num], dam, knock);
+    }
+
+    void SetHitAnim(Vector3 hitPoint, float knockDis)
+    {
+        Vector3 velocity = transform.position - hitPoint;
+        velocity.y = 0;
+
+        if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
+        {
+            if (knockDis > 20f)
+                HitState = 4;
+            else
+                HitState = 2;
+        }
+        else
+        {
+            if (knockDis > 20f)
+                HitState = 3;
+            else
+                HitState = 1;
+
+            velocity *= -1;
+        }
+
+        StartRotateVel(velocity);
     }
 
     public void ResetCombo() { ComboStep = 0; }

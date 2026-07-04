@@ -31,6 +31,7 @@ public class CardUI : MonoBehaviour
         cardPanel.SetActive(true);
         SetupRandomCards(rank);
     }
+
     void SetupRandomCards(int rank)
     {
         int count = BuffDB.Instance.GetBuffCount(rank);
@@ -61,6 +62,7 @@ public class CardUI : MonoBehaviour
             cardButtons[i].onClick.AddListener(() => OnCardClicked(buttonNumber));
         }
     }
+
     public void OnCardClicked(int buttonNumber)
     {
         int selectedIndex = currentIndices[buttonNumber];
