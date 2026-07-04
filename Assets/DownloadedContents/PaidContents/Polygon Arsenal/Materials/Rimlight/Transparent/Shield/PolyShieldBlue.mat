@@ -76,7 +76,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - FresnelSize: 7.5
+    - FresnelSize: 5
     - Vector1_CA637FD8: 5.5
     - _BumpScale: 1
     - _Cutoff: 0.5

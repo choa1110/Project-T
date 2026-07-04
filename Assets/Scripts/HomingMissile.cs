@@ -1,9 +1,11 @@
 using UnityEngine;
 using Fusion;
+using System.Collections;
 
 public class HomingMissile : NetworkBehaviour
 {
     [SerializeField] NetworkObject _networkObj;
+    [SerializeField] Collider _col;
     [SerializeField] Rigidbody _rb;
 
     [Networked] Player _target { get; set; }
@@ -12,18 +14,23 @@ public class HomingMissile : NetworkBehaviour
     public AttackParameters param;
     AttackParameter _param;
 
-    public float speed;
-    public float turnSpeed;
-    public float areaRadius;
-
-    [SerializeField] LayerMask _attackLayer;
-
+    [SerializeField] float _speed;
+    [SerializeField] float _turnSpeed;
+    [SerializeField] float _areaRadius;
     [SerializeField] float _damPow;
     [SerializeField] float _knockPow;
 
+    [SerializeField] LayerMask _attackLayer;
+
+    [SerializeField] GameObject _body;
+    [SerializeField] ParticleSystem _explosion;
+    [SerializeField] ParticleSystem _jet;
+
+    bool _exploded = false;
+
     void OnDrawGizmos()
     {
-        Gizmos.DrawWireSphere(transform.position, areaRadius);
+        Gizmos.DrawWireSphere(transform.position, _areaRadius);
     }
 
     void Awake()
@@ -31,14 +38,14 @@ public class HomingMissile : NetworkBehaviour
         _param = param.parameters[0];
     }
 
-    public void SetTarget(Player player)
-    {
-        _target = player;
-    }
-
     public void SetOwner(Player player)
     {
         _owner = player;
+    }
+
+    public void SetTarget(Player player)
+    {
+        _target = player;
     }
 
     public override void FixedUpdateNetwork()
@@ -52,26 +59,35 @@ public class HomingMissile : NetworkBehaviour
 
         Quaternion targetRot = Quaternion.LookRotation(dir);
 
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeed * Runner.DeltaTime);
-        _rb.linearVelocity = transform.forward * speed;
+        if (!_exploded)
+        {
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, _turnSpeed * Runner.DeltaTime);
+            _rb.linearVelocity = transform.forward * _speed;
+        }
+        else
+            _rb.linearVelocity = Vector3.zero;
     }
 
     void OnTriggerEnter(Collider other)
     {
         if (!Object.HasStateAuthority) return;
 
-        Collider[] overlaps = Physics.OverlapSphere(transform.position, areaRadius, _attackLayer);
+        Collider[] overlaps = Physics.OverlapSphere(transform.position, _areaRadius, _attackLayer);
 
-        if (overlaps.Length > 0)
+        foreach (Collider collider in overlaps)
         {
-            foreach (Collider collider in overlaps)
-            {
-                if (collider.transform.TryGetComponent<Player>(out Player target))
-                    CheckCollides(target);
-            }
+            if (collider.transform.TryGetComponent<Player>(out Player target))
+                CheckCollides(target);
         }
 
-        Runner.Despawn(_networkObj);
+        _body.SetActive(false);
+        _jet.Stop();
+        _col.enabled = false;
+
+        _explosion.Play();
+        _exploded = true;
+
+        StartCoroutine(DelayDespawn());
     }
 
     void CheckCollides(Player target)
@@ -85,5 +101,12 @@ public class HomingMissile : NetworkBehaviour
 
         Vector3 knockDir = tmpz + tmpx + tmpy;
         target.ApplyHit(_owner, transform.position, _damPow, knockDir, _knockPow, _param.CameraShake);
+    }
+
+    IEnumerator DelayDespawn()
+    {
+        yield return new WaitForSeconds(1f);
+
+        Runner.Despawn(_networkObj);
     }
 }
