@@ -76,8 +76,6 @@ public class HomingMissile : NetworkBehaviour
 
     void CheckCollides(Player target)
     {
-        if (target == _owner) return;
-
         Vector3 targetDir = (target.transform.position - transform.position).normalized;
         Quaternion rotation = Quaternion.LookRotation(targetDir);
 

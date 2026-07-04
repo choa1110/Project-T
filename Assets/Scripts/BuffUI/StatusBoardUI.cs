@@ -1,58 +1,94 @@
+using System.Collections.Generic;
 using UnityEngine;
-using Fusion; // Fusion ���ӽ����̽� �ʿ�
+using UnityEngine.InputSystem;
+using Fusion;
 
+/// <summary>
+/// Tab 키 스코어보드 매니저.
+/// Tab 누르는 동안 보드 표시, 떼면 숨김.
+///
+/// 씬 설정:
+///   1. Canvas 아래에 이 컴포넌트 배치
+///   2. boardPanel    : 전체 패널 (기본 비활성)
+///   3. listContainer : 행들이 들어갈 Vertical Layout Group
+///   4. rowPrefab     : PlayerStatusRow 컴포넌트가 붙은 프리팹
+/// </summary>
 public class StatusBoardUI : MonoBehaviour
 {
-    [Header("UI Components")]
-    public GameObject boardPanel;       // ���� �״� �� ��ü �г�
-    public Transform listContainer;     // Row���� �� Vertical Layout �׷�
-    public GameObject rowPrefab;        // ������ ���� PlayerStatusRow ������
+    [Header("UI 참조")]
+    [SerializeField] GameObject boardPanel;
+    [SerializeField] Transform  listContainer;
+    [SerializeField] GameObject rowPrefab;
+
+    [Header("설정")]
+    [SerializeField] bool holdToShow = true;   // true=누르는 동안 표시, false=토글
+
+    bool _visible;
 
     void Start()
     {
-        boardPanel.SetActive(false); // ������ �� ���α�
+        if (boardPanel != null) boardPanel.SetActive(false);
     }
 
     void Update()
     {
-        // �� Ű�� ��� (InputSystem�� �������� UI�� Legacy Input�� ���� ���� �����ϴ�)
-        if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            bool show = !boardPanel.activeSelf;
-            boardPanel.SetActive(show);
+        if (Keyboard.current == null) return;
 
-            if (show) RefreshBoard();
+        bool tabDown = Keyboard.current.tabKey.wasPressedThisFrame;
+        bool tabUp   = Keyboard.current.tabKey.wasReleasedThisFrame;
+
+        if (holdToShow)
+        {
+            if (tabDown) SetVisible(true);
+            if (tabUp)   SetVisible(false);
+        }
+        else
+        {
+            if (tabDown) SetVisible(!_visible);
         }
     }
 
-    void RefreshBoard()
+    void SetVisible(bool show)
     {
-        // 1. ���� ��� �ʱ�ȭ
-        foreach (Transform child in listContainer)
-            Destroy(child.gameObject);
+        _visible = show;
+        if (boardPanel != null) boardPanel.SetActive(show);
+        if (show) PopulateRows(forceRebuild: true);
+    }
 
-        // 2. ���� �ִ� ��� �÷��̾�(BuffSystem) ã��
-        // (Fusion�� ��� FindObjectsOfType���� ã�Ƶ� �ǰ�, Runner.ActivePlayers�� �ᵵ ��)
-        var allPlayers = FindObjectsOfType<BuffSystem>();
+    void PopulateRows(bool forceRebuild)
+    {
+        if (!forceRebuild || listContainer == null || rowPrefab == null) return;
 
-        foreach (var buffSys in allPlayers)
+        foreach (Transform child in listContainer) Destroy(child.gameObject);
+
+        var allPlayers = new List<Player>(FindObjectsByType<Player>(FindObjectsSortMode.None));
+        allPlayers.Sort((a, b) =>
         {
-            // �÷��̾� ��ü�� ���� �ʱ�ȭ �� ������ �н�
-            // if (buffSys.Object == null) continue;
+            int idA = (a.Object != null) ? a.Object.InputAuthority.PlayerId : 0;
+            int idB = (b.Object != null) ? b.Object.InputAuthority.PlayerId : 0;
+            return idA.CompareTo(idB);
+        });
 
-            // Row ����
-            GameObject rowObj = Instantiate(rowPrefab, listContainer);
-            PlayerStatusRow row = rowObj.GetComponent<PlayerStatusRow>();
+        NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
 
-            // �̸� ���� (Player ID �Ǵ� �г���)
-            // string pName = $"Player {buffSys.Object.InputAuthority.PlayerId}";
+        foreach (var player in allPlayers)
+        {
+            if (player.Object == null) continue;
 
-            // �� �ڽ�(Local Player)���� ǥ�����ָ� ����
-            // if (buffSys.Object.HasInputAuthority)
-            //     pName += " (Me)";
+            int    pid    = player.Object.InputAuthority.PlayerId;
+            bool   isSelf = player.Object.HasInputAuthority;
+            string label  = $"Player {pid}{(isSelf ? "  (Me)" : "")}";
 
-            // // 3. Phase 2���� ���� GetSyncBuffs()�� ���� ��� ��������!
-            // row.SetInfo(pName, buffSys.GetSyncBuffs());
+            float curHP = player.CurrentHP;
+            float maxHP = player.stats.GetStat(StatType.MaxHP)?.Value ?? 1f;
+
+            var buffSys   = player.GetComponent<BuffSystem>();
+            var buffNames = buffSys != null ? buffSys.GetActiveBuffNames() : new List<string>();
+
+            var rowGO = Instantiate(rowPrefab, listContainer);
+            var row   = rowGO.GetComponent<PlayerStatusRow>();
+            if (row != null)
+                row.SetData(label, curHP, maxHP, buffNames, isSelf, player.team);
         }
     }
 }

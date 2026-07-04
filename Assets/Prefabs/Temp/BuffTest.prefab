@@ -145,5 +145,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d734d5f14f08d14893df4e0f4ccc994, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatBuffItem
-  _networkObj: {fileID: -1386507943253699400}
+  _networkObj: {fileID: 0}
   buffNum: 0
+  buffRank: 0

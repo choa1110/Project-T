@@ -13,6 +13,7 @@ public class FollowCamera : MonoBehaviour
     [SerializeField] private LayerMask transLayer;
 
     Vector3 _movePos;
+    Vector3 _armDir;
     Vector3 _offset = new Vector3(0, 0, 0);
 
     bool inSoftLerp;
@@ -44,11 +45,11 @@ public class FollowCamera : MonoBehaviour
         Vector3 followPos = target.transform.position;
         followPos.y += 1.2f;
 
-        Vector3 dir = Quaternion.Euler(angleX, 0f, 0f) * Vector3.forward;
+        _armDir = Quaternion.Euler(angleX, 0f, 0f) * Vector3.forward;
 
         // 장애물 감지 로직 (Raycast)
         // (필요하다면 플레이어 본인은 제외하도록 LayerMask 설정을 잘 해야 함)
-        RaycastHit[] hits = Physics.RaycastAll(followPos, dir, camDis, transLayer);
+        RaycastHit[] hits = Physics.RaycastAll(followPos, _armDir, camDis, transLayer);
 
         foreach (RaycastHit hit in hits)
         {
@@ -57,13 +58,13 @@ public class FollowCamera : MonoBehaviour
         }
 
         if (inSoftLerp)
-            _movePos = Vector3.Lerp(transform.position, target.transform.position + dir * camDis, 5 * Time.deltaTime);
+            _movePos = Vector3.Lerp(transform.position, target.transform.position + _armDir * camDis, 10 * Time.deltaTime);
         else
-            _movePos = Vector3.Lerp(transform.position, target.transform.position + dir * camDis, 20 * Time.deltaTime);
+            _movePos = target.transform.position + _armDir * camDis;
+        //_movePos = Vector3.Lerp(transform.position, target.transform.position + dir * camDis, 50 * Time.deltaTime);
 
         transform.position = _movePos + _offset;
 
-        Debug.Log(Vector3.Distance(transform.position, _movePos) + "" + inSoftLerp);
         // (참고) 만약 카메라가 항상 플레이어를 바라보게 하려면 아래 코드를 추가하세요.
         // 현재는 angleX로만 방향을 잡고 있습니다.
         // transform.LookAt(target.transform.position + Vector3.up * 1.2f);
@@ -104,7 +105,10 @@ public class FollowCamera : MonoBehaviour
 
     IEnumerator LerpTime()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.1f);
+
+        while (Vector3.Distance(transform.position, target.transform.position + _armDir * camDis) > 0.01f)
+            yield return null;
 
         inSoftLerp = false;
     }

@@ -35,10 +35,8 @@ public class Blast : NetworkBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (!Object.HasStateAuthority) return;
-        Debug.Log("Collide");
 
         Player target = other.GetComponentInParent<Player>();
-        Debug.Log(target);
 
         if (target)
         {
@@ -47,7 +45,7 @@ public class Blast : NetworkBehaviour
             Vector3 knockPos = targetPos - transform.position;
 
             if (target.team != owner.team)
-                target.ApplyHit(transform.position, pow * 2f, knockPos, knock * 1.5f, 10);
+                target.ApplyHit(owner, transform.position, pow * 2f, knockPos, knock * 1.5f, 10);
             else
                 target.ApplyHit(transform.position, 0, knockPos, knock, 7);
         }

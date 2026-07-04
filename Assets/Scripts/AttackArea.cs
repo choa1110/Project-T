@@ -4,15 +4,14 @@ using Fusion;
 
 public class AttackArea : NetworkBehaviour
 {
-    GameObject _owner;
-    Player _playerControl;
+    Player _owner;
     AttackParameter _param;
 
     [SerializeField] LayerMask _attackLayer;
+    [SerializeField] float _areaRadius;
 
-    public float areaRadius;
+    [Networked] bool _inAttack {  get; set; }
 
-    bool _inAttack;
     Vector3 _prevPoint;
     Vector3 _curPoint;
 
@@ -23,14 +22,12 @@ public class AttackArea : NetworkBehaviour
 
     void OnDrawGizmos()
     {
-        Gizmos.DrawWireSphere(transform.position, areaRadius);
+        Gizmos.DrawWireSphere(transform.position, _areaRadius);
     }
 
-    public void SetOwner(GameObject player)
+    public void SetOwner(Player player)
     {
         _owner = player;
-
-        _playerControl = _owner.GetComponent<Player>();
     }
 
     public void SetAttackStatus(AttackParameter input, float damage, float knock)
@@ -42,35 +39,25 @@ public class AttackArea : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if(_owner == null || !_inAttack) return;
-
-        if (_playerControl != null)
-        {
-            if (!_playerControl.Object || !_playerControl.Object.HasInputAuthority)
-                return;
-        }
+        if (_owner == null || !_inAttack) return;
+        if (!Object.HasStateAuthority) return;
 
         _curPoint = transform.position;
 
         Vector3 direction = (_prevPoint - _curPoint).normalized;
         float distance = Vector3.Distance(_curPoint, _prevPoint);
 
-        Collider[] overlaps = Physics.OverlapSphere(transform.position, areaRadius, _attackLayer);
+        Collider[] overlaps = Physics.OverlapSphere(transform.position, _areaRadius, _attackLayer);
 
-        if (overlaps.Length > 0)
+        foreach (Collider collider in overlaps)
         {
-            foreach (Collider collider in overlaps)
-            {
-                Player target = collider.transform.GetComponentInParent<Player>();
-
-                CheckCollides(target);
-            }
+            Player target = collider.transform.GetComponentInParent<Player>();
+            CheckCollides(target);
         }
 
-        if (Physics.SphereCast(_curPoint, areaRadius, direction, out RaycastHit hit, distance, _attackLayer))
+        if (Physics.SphereCast(_curPoint, _areaRadius, direction, out RaycastHit hit, distance, _attackLayer))
         {
             Player target = hit.transform.GetComponentInParent<Player>();
-
             CheckCollides(target);
         }
 
@@ -79,30 +66,25 @@ public class AttackArea : NetworkBehaviour
 
     public void AttackStart()
     {
-        _hit_objs.Clear();
+        if (Object.HasStateAuthority)
+        {
+            _hit_objs.Clear();
 
-        _inAttack = true;
-        _prevPoint = transform.position;
+            _inAttack = true;
+            _prevPoint = transform.position;
+        }
     }
 
     public void AttackEnd()
     {
-        _inAttack = false;
+        if (Object.HasStateAuthority)
+            _inAttack = false;
     }
 
     void CheckCollides(Player target)
     {
-        if (target && target != _playerControl && !_hit_objs.Contains(target))
+        if (target && target != _owner && target.team != _owner.team && !_hit_objs.Contains(target))
         {
-            // Prevent team kills if it's a team game mode
-            if (Runner.SessionInfo != null && Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gameModeProp))
-            {
-                if ((int)gameModeProp == 1 && _playerControl != null && _playerControl.team == target.team)
-                {
-                    return;
-                }
-            }
-
             _hit_objs.Add(target);
 
             Vector3 hitPos = _owner.transform.position;
@@ -114,34 +96,7 @@ public class AttackArea : NetworkBehaviour
 
             Vector3 knockDir = tmpz + tmpx + tmpy;
 
-            if (Object.HasInputAuthority)
-            {
-                Rpc_RequestHitToServer(
-                    target.Object,
-                    _playerControl.Object,
-                    hitPos,
-                    _damPow,
-                    knockDir,
-                    _knockPow,
-                    _param.CameraShake
-                );
-            }
-            else if (Object.HasStateAuthority)
-            {
-                target.ApplyHit(_playerControl, hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
-            }
+            target.ApplyHit(_owner, hitPos, _damPow, knockDir, _knockPow, _param.CameraShake);
         }
-    }
-
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    void Rpc_RequestHitToServer(NetworkObject targetObject, NetworkObject attackerObject, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
-    {
-        if (targetObject == null) return;
-
-        Player targetPlayer = targetObject.GetComponent<Player>();
-        Player attackerPlayer = attackerObject != null ? attackerObject.GetComponent<Player>() : null;
-
-        if (targetPlayer != null)
-            targetPlayer.ApplyHit(attackerPlayer, hitPos, damage, knockDir, knockPow, camShake);
     }
 }
