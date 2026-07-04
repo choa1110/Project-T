@@ -6,10 +6,11 @@ public class Blast : NetworkBehaviour
 {
     Player owner;
 
+    [SerializeField] ParticleSystem blastEffect;
+    [SerializeField] Collider col;
+
     float pow;
     float knock;
-
-    [SerializeField] Collider col;
 
     public void SetOwner(Player player)
     {
@@ -28,6 +29,8 @@ public class Blast : NetworkBehaviour
     void Rpc_StartBlast()
     {
         col.enabled = true;
+
+        blastEffect.Play();
 
         StartCoroutine(BlastTime());
     }

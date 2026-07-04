@@ -20,9 +20,7 @@ public class ItemSystem : NetworkBehaviour
         if (!Object.HasStateAuthority) return;
 
         for (int i = 0; i < 2; i++)
-        {
             ItemIDs.Set(i, 0);
-        }
     }
 
     public bool SetItem(Item item)

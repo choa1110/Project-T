@@ -141,7 +141,10 @@ public class Player : NetworkBehaviour
 
     public GameObject barrier;
 
+    [SerializeField] ParticleSystem spawnEffect;
     [SerializeField] ParticleSystem hitEffect;
+    [SerializeField] ParticleSystem healEffect;
+    [SerializeField] ParticleSystem blinkEffect;
     [SerializeField] Blast shockBlast;
 
     void Awake()
@@ -153,9 +156,11 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
+        spawnEffect.Play();
+
         if (Object.HasStateAuthority && !IsModelAssigned)
         {
-            ModelNum = UnityEngine.Random.Range(0, modelList.Count);
+            ModelNum = Random.Range(0, modelList.Count);
             IsModelAssigned = true;
         }
 
@@ -171,6 +176,7 @@ public class Player : NetworkBehaviour
             }
             RPC_SetNickName(myName);
         }
+
         StartCoroutine(WaitForSceneLoad());
     }
 
@@ -191,6 +197,7 @@ public class Player : NetworkBehaviour
     void SetupPlayer()
     {
         GameManager.Instance.RegisterPlayer(this);
+        life = GameManager.Instance.InitialLives;
 
         if (Object.HasInputAuthority)
         {
@@ -212,19 +219,17 @@ public class Player : NetworkBehaviour
     {
         if (Object.HasStateAuthority)
         {
-            // Use InitialLives from GameManager (synced from Host settings)
-            int startLives = life;
-            if (startLives <= 0) startLives = 3;
+            CurrentLives = life;
 
             CurrentHP = stats.GetStat(StatType.MaxHP).Value;
-            CurrentLives = startLives;
             _jumpCount = jumpAbiliy;
             IsDead = false;
 
             if (_item != null)
-            {
                 _item.ResetItems();
-            }
+
+            if (_ability != null)
+                CurrentCoolDown = _ability.coolTime / 2;
 
             Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}), {CurrentHP} HP, and items reset.");
         }
@@ -579,10 +584,14 @@ public class Player : NetworkBehaviour
     public void ApplyHeal(float ratio)
     {
         ChangeHP(stats.GetStat(StatType.MaxHP).Value * ratio);
+
+        healEffect.Play();
     }
 
     void ChangeHP(float amount)
     {
+        if (!Object.HasStateAuthority) return;
+
         CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, stats.GetStat(StatType.MaxHP).Value);
         Rpc_BroadcastHpChange();
 
@@ -630,6 +639,8 @@ public class Player : NetworkBehaviour
         float randomX = UnityEngine.Random.Range(-10f, 10f);
         float randomZ = UnityEngine.Random.Range(-10f, 10f);
         Vector3 spawnPos = new Vector3(randomX, 5f, randomZ);
+
+        spawnEffect.Play();
 
         _ncc.Teleport(spawnPos);
 
@@ -679,6 +690,8 @@ public class Player : NetworkBehaviour
             POV.ToggleSoft();
 
         _ncc.Teleport(transform.position + transform.forward.normalized * 5f);
+
+        blinkEffect.Play();
     }
 
     // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)
