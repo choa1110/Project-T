@@ -531,54 +531,7 @@ public class Player : NetworkBehaviour
     {
         ChangeHP(-stats.GetStat(StatType.MaxHP).Value);
 
-<<<<<<< Updated upstream
-        CurrentLives--;
-        Debug.Log($"[HandleDeath] {NickName} died. Remaining Lives: {CurrentLives}");
-
-        if (killer != null && killer != this)
-        {
-            killer.TotalScore += 3; // 3 points for elimination
-            int curRound = GameManager.Instance.CurrentRound;
-            if (curRound >= 1 && curRound <= 5)
-            {
-                int currentKills = killer.RoundEliminations.Get(curRound - 1);
-                killer.RoundEliminations.Set(curRound - 1, currentKills + 1);
-            }
-            Debug.Log($"{killer.NickName} eliminated {NickName}! Round eliminations: {killer.RoundEliminations.Get(curRound - 1)}");
-        }
-
-        if (CurrentLives > 0)
-        {
-            // Respawn
-            CurrentHP = stats.GetStat(StatType.MaxHP).Value;
-            
-            // Reset velocities
-            _horVelocity = Vector3.zero;
-            _verVelocity = 0f;
-            _externalVelocity = Vector3.zero;
-            CurrentKnockbackVelocity = Vector3.zero;
-
-            // Random spawn position within reasonable bounds (adjust based on map)
-            float randomX = UnityEngine.Random.Range(-10f, 10f);
-            float randomZ = UnityEngine.Random.Range(-10f, 10f);
-            Vector3 spawnPos = new Vector3(randomX, 5f, randomZ);
-            
-            _ncc.Teleport(spawnPos);
-            
-            LastAttacker = null;
-            LastAttackedTimer = 0f;
-            
-            Debug.Log($"{NickName} respawned at {spawnPos}.");
-        }
-        else
-        {
-            IsDead = true;
-            Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
-            RPC_SetSpectatorMode();
-        }
-=======
         Invoke("PlayerInvisible", 1f);
->>>>>>> Stashed changes
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
