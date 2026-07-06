@@ -46,7 +46,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     bool _isCardUIOpened = false;
 
     [Header("Random Box Settings")]
-    public NetworkPrefabRef randomBoxPrefab;
+    [SerializeField] NetworkObject randomBoxPrefab;
     [SerializeField] float randomBoxSpawnInterval = 10f;
     [SerializeField] Vector2 mapBoundsX = new Vector2(-15f, 15f);
     [SerializeField] Vector2 mapBoundsZ = new Vector2(-15f, 15f);

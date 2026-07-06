@@ -47,8 +47,8 @@ public class Blast : NetworkBehaviour
             targetPos.y += 0.85f;
             Vector3 knockPos = targetPos - transform.position;
 
-            if (target.team != owner.team)
-                target.ApplyHit(owner, transform.position, pow * 2f, knockPos, knock * 1.5f, 10);
+            if (target.team != owner.team && !target.barrier.activeSelf)
+                target.ApplyHit(owner, transform.position, pow * 2f, knockPos, knock * 4f, 10);
             else
                 target.ApplyHit(transform.position, 0, knockPos, knock, 7);
         }
@@ -56,7 +56,7 @@ public class Blast : NetworkBehaviour
 
     IEnumerator BlastTime()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.3f);
 
         col.enabled = false;
     }

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1733468557656450959}
   - component: {fileID: 3887940769275930923}
+  - component: {fileID: 9128902502447519862}
   - component: {fileID: 5915540755292440704}
   - component: {fileID: 1797774893377800025}
   - component: {fileID: 5997270945935787043}
@@ -19,7 +20,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1733468557656450959
 Transform:
   m_ObjectHideFlags: 0
@@ -28,7 +29,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6153812843274325064}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
@@ -56,6 +57,27 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.25
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!135 &9128902502447519862
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6153812843274325064}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 264
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.2
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &5915540755292440704
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,7 +91,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Barrier
   owner: {fileID: 0}
-  _duration: 7
+  _duration: 10
 --- !u!199 &1797774893377800025
 ParticleSystemRenderer:
   serializedVersion: 7

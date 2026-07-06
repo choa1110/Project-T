@@ -1524,21 +1524,9 @@ PrefabInstance:
       propertyPath: owner
       value: 
       objectReference: {fileID: 5105540053892191170}
-    - target: {fileID: 5915540755292440704, guid: 7821900f6e6cd1641b01a4733fc745c8, type: 3}
-      propertyPath: _duration
-      value: 10
-      objectReference: {fileID: 0}
     - target: {fileID: 6153812843274325064, guid: 7821900f6e6cd1641b01a4733fc745c8, type: 3}
       propertyPath: m_Name
       value: Barrier
-      objectReference: {fileID: 0}
-    - target: {fileID: 6153812843274325064, guid: 7821900f6e6cd1641b01a4733fc745c8, type: 3}
-      propertyPath: m_Layer
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 6153812843274325064, guid: 7821900f6e6cd1641b01a4733fc745c8, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

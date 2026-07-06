@@ -1,16 +1,20 @@
+using Fusion;
 using UnityEngine;
 
 public class ComboAnimSettings : StateMachineBehaviour
 {
     Player _player;
+    NetworkObject no;
 
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (_player == null)
+        if (_player == null) {
             _player = animator.gameObject.GetComponent<Player>();
+            no = animator.gameObject.GetComponent<NetworkObject>();
+        }
 
-        animator.applyRootMotion = true;
+        animator.applyRootMotion = no.HasStateAuthority || no.HasInputAuthority;
         _player.DisableMovement();
         _player.SetAttackStats(_player.ComboStep - 1);
 

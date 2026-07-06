@@ -1,6 +1,6 @@
 using UnityEngine;
 using Fusion;
-using System.Collections;
+using UnityEngine.Rendering.Universal;
 
 public class HomingMissile : NetworkBehaviour
 {
@@ -24,7 +24,9 @@ public class HomingMissile : NetworkBehaviour
 
     [SerializeField] GameObject _body;
     [SerializeField] ParticleSystem _explosion;
-    [SerializeField] ParticleSystem _jet;
+    [SerializeField] AudioSource _boom;
+
+    [Networked] TickTimer despawnTimer { get; set; }
 
     bool _exploded = false;
 
@@ -33,14 +35,10 @@ public class HomingMissile : NetworkBehaviour
         Gizmos.DrawWireSphere(transform.position, _areaRadius);
     }
 
-    void Awake()
-    {
-        _param = param.parameters[0];
-    }
-
     public void SetOwner(Player player)
     {
         _owner = player;
+        _param = param.parameters[0];
     }
 
     public void SetTarget(Player player)
@@ -51,6 +49,12 @@ public class HomingMissile : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         if (!Object.HasStateAuthority || _target == null) return;
+
+        if (_exploded && despawnTimer.Expired(Runner))
+        {
+            Runner.Despawn(_networkObj);
+            return;
+        }
 
         Vector3 flyPos = _target.transform.position;
         flyPos.y += 1f;
@@ -80,14 +84,20 @@ public class HomingMissile : NetworkBehaviour
                 CheckCollides(target);
         }
 
+        Rpc_BroadcastExplode();
+
+        despawnTimer = TickTimer.CreateFromSeconds(Runner, 1f);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastExplode()
+    {
         _body.SetActive(false);
-        _jet.Stop();
         _col.enabled = false;
 
         _explosion.Play();
+        _boom.Play();
         _exploded = true;
-
-        StartCoroutine(DelayDespawn());
     }
 
     void CheckCollides(Player target)
@@ -101,12 +111,5 @@ public class HomingMissile : NetworkBehaviour
 
         Vector3 knockDir = tmpz + tmpx + tmpy;
         target.ApplyHit(_owner, transform.position, _damPow, knockDir, _knockPow, _param.CameraShake);
-    }
-
-    IEnumerator DelayDespawn()
-    {
-        yield return new WaitForSeconds(1f);
-
-        Runner.Despawn(_networkObj);
     }
 }

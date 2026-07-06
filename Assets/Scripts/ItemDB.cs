@@ -66,7 +66,7 @@ public class ItemDB : NetworkBehaviour
     {
         Player target = GameManager.Instance.GetClosesetOpponent(user);
         
-        target.PulledToPoint(user);
+        target.PulledToPoint(user, 10);
     }
 
     void OnUse_RepulseBarrier(Player user)

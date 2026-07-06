@@ -437,7 +437,7 @@ public class Player : NetworkBehaviour
                     transform.rotation *= deltaRotation;
 
                     // 루트 모션 중복 적용 방지
-                    _anim.ApplyBuiltinRootMotion();
+                    //_anim.ApplyBuiltinRootMotion();
                 }
             }
         }
@@ -638,13 +638,13 @@ public class Player : NetworkBehaviour
 
         float randomX = UnityEngine.Random.Range(-10f, 10f);
         float randomZ = UnityEngine.Random.Range(-10f, 10f);
-        Vector3 spawnPos = new Vector3(randomX, 5f, randomZ);
-
-        spawnEffect.Play();
+        Vector3 spawnPos = new Vector3(randomX, 0f, randomZ);
 
         _ncc.Teleport(spawnPos);
 
         //_ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
+
+        spawnEffect.Play();
     }
 
     void HandleDeath()

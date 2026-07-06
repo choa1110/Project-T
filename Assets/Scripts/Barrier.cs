@@ -14,6 +14,11 @@ public class Barrier : NetworkBehaviour
         ResetDuration();
     }
 
+    void LateUpdate()
+    {
+        transform.rotation = Quaternion.identity;
+    }
+
     public override void FixedUpdateNetwork()
     {
         curDur -= Runner.DeltaTime;

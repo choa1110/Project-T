@@ -37,7 +37,7 @@ public class AttackArea : NetworkBehaviour
         _knockPow = knock * _param.KnockbackRate;
     }
 
-    void FixedUpdate()
+    public  override void FixedUpdateNetwork()
     {
         if (_owner == null || !_inAttack) return;
         if (!Object.HasStateAuthority) return;
@@ -66,8 +66,6 @@ public class AttackArea : NetworkBehaviour
 
     public void AttackStart()
     {
-        Debug.Log("Start " + this);
-
         _hit_objs.Clear();
 
         _inAttack = true;
@@ -86,7 +84,7 @@ public class AttackArea : NetworkBehaviour
             _hit_objs.Add(target);
 
             Vector3 hitPos = _owner.transform.position;
-            hitPos.y += 1f;
+            hitPos.y += 0.85f;
 
             Vector3 tmpz = _owner.transform.forward * _param.KnockbackDir.z;
             Vector3 tmpx = _owner.transform.right * _param.KnockbackDir.x;
