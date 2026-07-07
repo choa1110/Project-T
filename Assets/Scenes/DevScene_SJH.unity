@@ -674,6 +674,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74984e12fa33fe6439f5521422fc9094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TempAbilityApplyer
+  _networkObj: {fileID: 0}
   ability: {fileID: 11400000, guid: 1b4d44be074f4234ca34fc313f429c44, type: 2}
 --- !u!136 &414251948
 CapsuleCollider:
@@ -778,6 +779,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1859959091}
     m_Modifications:
+    - target: {fileID: 1648045677623521649, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+    - target: {fileID: 1648045677623521649, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
     - target: {fileID: 3828182486306189941, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
       propertyPath: m_Name
       value: OpponentData (2)
@@ -1470,6 +1479,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93ee358753e7ef747a93dfea970fe55e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDB
+  abilityList: []
 --- !u!4 &712963635
 Transform:
   m_ObjectHideFlags: 0
@@ -1544,8 +1554,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+  m_sharedMaterial: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1681,8 +1691,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 100%
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+  m_sharedMaterial: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1792,6 +1802,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e802331459cded2408eeeb229f03ee02, type: 2}
   - {fileID: 11400000, guid: 7aeb80bded3ff9c40ae507a8eae74b49, type: 2}
   missile: {fileID: 0}
+  trap: {fileID: 0}
 --- !u!4 &782911593
 Transform:
   m_ObjectHideFlags: 0
@@ -1893,13 +1904,22 @@ MonoBehaviour:
   playerList: []
   _RoundTimer: 0
   _CurrentRound: 1
-  itemBoxPrefab:
-    RawGuidValue: 2a77df2e54dd0fc4584eb42035e1dc8f
-  boxSpawnInterval: 8
+  _MaxRounds: 0
+  _InitialLives: 0
+  _RoundDuration: 0
+  _GameOver: 0
   mapDB: {fileID: 0}
   itemSlots:
   - {fileID: 895089600}
   - {fileID: 1196452118}
+  randomBoxPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  randomBoxSpawnInterval: 10
+  maxRandomBoxes: 5
+  randomBoxItemRange: {x: 0, y: 2}
+  mapBoundsX: {x: -15, y: 15}
+  mapBoundsZ: {x: -15, y: 15}
+  spawnHeight: 1
   inputActions: {fileID: -944628639613478452, guid: e283aeca8c5de0c418d2f2b2f544401b, type: 3}
 --- !u!4 &851641443
 Transform:
@@ -2557,8 +2577,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 0:00
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+  m_sharedMaterial: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3057,8 +3077,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+  m_sharedMaterial: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3143,6 +3163,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1859959091}
     m_Modifications:
+    - target: {fileID: 1648045677623521649, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+    - target: {fileID: 1648045677623521649, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
     - target: {fileID: 3828182486306189941, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
       propertyPath: m_Name
       value: OpponentData (1)
@@ -4141,7 +4169,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d734d5f14f08d14893df4e0f4ccc994, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatBuffItem
+  _networkObj: {fileID: 0}
   buffNum: 0
+  buffRank: 0
 --- !u!1001 &1866333695
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4618,8 +4648,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Nickname
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+  m_sharedMaterial: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4704,6 +4734,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1859959091}
     m_Modifications:
+    - target: {fileID: 1648045677623521649, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
+    - target: {fileID: 1648045677623521649, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 9025254776977741972, guid: 0af58ca6c7b5d004e87a442e8d85a3a7, type: 2}
     - target: {fileID: 3828182486306189941, guid: ec18dce13ad9a1143917e000f71d8c8d, type: 3}
       propertyPath: m_Name
       value: OpponentData

@@ -70,20 +70,20 @@ public void OnMapSelectBack()
         if (mapSelectPanel  != null) mapSelectPanel.SetActive(false);
     }
 
-public void OnCreateRoomConfirm()
+    public async void OnCreateRoomConfirm()
     {
         string n = roomNameInput != null ? roomNameInput.text.Trim() : "";
         if (string.IsNullOrEmpty(n)) { Debug.LogWarning("[LobbyUI] 방 이름 필요"); return; }
         _pendingRoomName = n;
-        if (mainPanel       != null) mainPanel.SetActive(false);
-        if (createRoomPanel != null) createRoomPanel.SetActive(false);
-        if (joinRoomPanel   != null) joinRoomPanel.SetActive(false);
-        if (mapSelectPanel  != null)
+        Debug.Log("[LobbyUI] 방 생성: " + n + " -> ChatScene");
+        await _runner.StartGame(new StartGameArgs
         {
-            mapSelectPanel.SetActive(true);
-            var mapUI = mapSelectPanel.GetComponentInChildren<LobbyMapSelectUI>(true);
-            if (mapUI != null) mapUI.Open(isHost: true);
-        }
+            GameMode     = GameMode.Host,
+            SessionName  = n,
+            Scene        = SceneRef.FromIndex(1),
+            PlayerCount  = 4,
+            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+        });
     }
 
     public async void OnStartGame()
