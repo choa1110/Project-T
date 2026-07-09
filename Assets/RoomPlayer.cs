@@ -5,7 +5,15 @@ using System;
 
 public class RoomPlayer : NetworkBehaviour
 {
-    public static List<RoomPlayer> Players = new List<RoomPlayer>();
+    private static List<RoomPlayer> _players = new List<RoomPlayer>();
+    public static List<RoomPlayer> Players
+    {
+        get
+        {
+            _players.RemoveAll(p => p == null || p.Object == null || !p.Object.IsValid);
+            return _players;
+        }
+    }
     [Networked] public string NickName { get; set; } // 닉네임 공유
     [Networked] public NetworkBool IsReady { get; set; } // 레디 상태 공유
     [Networked] public NetworkBool IsLeader { get; set; } // 방장 정보

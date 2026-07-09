@@ -41,6 +41,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Networked] public float RoundDuration { get; set; }
     [Networked] TickTimer transitionTimer { get; set; }
     [Networked] bool _isTransitioning { get; set; }
+    public bool IsTransitioning => _isTransitioning;
+    [Networked] public int TransitionPhase { get; set; }
 
     public CardUI cardUI;
     bool _isCardUIOpened = false;
@@ -149,18 +151,39 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (Object.HasStateAuthority)
         {
+            // Clean up player list from null/invalid player references
+            playerList.RemoveAll(p => p == null || p.Object == null || !p.Object.IsValid);
+
             if (_isTransitioning)
             {
                 if (transitionTimer.Expired(Runner))
                 {
-                    _isTransitioning = false;
-                    if (CurrentRound < MaxRounds)
+                    if (TransitionPhase == 1)
                     {
-                        StartNextRound();
+                        // Transition to Phase 2 (Card Selection): 10 seconds
+                        TransitionPhase = 2;
+                        transitionTimer = TickTimer.CreateFromSeconds(Runner, 10f);
+                        RPC_ShowCardUI(CurrentRound);
                     }
-                    else
+                    else if (TransitionPhase == 2)
                     {
-                        DeclareWinner();
+                        // Transition to Phase 3 (Post-selection wait): 3 seconds
+                        TransitionPhase = 3;
+                        transitionTimer = TickTimer.CreateFromSeconds(Runner, 3f);
+                        RPC_HideCardUI();
+                    }
+                    else if (TransitionPhase == 3)
+                    {
+                        _isTransitioning = false;
+                        TransitionPhase = 0;
+                        if (CurrentRound < MaxRounds)
+                        {
+                            StartNextRound();
+                        }
+                        else
+                        {
+                            DeclareWinner();
+                        }
                     }
                 }
                 return;
@@ -170,7 +193,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 RoundTimer -= Runner.DeltaTime;
 
-                if (RoundTimer <= 0)
+                if (RoundTimer <= 0 || CheckRoundEndConditions())
                 {
                     RoundTimer = 0;
                     _isCardUIOpened = true;
@@ -189,6 +212,54 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
             }
         }
+    }
+
+    bool CheckRoundEndConditions()
+    {
+        if (playerList.Count == 0) return false;
+
+        // Ensure all active players have registered in the player list first
+        int activeCount = Runner.ActivePlayers.Count();
+        int registeredCount = playerList.Count(p => p != null && p.Object != null && p.Object.IsValid);
+        if (registeredCount < activeCount) return false;
+
+        // Check if GameMode is Team Match (1 = Team Match)
+        bool isTeamMatch = false;
+        if (Runner != null && Runner.SessionInfo != null && 
+            Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
+        {
+            isTeamMatch = (int)gmProp == 1;
+        }
+
+        if (isTeamMatch)
+        {
+            // Count alive players per team
+            int redAlive = playerList.Count(p => p != null && p.team == 0 && p.CurrentLives > 0);
+            int blueAlive = playerList.Count(p => p != null && p.team == 1 && p.CurrentLives > 0);
+
+            int redTotal = playerList.Count(p => p != null && p.team == 0);
+            int blueTotal = playerList.Count(p => p != null && p.team == 1);
+
+            // If a team has players but all are out of lives, end the round early
+            if (redTotal > 0 && redAlive == 0) return true;
+            if (blueTotal > 0 && blueAlive == 0) return true;
+        }
+        else
+        {
+            // Solo Mode
+            int aliveCount = playerList.Count(p => p != null && p.CurrentLives > 0);
+            if (playerList.Count > 1)
+            {
+                if (aliveCount <= 1) return true;
+            }
+            else
+            {
+                // Single player testing mode
+                if (aliveCount == 0) return true;
+            }
+        }
+
+        return false;
     }
 
     void EndRound()
@@ -217,9 +288,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         // Show Interim Score UI
         RPC_ShowInterimScoreUI(CurrentRound);
         
-        // Start transition timer (e.g., 15 seconds to select cards / view scores)
-        transitionTimer = TickTimer.CreateFromSeconds(Runner, 15f);
+        // Start phase 1 transition timer (5 seconds for interim score display)
+        transitionTimer = TickTimer.CreateFromSeconds(Runner, 5f);
         _isTransitioning = true;
+        TransitionPhase = 1;
     }
 
     void DeclareWinner()
@@ -256,6 +328,39 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             p.OnModelNumChanged(); // This re-enables the current model
             p.GetComponent<NetworkCharacterController>().enabled = true;
+
+            // Re-enable skinned mesh renderer if it was disabled (e.g. by DeathZone)
+            if (p.modelList != null && p.ModelNum >= 0 && p.ModelNum < p.modelList.Count)
+            {
+                var info = p.modelList[p.ModelNum].GetComponent<CharacterInfo>();
+                if (info != null && info.mesh != null)
+                {
+                    info.mesh.enabled = true;
+                }
+            }
+
+            // Reset camera target for the local player
+            if (p.Object.HasInputAuthority && p.POV != null)
+            {
+                p.POV.ToggleSoft();
+                p.POV.target = p;
+            }
+
+            // Reset HP fill bars instantly to full for the new round
+            if (p.Object.HasInputAuthority)
+            {
+                if (HUDManager.Instance != null && HUDManager.Instance.hpBar != null)
+                {
+                    HUDManager.Instance.hpBar.SetFillBarInstant(1.0f);
+                }
+            }
+            else
+            {
+                if (p.linkedOpponentData != null && p.linkedOpponentData.fillBar != null)
+                {
+                    p.linkedOpponentData.fillBar.SetFillBarInstant(1.0f);
+                }
+            }
         }
     }
 
@@ -341,6 +446,24 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             Debug.LogError("GameManager: ScoreDisplayUI.Instance is null!");
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_HideCardUI()
+    {
+        if (cardUI != null && cardUI.cardPanel != null)
+        {
+            cardUI.cardPanel.SetActive(false);
+        }
+    }
+
+    public float GetCardSelectionRemainingTime()
+    {
+        if (Object == null || !Object.IsValid || !_isTransitioning || TransitionPhase != 2)
+            return 0f;
+
+        float? remaining = transitionTimer.RemainingTime(Runner);
+        return remaining.HasValue ? Mathf.Max(0f, remaining.Value) : 0f;
     }
 
     public void RegisterPlayer(Player reg)

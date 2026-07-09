@@ -378,11 +378,6 @@ public class ScoreDisplayUI : MonoBehaviour
         yield return new WaitForSeconds(5f);
         
         interimPanel.SetActive(false);
-
-        if (GameManager.Instance != null && GameManager.Instance.cardUI != null)
-        {
-            GameManager.Instance.cardUI.OpenCardSelection(roundNum);
-        }
     }
 
     public void ShowFinalRankings()
@@ -405,6 +400,99 @@ public class ScoreDisplayUI : MonoBehaviour
             isTeamMatch = (int)gmProp == 1;
         }
 
+        // Determine Win/Loss/Draw title and color for local player
+        string titleText = "FINAL RANKINGS";
+        Color titleColor = new Color(1f, 0.78f, 0.15f, 1f); // default gold
+
+        Player localPlayer = players.Find(p => p != null && p.Object != null && p.Object.HasInputAuthority);
+
+        if (localPlayer != null)
+        {
+            if (isTeamMatch)
+            {
+                var redPlayers = players.Where(p => p.team == 0).ToList();
+                var bluePlayers = players.Where(p => p.team == 1).ToList();
+
+                int redTotalKills = 0;
+                int blueTotalKills = 0;
+
+                for (int r = 0; r < GameManager.Instance.MaxRounds; r++)
+                {
+                    redTotalKills += redPlayers.Sum(p => p.RoundEliminations.Get(r));
+                    blueTotalKills += bluePlayers.Sum(p => p.RoundEliminations.Get(r));
+                }
+
+                if (redTotalKills == blueTotalKills)
+                {
+                    titleText = "DRAW";
+                    titleColor = new Color(0.6f, 0.6f, 0.6f, 1f); // Gray
+                }
+                else
+                {
+                    bool redWins = redTotalKills > blueTotalKills;
+                    bool isLocalRed = localPlayer.team == 0;
+
+                    if ((redWins && isLocalRed) || (!redWins && !isLocalRed))
+                    {
+                        titleText = "🏆 VICTORY 🏆";
+                        titleColor = new Color(0.3f, 0.9f, 0.3f, 1f); // Green
+                    }
+                    else
+                    {
+                        titleText = "DEFEAT";
+                        titleColor = new Color(0.9f, 0.2f, 0.2f, 1f); // Red
+                    }
+                }
+            }
+            else
+            {
+                // Solo Mode
+                var playerTotals = players.Select(p => {
+                    int totalKills = 0;
+                    for (int r = 0; r < GameManager.Instance.MaxRounds; r++)
+                    {
+                        totalKills += p.RoundEliminations.Get(r);
+                    }
+                    int totalScore = totalKills * 3;
+                    return new { Player = p, TotalKills = totalKills, TotalScore = totalScore };
+                })
+                .OrderByDescending(pt => pt.TotalScore)
+                .ToList();
+
+                if (playerTotals.Count > 0)
+                {
+                    int maxScore = playerTotals[0].TotalScore;
+                    var topScorers = playerTotals.Where(pt => pt.TotalScore == maxScore).ToList();
+
+                    var localTotal = playerTotals.Find(pt => pt.Player == localPlayer);
+                    if (localTotal != null)
+                    {
+                        if (localTotal.TotalScore == maxScore)
+                        {
+                            if (topScorers.Count == 1)
+                            {
+                                titleText = "🏆 VICTORY 🏆";
+                                titleColor = new Color(0.3f, 0.9f, 0.3f, 1f); // Green
+                            }
+                            else
+                            {
+                                titleText = "DRAW";
+                                titleColor = new Color(0.6f, 0.6f, 0.6f, 1f); // Gray
+                            }
+                        }
+                        else
+                        {
+                            titleText = "DEFEAT";
+                            titleColor = new Color(0.9f, 0.2f, 0.2f, 1f); // Red
+                        }
+                    }
+                }
+            }
+        }
+
+        finalTitle.text = titleText;
+        finalTitle.color = titleColor;
+
         if (isTeamMatch)
         {
             var redPlayers = players.Where(p => p.team == 0).ToList();
@@ -419,7 +507,8 @@ public class ScoreDisplayUI : MonoBehaviour
                 blueTotalKills += bluePlayers.Sum(p => p.RoundEliminations.Get(r));
             }
 
-            bool redWins = redTotalKills >= blueTotalKills;
+            bool redWins = redTotalKills > blueTotalKills;
+            bool blueWins = blueTotalKills > redTotalKills;
 
             if (redWins)
             {
@@ -435,7 +524,7 @@ public class ScoreDisplayUI : MonoBehaviour
                     CreateFinalTeamMemberRow(finalListParent, p);
                 }
             }
-            else
+            else if (blueWins)
             {
                 CreateTeamHeader(finalListParent, "🏆 1st PLACE: BLUE TEAM", blueTotalKills, new Color(0.35f, 0.55f, 1f, 1f));
                 foreach (var p in bluePlayers)
@@ -445,6 +534,20 @@ public class ScoreDisplayUI : MonoBehaviour
 
                 CreateTeamHeader(finalListParent, "2nd PLACE: RED TEAM", redTotalKills, new Color(1f, 0.35f, 0.35f, 1f));
                 foreach (var p in redPlayers)
+                {
+                    CreateFinalTeamMemberRow(finalListParent, p);
+                }
+            }
+            else // Tied / Draw
+            {
+                CreateTeamHeader(finalListParent, "🤝 DRAW: RED TEAM", redTotalKills, new Color(1f, 0.35f, 0.35f, 1f));
+                foreach (var p in redPlayers)
+                {
+                    CreateFinalTeamMemberRow(finalListParent, p);
+                }
+
+                CreateTeamHeader(finalListParent, "🤝 DRAW: BLUE TEAM", blueTotalKills, new Color(0.35f, 0.55f, 1f, 1f));
+                foreach (var p in bluePlayers)
                 {
                     CreateFinalTeamMemberRow(finalListParent, p);
                 }

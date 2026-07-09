@@ -19,16 +19,76 @@ public class CardUI : MonoBehaviour
     public TextMeshProUGUI[] cardTexts;
 
     private int[] currentIndices = new int[3];
+    private TextMeshProUGUI _timerText;
+    private bool _hasSelectedThisPhase = false;
+
+    void Awake()
+    {
+        // Dynamically create a timer text above the selection area if not already present
+        if (cardPanel != null)
+        {
+            GameObject timerGo = new GameObject("CardSelectionTimerText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            timerGo.transform.SetParent(cardPanel.transform, false);
+
+            _timerText = timerGo.GetComponent<TextMeshProUGUI>();
+            _timerText.fontSize = 28;
+            _timerText.color = new Color(1f, 0.35f, 0.35f, 1f); // Vibrant orange-red
+            _timerText.alignment = TextAlignmentOptions.Center;
+            _timerText.fontStyle = FontStyles.Bold;
+
+            // Positioning it above the buttons
+            RectTransform rt = timerGo.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.85f);
+            rt.anchorMax = new Vector2(0.5f, 0.85f);
+            rt.sizeDelta = new Vector2(400, 50);
+            rt.anchoredPosition = new Vector2(0, 0);
+
+            if (cardTexts != null && cardTexts.Length > 0 && cardTexts[0] != null)
+            {
+                _timerText.font = cardTexts[0].font;
+            }
+        }
+    }
 
     void Start()
     {
         cardPanel.SetActive(false);
     }
 
+    void Update()
+    {
+        if (cardPanel != null && cardPanel.activeSelf)
+        {
+            if (GameManager.Instance != null)
+            {
+                float remainingTime = GameManager.Instance.GetCardSelectionRemainingTime();
+                
+                if (_timerText != null)
+                {
+                    _timerText.text = $"TIME REMAINING: {remainingTime:F1}s";
+                }
+
+                // If timer expired and panel is still open (and we haven't selected yet), auto select a random card
+                if (remainingTime <= 0f && !_hasSelectedThisPhase)
+                {
+                    SelectRandomCard();
+                }
+            }
+        }
+    }
+
+    void SelectRandomCard()
+    {
+        _hasSelectedThisPhase = true;
+        int randomButton = Random.Range(0, 3);
+        OnCardClicked(randomButton);
+    }
 
     public void OpenCardSelection(int rank)
     {
         cardPanel.SetActive(true);
+        cardRank = rank;
+        _hasSelectedThisPhase = false; // Reset selection flag for the new phase
         SetupRandomCards(rank);
     }
 
@@ -65,12 +125,13 @@ public class CardUI : MonoBehaviour
 
     public void OnCardClicked(int buttonNumber)
     {
+        _hasSelectedThisPhase = true;
         int selectedIndex = currentIndices[buttonNumber];
         Player myPlayer = GetMyPlayer();
 
         if(myPlayer != null)
         {
-            myPlayer.RPC_SelectCard(selectedIndex + 1);
+            myPlayer.RPC_SelectCard(cardRank, selectedIndex + 1);
         }
 
         cardPanel.SetActive(false);

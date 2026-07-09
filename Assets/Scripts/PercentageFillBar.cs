@@ -6,6 +6,15 @@ public class PercentageFillBar : FillBar
 {
     [SerializeField] TMP_Text _percentage;
 
+    public override void SetFillBarInstant(float rate)
+    {
+        base.SetFillBarInstant(rate);
+        if (_percentage != null)
+        {
+            _percentage.text = (rate * 100).ToString("F1") + "%";
+        }
+    }
+
     protected override IEnumerator LerpFillBar()
     {
         while (_lerpTime > 0)

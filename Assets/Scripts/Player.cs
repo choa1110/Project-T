@@ -199,6 +199,12 @@ public class Player : NetworkBehaviour
         GameManager.Instance.RegisterPlayer(this);
         life = GameManager.Instance.InitialLives;
 
+        if (Object.HasStateAuthority)
+        {
+            life = GameManager.Instance.InitialLives;
+            if (life <= 0) life = 3;
+        }
+
         if (Object.HasInputAuthority)
         {
             POV = FollowCamera.Instance;
@@ -206,6 +212,10 @@ public class Player : NetworkBehaviour
 
             HUDManager.Instance.charName.text = NickName.ToString();
             onHPChange.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
+            if (HUDManager.Instance.hpBar != null)
+            {
+                HUDManager.Instance.hpBar.SetFillBarInstant(1.0f);
+            }
             _item.HUDLink();
             _skill = HUDManager.Instance.skillInterface;
 
@@ -224,6 +234,21 @@ public class Player : NetworkBehaviour
             CurrentHP = stats.GetStat(StatType.MaxHP).Value;
             _jumpCount = jumpAbiliy;
             IsDead = false;
+
+            _horVelocity = Vector3.zero;
+            _verVelocity = 0f;
+            _externalVelocity = Vector3.zero;
+            KnockbackTimer = 0f;
+            PullTimer = 0f;
+
+            if (_ncc != null)
+            {
+                _ncc.enabled = true;
+                int idx = Object.InputAuthority.PlayerId;
+                float xPos = idx * 2f;
+                Vector3 spawnPos = new Vector3(xPos, 3f, 0);
+                _ncc.Teleport(spawnPos);
+            }
 
             if (_item != null)
                 _item.ResetItems();
@@ -253,11 +278,11 @@ public class Player : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_SelectCard(int buffIndex)
+    public void RPC_SelectCard(int rank, int buffIndex)
     {
         Buff selectedBuff = null;
 
-        switch (GameManager.Instance.CurrentRound) {
+        switch (rank) {
             case 1: selectedBuff = BuffDB.Instance.GetRank1Buff(buffIndex); break;
             case 2: selectedBuff = BuffDB.Instance.GetRank2Buff(buffIndex); break;
             case 3: selectedBuff = BuffDB.Instance.GetRank3Buff(buffIndex); break;
@@ -495,6 +520,7 @@ public class Player : NetworkBehaviour
     public void ApplyHit(Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsTransitioning) return;
 
         onHit.Invoke();
 
@@ -512,6 +538,7 @@ public class Player : NetworkBehaviour
     public void ApplyHit(Player attacker, Vector3 hitPos, float damage, Vector3 knockDir, float knockPow, float camShake)
     {
         if (IsDead || IsSuperarmour) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsTransitioning) return;
 
         onHit.Invoke();
 
@@ -534,6 +561,8 @@ public class Player : NetworkBehaviour
 
     public void ApplyDeath()
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsTransitioning) return;
+
         ChangeHP(-stats.GetStat(StatType.MaxHP).Value);
 
         Invoke("PlayerInvisible", 1f);

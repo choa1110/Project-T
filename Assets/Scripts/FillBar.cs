@@ -23,6 +23,15 @@ public class FillBar : MonoBehaviour
             _lerpTime = 0.3f;
     }
 
+    public virtual void SetFillBarInstant(float rate)
+    {
+        StopAllCoroutines();
+        _targetRate = rate;
+        _curRate = rate;
+        _fillBar.fillAmount = rate;
+        _lerpTime = 0f;
+    }
+
     protected virtual IEnumerator LerpFillBar()
     {
         while (_lerpTime > 0)
@@ -39,10 +48,10 @@ public class FillBar : MonoBehaviour
         _fillBar.fillAmount = _curRate;
         _lerpTime = 0;
         
-        // 1. A¿¡¼­ B±îÁö ºÎµå·´°Ô ÀüÈ¯
-        // A = lerp(A, B, delta * ¼Óµµ)
+        // 1. Aì—ì„œ Bê¹Œì§€ ë¶€ë“œëŸ½ê²Œ ì „í™˜
+        // A = lerp(A, B, delta * ì†ë„)
 
-        // 2. A¿¡¼­ B±îÁö ÀÏÁ¤ ½Ã°£ ³»¿¡ ÀüÈ¯
+        // 2. Aì—ì„œ Bê¹Œì§€ ì¼ì • ì‹œê°„ ë‚´ì— ì „í™˜
         // A = lerp(s, e, 0~1)
     }
 }
