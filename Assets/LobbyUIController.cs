@@ -121,7 +121,7 @@ public void OnMapSelectBack()
                 {
                     GameMode     = GameMode.Client,
                     SessionName  = sn,
-                    Scene        = SceneRef.FromIndex(2),
+                    Scene        = SceneRef.FromIndex(1),
                     SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
                 });
             });
