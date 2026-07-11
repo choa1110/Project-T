@@ -104,6 +104,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (_instance == this)
             _instance = null;
+        if (_netRunner != null)
+            _netRunner.RemoveCallbacks(this);
     }
 
     public override void Spawned()
@@ -156,13 +158,23 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
             if (_isTransitioning)
             {
-                if (transitionTimer.Expired(Runner))
+                if (TransitionPhase == 2 && playerList.Count > 0 && playerList.All(p => p.HasSelectedCard))
+                {
+                    // Transition to Phase 3 (Post-selection wait) immediately: 3 seconds
+                    TransitionPhase = 3;
+                    transitionTimer = TickTimer.CreateFromSeconds(Runner, 3f);
+                }
+                else if (transitionTimer.Expired(Runner))
                 {
                     if (TransitionPhase == 1)
                     {
                         // Transition to Phase 2 (Card Selection): 10 seconds
                         TransitionPhase = 2;
                         transitionTimer = TickTimer.CreateFromSeconds(Runner, 10f);
+                        foreach (var p in playerList)
+                        {
+                            p.HasSelectedCard = false;
+                        }
                         RPC_ShowCardUI(CurrentRound);
                     }
                     else if (TransitionPhase == 2)
@@ -170,12 +182,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                         // Transition to Phase 3 (Post-selection wait): 3 seconds
                         TransitionPhase = 3;
                         transitionTimer = TickTimer.CreateFromSeconds(Runner, 3f);
-                        RPC_HideCardUI();
                     }
                     else if (TransitionPhase == 3)
                     {
                         _isTransitioning = false;
                         TransitionPhase = 0;
+                        RPC_HideCardUI();
                         if (CurrentRound < MaxRounds)
                         {
                             StartNextRound();
@@ -285,13 +297,21 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             Debug.Log($"[Round End] {rankedPlayers[i].NickName} ranked {i + 1} and got {points} points.");
         }
 
-        // Show Interim Score UI
-        RPC_ShowInterimScoreUI(CurrentRound);
-        
-        // Start phase 1 transition timer (5 seconds for interim score display)
-        transitionTimer = TickTimer.CreateFromSeconds(Runner, 5f);
-        _isTransitioning = true;
-        TransitionPhase = 1;
+        if (CurrentRound < MaxRounds)
+        {
+            // Show Interim Score UI
+            RPC_ShowInterimScoreUI(CurrentRound);
+            
+            // Start phase 1 transition timer (5 seconds for interim score display)
+            transitionTimer = TickTimer.CreateFromSeconds(Runner, 5f);
+            _isTransitioning = true;
+            TransitionPhase = 1;
+        }
+        else
+        {
+            // Final round ended! Show final rankings immediately.
+            DeclareWinner();
+        }
     }
 
     void DeclareWinner()
@@ -315,6 +335,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         foreach (var player in playerList)
         {
             player.RoundStart();
+            player.HasSelectedCard = false;
             RPC_ResetPlayerVisuals(player.Object);
         }
     }
@@ -581,7 +602,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     void SpawnGameCharacter(NetworkRunner runner, PlayerRef player, int assignedModelNum = -1, int assignedTeam = 0)
     {
-        if (runner.GetPlayerObject(player) != null)
+        NetworkObject existingPlayerObj = runner.GetPlayerObject(player);
+        if (existingPlayerObj != null && existingPlayerObj.IsValid)
         {
              return;
         }

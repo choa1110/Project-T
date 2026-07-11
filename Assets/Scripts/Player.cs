@@ -38,6 +38,7 @@ public class Player : NetworkBehaviour
 
     [Networked, OnChangedRender(nameof(OnModelNumChanged))] public int ModelNum { get; set; }
     [Networked] public NetworkBool IsModelAssigned { get; set; }
+    [Networked] public NetworkBool HasSelectedCard { get; set; }
 
     public void OnModelNumChanged()
     {
@@ -158,10 +159,14 @@ public class Player : NetworkBehaviour
     {
         spawnEffect.Play();
 
-        if (Object.HasStateAuthority && !IsModelAssigned)
+        if (Object.HasStateAuthority)
         {
-            ModelNum = Random.Range(0, modelList.Count);
-            IsModelAssigned = true;
+            if (!IsModelAssigned)
+            {
+                ModelNum = Random.Range(0, modelList.Count);
+                IsModelAssigned = true;
+            }
+            HasSelectedCard = false;
         }
 
         // Ensure visuals are updated immediately upon spawning/syncing
@@ -280,6 +285,7 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RPC_SelectCard(int rank, int buffIndex)
     {
+        HasSelectedCard = true;
         Buff selectedBuff = null;
 
         switch (rank) {

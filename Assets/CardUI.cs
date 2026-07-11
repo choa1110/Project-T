@@ -2,6 +2,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
 public class CardUI : MonoBehaviour
 {
@@ -61,17 +62,30 @@ public class CardUI : MonoBehaviour
         {
             if (GameManager.Instance != null)
             {
-                float remainingTime = GameManager.Instance.GetCardSelectionRemainingTime();
-                
-                if (_timerText != null)
-                {
-                    _timerText.text = $"TIME REMAINING: {remainingTime:F1}s";
-                }
+                bool allSelected = GameManager.Instance.playerList.Count > 0 && 
+                                   GameManager.Instance.playerList.All(p => p.HasSelectedCard);
 
-                // If timer expired and panel is still open (and we haven't selected yet), auto select a random card
-                if (remainingTime <= 0f && !_hasSelectedThisPhase)
+                if (allSelected)
                 {
-                    SelectRandomCard();
+                    if (_timerText != null)
+                    {
+                        _timerText.text = "All players have selected; the round is starting.";
+                    }
+                }
+                else
+                {
+                    float remainingTime = GameManager.Instance.GetCardSelectionRemainingTime();
+                    
+                    if (_timerText != null)
+                    {
+                        _timerText.text = $"TIME REMAINING: {remainingTime:F1}s";
+                    }
+
+                    // If timer expired and panel is still open (and we haven't selected yet), auto select a random card
+                    if (remainingTime <= 0f && !_hasSelectedThisPhase)
+                    {
+                        SelectRandomCard();
+                    }
                 }
             }
         }
@@ -118,8 +132,12 @@ public class CardUI : MonoBehaviour
             }
 
             int buttonNumber = i; 
-            cardButtons[i].onClick.RemoveAllListeners();
-            cardButtons[i].onClick.AddListener(() => OnCardClicked(buttonNumber));
+            if (cardButtons[i] != null)
+            {
+                cardButtons[i].interactable = true;
+                cardButtons[i].onClick.RemoveAllListeners();
+                cardButtons[i].onClick.AddListener(() => OnCardClicked(buttonNumber));
+            }
         }
     }
 
@@ -134,7 +152,14 @@ public class CardUI : MonoBehaviour
             myPlayer.RPC_SelectCard(cardRank, selectedIndex + 1);
         }
 
-        cardPanel.SetActive(false);
+        // Disable all buttons to prevent clicking again
+        for (int i = 0; i < cardButtons.Length; i++)
+        {
+            if (cardButtons[i] != null)
+            {
+                cardButtons[i].interactable = false;
+            }
+        }
     }
 
     Player GetMyPlayer()

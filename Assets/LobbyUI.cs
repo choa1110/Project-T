@@ -170,4 +170,12 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+
+    void OnDestroy()
+    {
+        if (_runner != null)
+        {
+            _runner.RemoveCallbacks(this);
+        }
+    }
 }
