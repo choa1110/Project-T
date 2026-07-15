@@ -7,5 +7,5 @@ public class CharacterInfo : MonoBehaviour
     public SkinnedMeshRenderer mesh;
     public Sprite icon;
 
-    public List<AttackArea> fists;
+    public List<AttackArea> areas;
 }

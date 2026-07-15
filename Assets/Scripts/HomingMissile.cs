@@ -50,7 +50,7 @@ public class HomingMissile : NetworkBehaviour
     {
         if (!Object.HasStateAuthority || _target == null) return;
 
-        if (_exploded && despawnTimer.Expired(Runner))
+        if (despawnTimer.Expired(Runner))
         {
             Runner.Despawn(_networkObj);
             return;
@@ -86,7 +86,7 @@ public class HomingMissile : NetworkBehaviour
 
         Rpc_BroadcastExplode();
 
-        despawnTimer = TickTimer.CreateFromSeconds(Runner, 1f);
+        despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

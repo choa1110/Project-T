@@ -13,7 +13,9 @@ public enum ExtraStatType
 public class Player : NetworkBehaviour
 {
     [SerializeField] NetworkCharacterController _ncc;
+    [SerializeField] CharacterController _cc;
     [SerializeField] Animator _anim;
+    [SerializeField] Collider _col;
 
     [SerializeField] BuffSystem _buffSystem;
     [SerializeField] ItemSystem _item;
@@ -53,7 +55,7 @@ public class Player : NetworkBehaviour
             _anim.avatar = _info.avatar;
 
             // Update attack areas owner if necessary, although they might already be set
-            foreach (AttackArea area in _info.fists)
+            foreach (AttackArea area in _info.areas)
             {
                 area.SetOwner(this);
                 if (!attackAreas.Contains(area))
@@ -146,6 +148,7 @@ public class Player : NetworkBehaviour
     [SerializeField] ParticleSystem hitEffect;
     [SerializeField] ParticleSystem healEffect;
     [SerializeField] ParticleSystem blinkEffect;
+    [SerializeField] ParticleSystem magnetEffect;
     [SerializeField] Blast shockBlast;
 
     void Awake()
@@ -202,13 +205,9 @@ public class Player : NetworkBehaviour
     void SetupPlayer()
     {
         GameManager.Instance.RegisterPlayer(this);
-        life = GameManager.Instance.InitialLives;
 
         if (Object.HasStateAuthority)
-        {
             life = GameManager.Instance.InitialLives;
-            if (life <= 0) life = 3;
-        }
 
         if (Object.HasInputAuthority)
         {
@@ -235,8 +234,8 @@ public class Player : NetworkBehaviour
         if (Object.HasStateAuthority)
         {
             CurrentLives = life;
+            ChangeHP(stats.GetStat(StatType.MaxHP).Value);
 
-            CurrentHP = stats.GetStat(StatType.MaxHP).Value;
             _jumpCount = jumpAbiliy;
             IsDead = false;
 
@@ -304,7 +303,6 @@ public class Player : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         ApplyGravity();
-
         ProcessKnockback();
         ProcessRotateByVelocity();
         ProcessCoolDown();
@@ -327,8 +325,8 @@ public class Player : NetworkBehaviour
             {
                 RespawnTimer -= Runner.DeltaTime;
 
-                if (RespawnTimer <= 0)
-                    Respawn();
+                if (Object.HasStateAuthority && RespawnTimer <= 0)
+                    Rpc_BroadcastRespawn();
             }
 
             return;
@@ -466,9 +464,6 @@ public class Player : NetworkBehaviour
                     // 이동량을 속도로 변환하여 NCC에 전달
                     _horVelocity = deltaPosition / (Runner.DeltaTime / 10f);
                     transform.rotation *= deltaRotation;
-
-                    // 루트 모션 중복 적용 방지
-                    //_anim.ApplyBuiltinRootMotion();
                 }
             }
         }
@@ -600,6 +595,7 @@ public class Player : NetworkBehaviour
 
         if (nextTarget != null)
         {
+            POV.ToggleSoft();
             POV.target = nextTarget;
         }
     }
@@ -631,7 +627,7 @@ public class Player : NetworkBehaviour
         Rpc_BroadcastHpChange();
 
         if (CurrentHP <= 0)
-            OnDeath();
+            Rpc_BroadcastOnDeath();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -640,20 +636,28 @@ public class Player : NetworkBehaviour
         onHPChange.Invoke(CurrentHP / stats.GetStat(StatType.MaxHP).Value);
     }
 
-    void OnDeath()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastOnDeath()
     {
         IsDead = true;
+        _ncc.enabled = false;
+        _cc.enabled = false;
+        _col.enabled = false;
 
         CurrentLives--;
         Debug.Log($"{NickName} died. Remaining Lives: {CurrentLives}");
 
         HandleDeath();
-
-        RespawnTimer = 5f;
     }
 
-    void Respawn()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastRespawn()
     {
+        PlayerInvisible();
+        _cc.enabled = true;
+        _ncc.enabled = true;
+        _col.enabled = true;
+
         ChangeHP(stats.GetStat(StatType.MaxHP).Value);
         IsDead = false;
 
@@ -662,8 +666,6 @@ public class Player : NetworkBehaviour
         _externalVelocity = Vector3.zero;
         KnockbackTimer = 0f;
         PullTimer = 0f;
-
-        _info.mesh.enabled = true;
 
         if (POV)
         {
@@ -678,6 +680,7 @@ public class Player : NetworkBehaviour
         _ncc.Teleport(spawnPos);
 
         //_ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
+        Invoke("PlayerVisible", 0.1f);
 
         spawnEffect.Play();
     }
@@ -706,11 +709,31 @@ public class Player : NetworkBehaviour
             Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
             RPC_SetSpectatorMode();
         }
+        else
+            RespawnTimer = 5f;
     }
 
-    public void PlayerInvisible()
+    void PlayerVisible()
+    {
+        _info.mesh.enabled = true;
+    }
+
+    void PlayerInvisible()
     {
         _info.mesh.enabled = false;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_MagnetActivate(float time)
+    {
+        magnetEffect.Play();
+
+        Invoke("MagnetUsed", time);
+    }
+
+    void MagnetUsed()
+    {
+        magnetEffect.Stop();
     }
 
     public void ActivateShock()
@@ -727,6 +750,12 @@ public class Player : NetworkBehaviour
         _ncc.Teleport(transform.position + transform.forward.normalized * 5f);
 
         blinkEffect.Play();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastActivateBarrier()
+    {
+        barrier.SetActive(true);
     }
 
     // 쿨타임 및 스킬 지속시간 처리 함수 (코루틴 대체)
@@ -830,12 +859,6 @@ public class Player : NetworkBehaviour
         }
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void Rpc_BroadcastActivateBarrier()
-    {
-        barrier.SetActive(true);
-    }
-
     static float Sign(float v)
     {
         if (v < 0.01f && v > -0.01f) return 0f;
@@ -862,7 +885,7 @@ public class Player : NetworkBehaviour
     public void InAttack(int num) 
     { 
         if (num >= 0 && num < attackAreas.Count)
-            attackAreas[num].AttackStart(); 
+            attackAreas[num].AttackStart();
     }
     
     public void OutAttack(int num) 

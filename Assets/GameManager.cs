@@ -499,7 +499,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         foreach (Player reg in playerList)
         {
-            if (user != reg) //reg.team != mainPlayer.team
+            if (user != reg && user.team != reg.team && !reg.IsDead)
             {
                 float dis = Vector3.Distance(user.transform.position, reg.transform.position);
 

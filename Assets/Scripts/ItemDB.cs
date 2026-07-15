@@ -65,8 +65,9 @@ public class ItemDB : NetworkBehaviour
     void OnUse_MagnetPull(Player user)
     {
         Player target = GameManager.Instance.GetClosesetOpponent(user);
-        
-        target.PulledToPoint(user, 10);
+
+        user.Rpc_MagnetActivate(7f);
+        target.PulledToPoint(user, 7f);
     }
 
     void OnUse_RepulseBarrier(Player user)

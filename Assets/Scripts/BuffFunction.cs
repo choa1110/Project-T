@@ -1,26 +1,32 @@
-﻿using UnityEngine;
+﻿using Fusion;
+using System;
+using UnityEngine;
 
+[Serializable]
 public class BuffFunction
 {
     Buff _buff;
     Player _target;
+    BuffSystem _bs;
 
     public bool expired { get; private set; }
 
     float timeLeft;
     bool isConditionMet;
 
-    public BuffFunction(Buff data, Player player)
+    public BuffFunction(Buff data, Player player, BuffSystem bs)
     {
         _buff = data;
         _target = player;
-        timeLeft = data.duration;
+        _bs = bs;
+
+        timeLeft = _buff.duration;
 
         foreach (var cond in _buff.conditions)
             cond.Bind(_target);
     }
 
-    public void UpdateTick(float delta)
+    public void UpdateTick(float delta, int index)
     {
         if (!_buff.isInfinite)
         {
@@ -41,13 +47,13 @@ public class BuffFunction
         }
 
         if (nowMet && !isConditionMet)
-            Apply();
+            _bs.Rpc_BroadcastApplyEffect(index);
         else if (!nowMet && isConditionMet)
-            Remove();
+            _bs.Rpc_BroadcastRemoveEffect(index);
 
         isConditionMet = nowMet;
     }
 
-    private void Apply() => _buff.effects.ForEach(e => e.Apply(_target));
-    public void Remove() => _buff.effects.ForEach(e => e.Remove());
+    public void ApplyEffectLocal() => _buff.effects.ForEach(e => e.Apply(_target));
+    public void RemoveEffectLocal() => _buff.effects.ForEach(e => e.Remove());
 }

@@ -17,9 +17,9 @@ MonoBehaviour:
   rank: 1
   icon: {fileID: 0}
   discription: 
-  isInfinite: 1
+  isInfinite: 0
   isConditional: 0
-  duration: 0
+  duration: 10
   conditions: []
   effects:
   - {fileID: 11400000, guid: 96b22bac0b7d2c8478d0e04985279fd6, type: 2}

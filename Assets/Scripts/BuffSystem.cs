@@ -4,25 +4,20 @@ using Fusion;
 
 public class BuffSystem : NetworkBehaviour 
 {
-    Player _player;
-    PlayerStats _playerStats;
+    [SerializeField] Player _player;
 
-    List<BuffFunction> _activeBuffs = new List<BuffFunction>();
-
-    void Awake()
-    {
-        _player = GetComponent<Player>();
-        _playerStats = _player.stats;
-    }
+    public List<BuffFunction> _appliedBuffs = new List<BuffFunction>();
 
     public override void FixedUpdateNetwork()
     {
-        for (int i = _activeBuffs.Count - 1; i >= 0; i--)
-        {
-            _activeBuffs[i].UpdateTick(Runner.DeltaTime);
+        if (!Object.HasStateAuthority) return;
 
-            if (_activeBuffs[i].expired)
-                RemoveBuff(_activeBuffs[i]);
+        for (int i = _appliedBuffs.Count - 1; i >= 0; i--)
+        {
+            _appliedBuffs[i].UpdateTick(Runner.DeltaTime, i);
+
+            if (_appliedBuffs[i].expired)
+                Rpc_BroadcastRemoveBuff(i);
         }
     }
 
@@ -33,15 +28,32 @@ public class BuffSystem : NetworkBehaviour
 
         if (data == null) return;
 
-        BuffFunction buff = new BuffFunction(data, _player);
-        _activeBuffs.Add(buff);
+        BuffFunction buff = new BuffFunction(data, _player, this);
+        _appliedBuffs.Add(buff);
         
         Debug.Log($"[서버] {_player.Object.InputAuthority} 플레이어에게 {data.name} 버프 적용됨!");
     }
 
-    private void RemoveBuff(BuffFunction buff)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastRemoveBuff(int num)
     {
-        buff.Remove();
-        _activeBuffs.Remove(buff);
+        _appliedBuffs[num].RemoveEffectLocal();
+        _appliedBuffs.RemoveAt(num);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastApplyEffect(int index)
+    {
+        if (index >= 0 && index < _appliedBuffs.Count)
+            _appliedBuffs[index].ApplyEffectLocal();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastRemoveEffect(int index)
+    {
+        if (index >= 0 && index < _appliedBuffs.Count)
+        {
+            _appliedBuffs[index].RemoveEffectLocal();
+        }
     }
 }
