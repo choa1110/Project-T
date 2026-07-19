@@ -55,7 +55,7 @@ public class RandomBoxSpawner : NetworkBehaviour
         int currentBoxCount = 0;
         foreach (var obj in Runner.GetAllNetworkObjects())
         {
-            if (obj.GetComponent<ItemBox>() != null)
+            if (obj.GetComponent<RandomBox>() != null)
             {
                 currentBoxCount++;
             }
@@ -80,7 +80,7 @@ public class RandomBoxSpawner : NetworkBehaviour
         NetworkObject spawnedBox = Runner.Spawn(_randomBoxPrefab, spawnPosition, Quaternion.identity);
         
         // If ItemBox requires initialization (e.g., item range), do it here.
-        ItemBox itemBox = spawnedBox.GetComponent<ItemBox>();
+        RandomBox itemBox = spawnedBox.GetComponent<RandomBox>();
         if (itemBox != null)
         {
             // Set default range or customize as needed.

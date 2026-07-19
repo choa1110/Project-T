@@ -52,8 +52,6 @@ public class BuffSystem : NetworkBehaviour
     public void Rpc_BroadcastRemoveEffect(int index)
     {
         if (index >= 0 && index < _appliedBuffs.Count)
-        {
             _appliedBuffs[index].RemoveEffectLocal();
-        }
     }
 }

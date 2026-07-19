@@ -402,7 +402,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         int count = 0;
         foreach (var obj in Runner.GetAllNetworkObjects())
         {
-            if (obj.GetComponent<ItemBox>() != null) count++;
+            if (obj.GetComponent<RandomBox>() != null) count++;
         }
         return count < maxRandomBoxes;
     }
@@ -416,7 +416,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         Vector3 pos = new Vector3(x, spawnHeight, z);
 
         NetworkObject box = Runner.Spawn(randomBoxPrefab, pos, Quaternion.identity);
-        ItemBox itemBox = box.GetComponent<ItemBox>();
+        RandomBox itemBox = box.GetComponent<RandomBox>();
         if (itemBox != null)
         {
             itemBox.SetItemRange(randomBoxItemRange.x, randomBoxItemRange.y);

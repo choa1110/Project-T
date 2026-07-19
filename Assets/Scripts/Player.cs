@@ -399,7 +399,7 @@ public class Player : NetworkBehaviour
         _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(input.x), 5f * Runner.DeltaTime);
 
         if (inputDir == default)
-            _horVelocity = Vector3.Lerp(_horVelocity, default, 25f * Runner.DeltaTime);
+            _horVelocity = Vector3.Lerp(_horVelocity, default, 50f * Runner.DeltaTime);
         else
         {
             if (_ncc.Grounded)
