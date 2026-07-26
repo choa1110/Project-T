@@ -34,6 +34,13 @@ public class ChatSceneUI : MonoBehaviour
                 modeStr = "2vs2 Team";
             }
             roomNameText.text = $"방: {_runner.SessionInfo.Name} ({modeStr})";
+
+            if (_runner.IsServer)
+            {
+                _runner.SessionInfo.IsOpen = true;
+                _runner.SessionInfo.IsVisible = true;
+                Debug.Log("[ChatSceneUI] Reopened session for matchmaking.");
+            }
         }
 
         if (leaveButton) leaveButton.onClick.AddListener(OnLeaveClicked);

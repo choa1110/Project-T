@@ -15,13 +15,17 @@ MonoBehaviour:
   parameters:
   - DamageRate: 0.8
     KnockbackDir: {x: 0, y: 0, z: 1}
-    KnockbackRate: 0.4
+    KnockbackRate: 0.3
     CameraShake: 3
   - DamageRate: 1.2
     KnockbackDir: {x: 0, y: 0.1, z: 1}
-    KnockbackRate: 0.5
+    KnockbackRate: 0.4
     CameraShake: 5
   - DamageRate: 1.5
     KnockbackDir: {x: 0, y: 0.5, z: 1}
     KnockbackRate: 2
     CameraShake: 7
+  - DamageRate: 1.5
+    KnockbackDir: {x: 0, y: 0, z: 1}
+    KnockbackRate: 2.5
+    CameraShake: 8

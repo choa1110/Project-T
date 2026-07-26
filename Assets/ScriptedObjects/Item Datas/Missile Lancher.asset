@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemId: 1
   itemName: Missile Lancher
-  itemIcon: {fileID: 21300000, guid: e4cd8094798bdb94ab72a48ad196d421, type: 3}
+  itemIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   description: 

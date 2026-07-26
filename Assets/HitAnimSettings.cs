@@ -11,7 +11,8 @@ public class HitAnimSettings : StateMachineBehaviour
             _player = animator.gameObject.GetComponent<Player>();
 
         _player.DisableMovement();
-        _player.ResetHit();
+        _player.ResetCombo();
+        _player.OutAttackAll();
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks

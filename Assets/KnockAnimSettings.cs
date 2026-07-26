@@ -11,6 +11,8 @@ public class KnockAnimSettings : StateMachineBehaviour
             _player = animator.gameObject.GetComponent<Player>();
 
         _player.DisableMovement();
+        _player.ResetCombo();
+        _player.OutAttackAll();
         _player.SetKnockedHit();
         _player.SetInvulnerable();
     }

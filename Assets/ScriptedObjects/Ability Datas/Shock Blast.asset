@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Shock Blast
   skillNum: 2
   icon: {fileID: 1626139632, guid: fa4afc23ec0e99c498acf212626525e2, type: 3}
-  coolTime: 30
+  coolTime: 10
   duration: 0
   discription: Releases a shockwave that damages and knocks back nearby enemies

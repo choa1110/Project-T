@@ -16,4 +16,4 @@ MonoBehaviour:
   - DamageRate: 1
     KnockbackDir: {x: 0, y: 0.25, z: 1}
     KnockbackRate: 1
-    CameraShake: 7
+    CameraShake: 10

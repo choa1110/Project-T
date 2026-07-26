@@ -1,9 +1,11 @@
 using UnityEngine;
 using Fusion;
+using UnityEngine.Rendering.Universal;
 
 public class HomingMissile : NetworkBehaviour
 {
     [SerializeField] NetworkObject _networkObj;
+    [SerializeField] Collider _col;
     [SerializeField] Rigidbody _rb;
 
     [Networked] Player _target { get; set; }
@@ -12,22 +14,30 @@ public class HomingMissile : NetworkBehaviour
     public AttackParameters param;
     AttackParameter _param;
 
-    public float speed;
-    public float turnSpeed;
-    public float areaRadius;
-
-    [SerializeField] LayerMask _attackLayer;
-
+    [SerializeField] float _speed;
+    [SerializeField] float _turnSpeed;
+    [SerializeField] float _areaRadius;
     [SerializeField] float _damPow;
     [SerializeField] float _knockPow;
 
+    [SerializeField] LayerMask _attackLayer;
+
+    [SerializeField] GameObject _body;
+    [SerializeField] ParticleSystem _explosion;
+    [SerializeField] AudioSource _boom;
+
+    [Networked] TickTimer despawnTimer { get; set; }
+
+    bool _exploded = false;
+
     void OnDrawGizmos()
     {
-        Gizmos.DrawWireSphere(transform.position, areaRadius);
+        Gizmos.DrawWireSphere(transform.position, _areaRadius);
     }
 
-    void Awake()
+    public void SetOwner(Player player)
     {
+        _owner = player;
         _param = param.parameters[0];
     }
 
@@ -36,14 +46,15 @@ public class HomingMissile : NetworkBehaviour
         _target = player;
     }
 
-    public void SetOwner(Player player)
-    {
-        _owner = player;
-    }
-
     public override void FixedUpdateNetwork()
     {
         if (!Object.HasStateAuthority || _target == null) return;
+
+        if (despawnTimer.Expired(Runner))
+        {
+            Runner.Despawn(_networkObj);
+            return;
+        }
 
         Vector3 flyPos = _target.transform.position;
         flyPos.y += 1f;
@@ -52,26 +63,41 @@ public class HomingMissile : NetworkBehaviour
 
         Quaternion targetRot = Quaternion.LookRotation(dir);
 
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeed * Runner.DeltaTime);
-        _rb.linearVelocity = transform.forward * speed;
+        if (!_exploded)
+        {
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, _turnSpeed * Runner.DeltaTime);
+            _rb.linearVelocity = transform.forward * _speed;
+        }
+        else
+            _rb.linearVelocity = Vector3.zero;
     }
 
     void OnTriggerEnter(Collider other)
     {
         if (!Object.HasStateAuthority) return;
 
-        Collider[] overlaps = Physics.OverlapSphere(transform.position, areaRadius, _attackLayer);
+        Collider[] overlaps = Physics.OverlapSphere(transform.position, _areaRadius, _attackLayer);
 
-        if (overlaps.Length > 0)
+        foreach (Collider collider in overlaps)
         {
-            foreach (Collider collider in overlaps)
-            {
-                if (collider.transform.TryGetComponent<Player>(out Player target))
-                    CheckCollides(target);
-            }
+            if (collider.transform.TryGetComponent<Player>(out Player target))
+                CheckCollides(target);
         }
 
-        Runner.Despawn(_networkObj);
+        Rpc_BroadcastExplode();
+
+        despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastExplode()
+    {
+        _body.SetActive(false);
+        _col.enabled = false;
+
+        _explosion.Play();
+        _boom.Play();
+        _exploded = true;
     }
 
     void CheckCollides(Player target)

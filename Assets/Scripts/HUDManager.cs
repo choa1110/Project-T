@@ -22,6 +22,8 @@ public class HUDManager : MonoBehaviour
     {
         if (_instance == null)
             _instance = this;
+
+        gameObject.AddComponent<ScoreDisplayUI>();
     }
 
     public void SetOpponentUI(Player mainChar)
@@ -72,6 +74,10 @@ public class HUDManager : MonoBehaviour
 
         opponentDatas[num].SetOpponentId(displayName);
         opponentDatas[num].SetTeamColor(opponent.team);
+        if (opponentDatas[num].fillBar != null)
+        {
+            opponentDatas[num].fillBar.SetFillBarInstant(1.0f);
+        }
         opponent.onHPChange.AddListener(opponentDatas[num].fillBar.UpdateFillBar);
     }
 }
