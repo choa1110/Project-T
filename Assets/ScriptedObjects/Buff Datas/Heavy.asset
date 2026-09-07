@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Heavy
   m_EditorClassIdentifier: Assembly-CSharp::Buff
   buffName: Heavy
-  buffNum: 0
+  buffNum: 1
   rank: 1
-  icon: {fileID: 0}
+  icon: {fileID: 1810017807, guid: bf87883477d089041815d052502d5877, type: 3}
   discription: Increases weight by 20%
   isInfinite: 1
   isConditional: 0

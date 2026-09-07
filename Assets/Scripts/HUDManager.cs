@@ -73,6 +73,7 @@ public class HUDManager : MonoBehaviour
         }
 
         opponentDatas[num].SetOpponentId(displayName);
+        opponentDatas[num].SetOppentIcon(opponent.charIcon);
         opponentDatas[num].SetTeamColor(opponent.team);
         if (opponentDatas[num].fillBar != null)
         {

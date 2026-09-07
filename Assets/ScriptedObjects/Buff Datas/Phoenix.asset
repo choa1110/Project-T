@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Phoenix
   m_EditorClassIdentifier: Assembly-CSharp::Buff
   buffName: Pheonix
-  buffNum: 111
+  buffNum: 1
   rank: 3
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5853bc00e6bfda84ea9030e0486a1c44, type: 3}
   discription: Grants an extra life
   isInfinite: 1
   isConditional: 0

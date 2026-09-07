@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 6846640950882887324}
   - component: {fileID: 7906215292132125519}
   - component: {fileID: 8628251030496797281}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: RandomBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -180,7 +180,7 @@ GameObject:
   - component: {fileID: 5354108699493017227}
   - component: {fileID: 3075243652657234771}
   - component: {fileID: 3199817490965416565}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: ShadowMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -272,8 +272,16 @@ PrefabInstance:
       value: PowerIconRandom
       objectReference: {fileID: 0}
     - target: {fileID: 1126493862438144, guid: 3a9cd1c0357a63f418dff8ac18827179, type: 3}
+      propertyPath: m_Layer
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 1126493862438144, guid: 3a9cd1c0357a63f418dff8ac18827179, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1392769685652016, guid: 3a9cd1c0357a63f418dff8ac18827179, type: 3}
+      propertyPath: m_Layer
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 4203627057767846, guid: 3a9cd1c0357a63f418dff8ac18827179, type: 3}
       propertyPath: m_LocalScale.x

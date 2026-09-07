@@ -13,12 +13,18 @@ MonoBehaviour:
   m_Name: Super Lightweighting
   m_EditorClassIdentifier: Assembly-CSharp::Buff
   buffName: Super Lightweighting
-  rank: 0
-  discription: Increases jump height by 100%, and grants an extra jump for 10 seconds.
-  isInfinite: 0
+  buffNum: 0
+  rank: 3
+  icon: {fileID: 59418736, guid: a5d5dd84aab07dc4d9702be185cd55b7, type: 3}
+  discription: 'Increases jump height by 50%, and grants an extra jump
+
+    Lowers
+    weight by 20%'
+  isInfinite: 1
   isConditional: 0
   duration: 10
   conditions: []
   effects:
   - {fileID: 11400000, guid: cbead6c47d2853141948a5fa462ee1cb, type: 2}
-  - {fileID: 11400000, guid: 96b22bac0b7d2c8478d0e04985279fd6, type: 2}
+  - {fileID: 11400000, guid: 45e296144c2b5ed4ea8a6acc85a4b0be, type: 2}
+  - {fileID: 11400000, guid: 8c3c87b7666403c42bd4f0af19084d54, type: 2}

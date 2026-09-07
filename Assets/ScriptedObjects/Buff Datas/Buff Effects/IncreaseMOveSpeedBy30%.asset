@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StatModifyEffect
   targetStat: 5
   modType: 1
-  amount: 100
+  amount: 30

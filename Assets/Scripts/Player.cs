@@ -21,9 +21,12 @@ public class Player : NetworkBehaviour
     [SerializeField] ItemSystem _item;
 
     CharacterInfo _info;
-    public Transform spawnTrans;
+    public Sprite charIcon;
+    [Networked] Vector3 _spawnVec { get; set; }
+    [Networked] Quaternion _spawnRot { get; set; }
 
     Ability _ability;
+    public bool hasAbility = false;
     SkillInterface _skill;
 
     public FollowCamera POV;
@@ -53,6 +56,7 @@ public class Player : NetworkBehaviour
         if (_info != null)
         {
             _anim.avatar = _info.avatar;
+            charIcon = _info.icon;
 
             // Update attack areas owner if necessary, although they might already be set
             foreach (AttackArea area in _info.areas)
@@ -91,6 +95,8 @@ public class Player : NetworkBehaviour
     [Networked, Capacity(5)] public NetworkArray<int> RoundEliminations => default;
     [Networked] public Player LastAttacker { get; set; }
     [Networked] float LastAttackedTimer { get; set; }
+    [Networked] float AirborneTimer { get; set; }
+    [Networked] bool LongAirborne { get; set; }
 
     List<AttackArea> attackAreas = new List<AttackArea>();
 
@@ -100,9 +106,12 @@ public class Player : NetworkBehaviour
     [Networked] Quaternion RotateVelTarget { get; set; }
     [Networked] float RotateVelTimer { get; set; }
     [Networked] float RespawnTimer { get; set; }
+    [Networked] float SlipTimer { get; set; }
     Vector3 MinimunKnockbackVelocity;
 
     // 끌어당기기(Pull) 관련 네트워크 변수
+    [Networked] public bool isPulling { get; set; }
+    [Networked] float PullingTimer { get; set; }
     [Networked] Player Puller { get; set; }
     [Networked] float PullTimer { get; set; }
     [Networked] Vector3 PullVelocity { get; set; }
@@ -146,6 +155,7 @@ public class Player : NetworkBehaviour
 
     [SerializeField] ParticleSystem spawnEffect;
     [SerializeField] ParticleSystem hitEffect;
+    [SerializeField] AudioSource hitSound;
     [SerializeField] ParticleSystem healEffect;
     [SerializeField] ParticleSystem blinkEffect;
     [SerializeField] ParticleSystem magnetEffect;
@@ -215,6 +225,7 @@ public class Player : NetworkBehaviour
             POV.target = this;
 
             HUDManager.Instance.charName.text = NickName.ToString();
+            HUDManager.Instance.charPortrait.sprite = charIcon;
             onHPChange.AddListener(HUDManager.Instance.hpBar.UpdateFillBar);
             if (HUDManager.Instance.hpBar != null)
             {
@@ -226,42 +237,50 @@ public class Player : NetworkBehaviour
             GameManager.Instance.WaitForRegister(this);
         }
 
-        RoundStart();
+        Rpc_BroadcastRoundStart();
     }
 
-    public void RoundStart()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastSetSpawn(Vector3 pos, Quaternion rot)
     {
-        if (Object.HasStateAuthority)
+        _spawnVec = pos;
+        _spawnRot = rot;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastRoundStart()
+    {
+        _cc.enabled = true;
+        _ncc.enabled = true;
+        _col.enabled = true;
+
+        CurrentLives = life;
+        ChangeHP(stats.GetStat(StatType.MaxHP).Value);
+
+        _jumpCount = jumpAbiliy;
+        IsDead = false;
+
+        _horVelocity = Vector3.zero;
+        _verVelocity = 0f;
+        _externalVelocity = Vector3.zero;
+        KnockbackTimer = 0f;
+        PullTimer = 0f;
+
+        if (_ncc != null)
         {
-            CurrentLives = life;
-            ChangeHP(stats.GetStat(StatType.MaxHP).Value);
-
-            _jumpCount = jumpAbiliy;
-            IsDead = false;
-
-            _horVelocity = Vector3.zero;
-            _verVelocity = 0f;
-            _externalVelocity = Vector3.zero;
-            KnockbackTimer = 0f;
-            PullTimer = 0f;
-
-            if (_ncc != null)
-            {
-                _ncc.enabled = true;
-                int idx = Object.InputAuthority.PlayerId;
-                float xPos = idx * 2f;
-                Vector3 spawnPos = new Vector3(xPos, 3f, 0);
-                _ncc.Teleport(spawnPos);
-            }
-
-            if (_item != null)
-                _item.ResetItems();
-
-            if (_ability != null)
-                CurrentCoolDown = _ability.coolTime / 2;
-
-            Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}), {CurrentHP} HP, and items reset.");
+            _ncc.enabled = true;
+            _ncc.Teleport(_spawnVec, _spawnRot);
+            Debug.Log("Visible");
+            Invoke("PlayerVisible", 0.1f);
         }
+
+        if (_item != null)
+            _item.ResetItems();
+
+        if (_ability != null)
+            CurrentCoolDown = _ability.coolTime / 2;
+
+        Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}), {CurrentHP} HP, and items reset.");
     }
 
     public override void Render()
@@ -274,6 +293,7 @@ public class Player : NetworkBehaviour
         _anim.SetBool("isDead", IsDead);
         _anim.SetBool("Jump", jumpedThisFrame);
         _anim.SetBool("Airborne", !_ncc.Grounded);
+        _anim.SetBool("Long", LongAirborne);
         _anim.SetInteger("ComboStep", ComboStep);
         _anim.SetInteger("Hit", HitState);
 
@@ -316,7 +336,7 @@ public class Player : NetworkBehaviour
                 _curButtons = data.buttons.GetPressed(_prevButtons);
                 if (_curButtons.IsSet(InputButton.Attack))
                 {
-                    CycleSpectatorTarget();
+                    //CycleSpectatorTarget();
                 }
                 _prevButtons = data.buttons;
             }
@@ -337,10 +357,32 @@ public class Player : NetworkBehaviour
         else
             LastAttacker = null;
 
+        if (!_ncc.Grounded)
+            AirborneTimer += Runner.DeltaTime;
+        else
+            AirborneTimer = 0;
+
+        if (AirborneTimer > 0.5f)
+            LongAirborne = true;
+
         _jumpStartTimer = Mathf.Max(0, _jumpStartTimer - Runner.DeltaTime);
 
         if (_jumpStartTimer <= 0)
             jumpedThisFrame = false;
+
+        if (SlipTimer > 0)
+            SlipTimer -= Runner.DeltaTime;
+
+        if (PullingTimer > 0)
+            PullingTimer -= Runner.DeltaTime;
+        else
+        {
+            if (isPulling)
+            {
+                isPulling = false;
+                MagnetUsed();
+            }
+        }
 
         ProcessPulling();
 
@@ -358,7 +400,10 @@ public class Player : NetworkBehaviour
             }
             else
             {
-                _horVelocity = Vector3.zero;
+                float decel = SlipTimer > 0 ? 1.2f : 5f;
+                _horVelocity = Vector3.Lerp(_horVelocity, Vector3.zero, decel * Runner.DeltaTime);
+
+                //_horVelocity = Vector3.zero;
                 _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
                 _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
             }
@@ -374,7 +419,9 @@ public class Player : NetworkBehaviour
 
         ComboMove();
         _ncc.Move(_horVelocity + Vector3.up * _verVelocity + _externalVelocity);
-        _externalVelocity = Vector3.zero;
+
+        float exdecel = SlipTimer > 0 ? 15f : 25f;
+        _externalVelocity = Vector3.Lerp(_externalVelocity, Vector3.zero, exdecel * Runner.DeltaTime);
 
         _prevButtons = data.buttons;
     }
@@ -399,13 +446,24 @@ public class Player : NetworkBehaviour
         _blendSpeedX = Mathf.Lerp(_blendSpeedX, Sign(input.x), 5f * Runner.DeltaTime);
 
         if (inputDir == default)
-            _horVelocity = Vector3.Lerp(_horVelocity, default, 50f * Runner.DeltaTime);
+        {
+            if (_ncc.Grounded)
+            {
+                float decel = SlipTimer > 0 ? 1.2f : 25f;
+                _horVelocity = Vector3.Lerp(_horVelocity, default, decel * Runner.DeltaTime);
+            }
+            else
+                _horVelocity = Vector3.Lerp(_horVelocity, default, 1.2f * Runner.DeltaTime);
+        }
         else
         {
             if (_ncc.Grounded)
-                _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * 20f * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value);
+            {
+                float accel = SlipTimer > 0 ? 3f : 25f;
+                _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * accel * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value);
+            }
             else
-                _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * 10f * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value * 0.7f);
+                _horVelocity = Vector3.ClampMagnitude(_horVelocity + inputDir * 3f * Runner.DeltaTime, stats.GetStat(StatType.SpeedMove).Value * 0.7f);
         }
     }
 
@@ -462,7 +520,7 @@ public class Player : NetworkBehaviour
                     Quaternion deltaRotation = _anim.deltaRotation;
 
                     // 이동량을 속도로 변환하여 NCC에 전달
-                    _horVelocity = deltaPosition / (Runner.DeltaTime / 10f);
+                    _externalVelocity = deltaPosition / (Runner.DeltaTime / 10f);
                     transform.rotation *= deltaRotation;
                 }
             }
@@ -485,7 +543,10 @@ public class Player : NetworkBehaviour
     {
         if (_ability != null) return;
 
+        HasSelectedCard = true;
+
         _ability = AbilityDB.Instance.SetAbility(skillNum);
+        hasAbility = true;
 
         CurrentCoolDown = _ability.coolTime / 2;
         SkillDurationTimer = 0f;
@@ -566,7 +627,7 @@ public class Player : NetworkBehaviour
 
         ChangeHP(-stats.GetStat(StatType.MaxHP).Value);
 
-        Invoke("PlayerInvisible", 1f);
+        Invoke("PlayerInvisible", 0.25f);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -607,6 +668,12 @@ public class Player : NetworkBehaviour
 
         hitEffect.transform.position = transform.position + Vector3.up * 0.85f + (hitPos - transform.position).normalized * 0.3f;
         hitEffect.Play();
+
+        if (hitSound)
+        {
+            hitSound.pitch = Random.Range(0.8f, 1.2f);
+            hitSound.Play();
+        }
 
         if (Object.HasInputAuthority)
             POV.CameraShake(camShake);
@@ -673,13 +740,13 @@ public class Player : NetworkBehaviour
             POV.target = this;
         }
 
-        float randomX = UnityEngine.Random.Range(-10f, 10f);
-        float randomZ = UnityEngine.Random.Range(-10f, 10f);
-        Vector3 spawnPos = new Vector3(randomX, 0f, randomZ);
+        //float randomX = UnityEngine.Random.Range(-10f, 10f);
+        //float randomZ = UnityEngine.Random.Range(-10f, 10f);
+        //Vector3 spawnPos = new Vector3(randomX, 0f, randomZ);
+        //
+        //_ncc.Teleport(spawnTrans.position, spawnTrans.rotation);
 
-        _ncc.Teleport(spawnPos);
-
-        //_ncc.Teleport(spawnTrans.position, Quaternion.Euler(spawnTrans.forward));
+        _ncc.Teleport(_spawnVec, _spawnRot);
         Invoke("PlayerVisible", 0.1f);
 
         spawnEffect.Play();
@@ -707,7 +774,7 @@ public class Player : NetworkBehaviour
         if (CurrentLives <= 0)
         {
             Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
-            RPC_SetSpectatorMode();
+            //RPC_SetSpectatorMode();
         }
         else
             RespawnTimer = 5f;
@@ -715,6 +782,7 @@ public class Player : NetworkBehaviour
 
     void PlayerVisible()
     {
+        Debug.Log("Visible2");
         _info.mesh.enabled = true;
     }
 
@@ -728,7 +796,8 @@ public class Player : NetworkBehaviour
     {
         magnetEffect.Play();
 
-        Invoke("MagnetUsed", time);
+        isPulling = true;
+        PullingTimer = time;
     }
 
     void MagnetUsed()
@@ -776,6 +845,12 @@ public class Player : NetworkBehaviour
                     _skill.OnCoolComplete();
             }
         }
+    }
+
+    public void SetSlippery(float duration)
+    {
+        if (SlipTimer < duration)
+            SlipTimer = duration;
     }
 
     void StartKnockback(Vector3 initialVel)
@@ -881,6 +956,8 @@ public class Player : NetworkBehaviour
     // Animation Events
     public void EnableMovement() { _isMoveable = true; }
     public void DisableMovement() { _isMoveable = false; }
+
+    public void LandingFin() { LongAirborne  = false; }
     
     public void InAttack(int num) 
     { 

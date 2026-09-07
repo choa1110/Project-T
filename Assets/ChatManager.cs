@@ -1,8 +1,9 @@
-using UnityEngine;
-using Photon.Chat;
-using AuthenticationValues = Photon.Chat.AuthenticationValues;
 using ExitGames.Client.Photon;
 using Fusion;
+using Photon.Chat;
+using UnityEngine;
+using static Unity.Collections.Unicode;
+using AuthenticationValues = Photon.Chat.AuthenticationValues;
 
 public class ChatManager : MonoBehaviour, IChatClientListener
 {
@@ -118,8 +119,9 @@ public class ChatManager : MonoBehaviour, IChatClientListener
             reason = chatClient.DisconnectedCause.ToString();
         }
 
-        networkUI.ReceiveMessage("System", $"������ ���������ϴ�. (����: {reason})");
-        Debug.LogError($"[Chat Error] Disconnect Cause: {reason}");
+        Destroy(gameObject);
+        //networkUI.ReceiveMessage("System", $"������ ���������ϴ�. (����: {reason})");
+        //Debug.LogError($"[Chat Error] Disconnect Cause: {reason}");
     }
 
     public void DebugReturn(DebugLevel level, string message) { }

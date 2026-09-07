@@ -8,10 +8,14 @@ public class RandomBox : NetworkBehaviour
     [SerializeField] int from, to;
 
     float _initalHeight;
+    ItemPoint spawn;
 
-    public override void Spawned()
+    public void SetSpawnPoint(ItemPoint point)
     {
-        _initalHeight = transform.position.y;
+        spawn = point;
+        spawn.isOccupied = true;
+
+        _initalHeight = spawn.pos.y + 1;
     }
 
     public void SetItemRange(int start, int end)
@@ -28,12 +32,15 @@ public class RandomBox : NetworkBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (!Object.HasStateAuthority) return;
+        if (Object && !Object.HasStateAuthority) return;
 
         if (other.TryGetComponent<ItemSystem>(out ItemSystem sys))
         {
             if (sys.SetItem(ItemDB.Instance.GetItem(Random.Range(from, to))))
+            {
+                spawn.isOccupied = false;
                 Runner.Despawn(_networkObj);
+            }
         }
     }
 }

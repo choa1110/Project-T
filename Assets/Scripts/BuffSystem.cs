@@ -7,6 +7,7 @@ public class BuffSystem : NetworkBehaviour
     [SerializeField] Player _player;
 
     public List<BuffFunction> _appliedBuffs = new List<BuffFunction>();
+    List<Buff> _activeBuffData = new List<Buff>();
 
     public override void FixedUpdateNetwork()
     {
@@ -53,5 +54,10 @@ public class BuffSystem : NetworkBehaviour
     {
         if (index >= 0 && index < _appliedBuffs.Count)
             _appliedBuffs[index].RemoveEffectLocal();
+    }
+
+    public List<Buff> GetActiveBuffs()
+    {
+        return new List<Buff>(_activeBuffData);
     }
 }

@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Light
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   buffName: Light
+  buffNum: 0
   rank: 1
+  icon: {fileID: 969868413, guid: 30e4fa8e1f875cd41a2f16fd79e5f19a, type: 3}
   discription: Increases movement speed by 15%
   isInfinite: 1
   isConditional: 0

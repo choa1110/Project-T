@@ -22,6 +22,8 @@ public class ChatSceneUI : MonoBehaviour
 
     private NetworkRunner _runner;
 
+    bool isReturning = false;
+
     void Start()
     {
         _runner = FindFirstObjectByType<NetworkRunner>();
@@ -50,7 +52,7 @@ public class ChatSceneUI : MonoBehaviour
 
     void Update()
     {
-        if (_runner == null) return;
+        if (_runner == null || isReturning) return;
 
         UpdatePlayerSlots();
         UpdateButtons();    
@@ -248,6 +250,7 @@ public class ChatSceneUI : MonoBehaviour
     public void OnLeaveClicked()
     {
         if (_runner != null) _runner.Shutdown();
+        isReturning = true;
         SceneManager.LoadScene(0);
     }
 }

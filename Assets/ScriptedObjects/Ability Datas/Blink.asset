@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ability
   skillName: Blink
   skillNum: 3
-  icon: {fileID: 21300000, guid: 662ae237300fee247a43823401881e39, type: 3}
+  icon: {fileID: 21300000, guid: dbf919997d97d0b4d8a0dba25d0b79be, type: 3}
   coolTime: 5
   duration: 0
   discription: Teleports short distance forward

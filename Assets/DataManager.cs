@@ -2,15 +2,16 @@
 
 public class DataManager : MonoBehaviour
 {
-    public static DataManager Instance;
+    static DataManager _instance;
+    public static DataManager Instance { get => _instance; }
 
     public string UserNickName { get; private set; }
 
     private void Awake()
     {
-        if (Instance == null)
+        if (_instance == null)
         {
-            Instance = this;
+            _instance = this;
             DontDestroyOnLoad(gameObject);
             LoadNickName();
         }

@@ -1,10 +1,10 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 using Fusion;
-using System.Collections.Generic;
 using Fusion.Sockets;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -12,6 +12,7 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
     public GameObject mainPanel; // 방 생성, 방 입장
     public GameObject createRoomPanel; // 방 만들기 팝업
     public GameObject joinRoomPanel;   // 방 목록 팝업
+
     [Header("내부 컴포넌트")]
     public TMP_InputField roomNameInput;
     public Transform roomListContent;  
@@ -34,8 +35,14 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
             _runner.ProvideInput = true;
             _runner.AddCallbacks(this);
         }
-        
-        OnBackToMain();
+    }
+
+    public void OnBackToMain()
+    {
+        if (mainPanel != null) mainPanel.SetActive(true);
+        if (createRoomPanel != null) createRoomPanel.SetActive(false);
+        if (joinRoomPanel != null) joinRoomPanel.SetActive(false);
+        //if (mapSelectPanel != null) mapSelectPanel.SetActive(false);
     }
 
     public void OnOpenCreatePanel()
@@ -53,13 +60,6 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
 
         Debug.Log("로비 접속 시도중..");
         await _runner.JoinSessionLobby(SessionLobby.ClientServer);
-    }
-
-    public void OnBackToMain()
-    {
-        createRoomPanel.SetActive(false);
-        joinRoomPanel.SetActive(false);
-        mainPanel.SetActive(true); // 메인만 보이게
     }
 
     // 방 만들기
@@ -107,6 +107,7 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
     }
+
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
         Debug.Log($"방 목록 갱신됨! 개수: {sessionList.Count}");
@@ -151,11 +152,40 @@ public class LobbyUI : MonoBehaviour, INetworkRunnerCallbacks
             }
         }
     }
+
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+        Debug.LogWarning($"[Network] Shutdown 발생: {shutdownReason}");
+
+        // Runner 객체 정리
+        if (runner != null)
+        {
+            Destroy(runner.gameObject);
+        }
+
+        // 연결 끊김 원인에 따른 예외 처리 (선택)
+        switch (shutdownReason)
+        {
+            case ShutdownReason.HostMigration:
+                // 호스트 마이그레이션을 사용할 경우 예외 처리
+                return;
+            case ShutdownReason.Ok:
+                // 정상적으로 나간 경우
+                break;
+            default:
+                // 비정상적 끊김 (HostDied, ConnectionTimeout 등)
+                Debug.Log("호스트와의 연결이 끊어졌습니다. 로비로 이동합니다.");
+                break;
+        }
+
+        // 안전하게 로비 씬으로 이동
+        SceneManager.LoadScene(0);
+    }
+
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     public void OnConnectedToServer(NetworkRunner runner) { }
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }

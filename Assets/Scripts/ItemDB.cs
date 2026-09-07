@@ -53,7 +53,7 @@ public class ItemDB : NetworkBehaviour
         shootPosition.y += 1f;
         shootPosition += user.transform.forward;
 
-        Runner.Spawn(missile, shootPosition, user.transform.rotation, Runner.LocalPlayer, (runner, obj) => {
+        Runner.Spawn(missile, shootPosition, user.transform.rotation, null, (runner, obj) => {
             if (obj.TryGetBehaviour<HomingMissile>(out var missileBehaviour))
             {
                 missileBehaviour.SetOwner(user);
@@ -91,6 +91,4 @@ public class ItemDB : NetworkBehaviour
                 trap.SetTrap(user.team);
         });
     }
-
-    // Rpc Request
 }

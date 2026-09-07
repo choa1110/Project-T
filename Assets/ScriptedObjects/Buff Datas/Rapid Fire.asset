@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Rapid Fire
   m_EditorClassIdentifier: Assembly-CSharp::Buff
   buffName: Rapid Fire
-  rank: 0
-  discription: Increases attack speed by 100%, but reduces knockback power by 50%
-    for 5 seconds.
-  isInfinite: 0
+  buffNum: 2
+  rank: 3
+  icon: {fileID: -114713434, guid: b6275bc665610114b85f375714dd2e21, type: 3}
+  discription: Doubles attack speed, but halves knockback power
+  isInfinite: 1
   isConditional: 0
   duration: 5
   conditions: []

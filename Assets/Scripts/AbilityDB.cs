@@ -24,6 +24,11 @@ public class AbilityDB : MonoBehaviour
         return abilityList[num - 1];
     }
 
+    public int GetAbilityCount()
+    { 
+        return abilityList.Count;
+    }
+
     public void ActivateAbility(int num, Player user)
     {
         switch (num)

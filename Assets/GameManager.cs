@@ -1,11 +1,12 @@
+using Fusion;
+using Fusion.Sockets;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Fusion;
-using Fusion.Sockets;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public struct NetworkInputData : INetworkInput
 {
@@ -34,6 +35,9 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     public NetworkPrefabRef playerPrefab;
 
     public List<Player> playerList = new List<Player>();
+
+    [SerializeField] List<MapInfo> mapList = new List<MapInfo>();
+    MapInfo curMap;
 
     [Networked] public float RoundTimer { get; set; }
     [Networked] public int MaxRounds { get; set; }
@@ -126,6 +130,9 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             _isCardUIOpened = false;
             _isTransitioning = false;
             randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
+
+            curMap = mapList[UnityEngine.Random.Range(0, mapList.Count)];
+            curMap.Rpc_BroadcastToggleMap(true);
         }
     }
 
@@ -217,10 +224,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             // Random Box Spawning Logic
             if (randomBoxTimer.Expired(Runner))
             {
-                if (CanSpawnRandomBox())
-                {
-                    SpawnRandomBox();
-                }
+                SpawnRandomBox();
+                
                 randomBoxTimer = TickTimer.CreateFromSeconds(Runner, randomBoxSpawnInterval);
             }
         }
@@ -332,11 +337,25 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         RoundTimer = RoundDuration;
         _isCardUIOpened = false;
 
-        foreach (var player in playerList)
+        MapInfo tmp = mapList[UnityEngine.Random.Range(0, mapList.Count)];
+
+        if (tmp != curMap)
         {
-            player.RoundStart();
-            player.HasSelectedCard = false;
-            RPC_ResetPlayerVisuals(player.Object);
+            curMap.Rpc_BroadcastToggleMap(false);
+            tmp.Rpc_BroadcastToggleMap(true);
+            curMap = tmp;
+        }
+        else
+            curMap.ShufflePoints();
+
+        for (int i = 0; i < playerList.Count; i++)
+        {
+            Transform transLo = curMap.GetPlayerSpawnPoint(i);
+            playerList[i].Rpc_BroadcastSetSpawn(transLo.position, transLo.rotation);
+
+            playerList[i].Rpc_BroadcastRoundStart();
+            playerList[i].HasSelectedCard = false;
+            //RPC_ResetPlayerVisuals(playerList[i].Object);
         }
     }
 
@@ -397,32 +416,44 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         return alivePlayers[(index + 1) % alivePlayers.Count];
     }
 
-    bool CanSpawnRandomBox()
-    {
-        int count = 0;
-        foreach (var obj in Runner.GetAllNetworkObjects())
-        {
-            if (obj.GetComponent<RandomBox>() != null) count++;
-        }
-        return count < maxRandomBoxes;
-    }
+    //bool CanSpawnRandomBox()
+    //{
+    //    int count = 0;
+    //    foreach (var obj in Runner.GetAllNetworkObjects())
+    //    {
+    //        if (obj.GetComponent<RandomBox>() != null) count++;
+    //    }
+    //    return count < maxRandomBoxes;
+    //}
 
-    void SpawnRandomBox()
+    void SpawnRandomBox(int itemRangeX = 0, int itemRangeY = 4)
     {
         if (randomBoxPrefab == null) return;
 
-        float x = UnityEngine.Random.Range(mapBoundsX.x, mapBoundsX.y);
-        float z = UnityEngine.Random.Range(mapBoundsZ.x, mapBoundsZ.y);
-        Vector3 pos = new Vector3(x, spawnHeight, z);
+        ItemPoint tmp = curMap.GetRandomItemDropPosition();
 
-        NetworkObject box = Runner.Spawn(randomBoxPrefab, pos, Quaternion.identity);
-        RandomBox itemBox = box.GetComponent<RandomBox>();
-        if (itemBox != null)
-        {
-            itemBox.SetItemRange(randomBoxItemRange.x, randomBoxItemRange.y);
-        }
+        if (tmp == null) return;
+
+        //float x = UnityEngine.Random.Range(mapBoundsX.x, mapBoundsX.y);
+        //float z = UnityEngine.Random.Range(mapBoundsZ.x, mapBoundsZ.y);
+        //Vector3 pos = new Vector3(x, spawnHeight, z);
+
+        Runner.Spawn(randomBoxPrefab, tmp.pos, Quaternion.identity, null, (runner, obj) => {
+            if (obj.TryGetBehaviour<RandomBox>(out var boxBehaviour))
+            {
+                boxBehaviour.SetSpawnPoint(tmp);
+                boxBehaviour.SetItemRange(itemRangeX, itemRangeY);
+            }
+        });
+
+        //NetworkObject box = Runner.Spawn(randomBoxPrefab, tmp.pos, Quaternion.identity);
+        //RandomBox itemBox = box.GetComponent<RandomBox>();
+        //if (itemBox != null)
+        //{
+        //    itemBox.SetItemRange(randomBoxItemRange.x, randomBoxItemRange.y);
+        //}
         
-        Debug.Log($"[GameManager] Spawned RandomBox at {pos}");
+        Debug.Log($"[GameManager] Spawned RandomBox at {tmp}");
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -576,6 +607,8 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 SpawnGameCharacter(runner, player, assignedModel, assignedTeam);
                 spawnIndex++;
             }
+
+            BackGroundMusic.Instance.BattleOn();
         }
     }
 
@@ -603,15 +636,16 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     void SpawnGameCharacter(NetworkRunner runner, PlayerRef player, int assignedModelNum = -1, int assignedTeam = 0)
     {
         NetworkObject existingPlayerObj = runner.GetPlayerObject(player);
+
         if (existingPlayerObj != null && existingPlayerObj.IsValid)
-        {
              return;
-        }
 
         // 2. 위치 계산
-        int index = player.PlayerId;
-        float xPos = index * 2f;
-        Vector3 spawnPosition = new Vector3(xPos, 3f, 0);
+        Transform spawnTransform = curMap.GetPlayerSpawnPoint(player.PlayerId);
+
+        //int index = player.PlayerId;
+        //float xPos = index * 2f;
+        //Vector3 spawnPosition = new Vector3(xPos, 3f, 0);
         
         // 3. 스폰 실행 (여기서 에러가 나는 건 코드가 아니라 playerPrefab 변수에 든 내용물 때문임)
         Debug.Log(this.name + " : " + playerPrefab);
@@ -621,18 +655,48 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             assignedModelNum = UnityEngine.Random.Range(0, 4);
         }
 
-        NetworkObject playerChar = runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player, (runner, obj) => {
-            Player p = obj.GetComponent<Player>();
-            if (p != null)
+        NetworkObject playerChar = runner.Spawn(playerPrefab, spawnTransform.position, spawnTransform.rotation, player, (runner, obj) => {
+            if (obj.TryGetBehaviour<Player>(out Player p))
             {
                 p.ModelNum = assignedModelNum;
                 p.IsModelAssigned = true;
                 p.team = assignedTeam; // Assign networked team property
+
+                p.Rpc_BroadcastSetSpawn(spawnTransform.position, spawnTransform.rotation);
             }
         });
 
         runner.SetPlayerObject(player, playerChar);
-        Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {xPos}) (모델: {assignedModelNum}) (팀: {assignedTeam})");
+        Debug.Log($"{player}번 플레이어 스폰 완료 (위치: {spawnTransform}) (모델: {assignedModelNum}) (팀: {assignedTeam})");
+    }
+
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+        Debug.LogWarning($"[Network] Shutdown 발생: {shutdownReason}");
+
+        // Runner 객체 정리
+        if (runner != null)
+        {
+            Destroy(runner.gameObject);
+        }
+
+        // 연결 끊김 원인에 따른 예외 처리 (선택)
+        switch (shutdownReason)
+        {
+            case ShutdownReason.HostMigration:
+                // 호스트 마이그레이션을 사용할 경우 예외 처리
+                return;
+            case ShutdownReason.Ok:
+                // 정상적으로 나간 경우
+                break;
+            default:
+                // 비정상적 끊김 (HostDied, ConnectionTimeout 등)
+                Debug.Log("호스트와의 연결이 끊어졌습니다. 로비로 이동합니다.");
+                break;
+        }
+
+        // 안전하게 로비 씬으로 이동
+        SceneManager.LoadScene(0);
     }
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
@@ -644,10 +708,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
-    {
-    }
-
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
     }
 

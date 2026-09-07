@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Payback
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   buffName: Payback
-  buffNum: 1
+  buffNum: 0
   rank: 2
-  icon: {fileID: 0}
+  icon: {fileID: 1626139632, guid: fa4afc23ec0e99c498acf212626525e2, type: 3}
   discription: Taking damage increases knockback power by 50% for 3 seconds.
   isInfinite: 1
   isConditional: 1

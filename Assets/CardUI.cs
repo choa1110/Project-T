@@ -1,5 +1,4 @@
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
@@ -22,6 +21,8 @@ public class CardUI : MonoBehaviour
     private int[] currentIndices = new int[3];
     private TextMeshProUGUI _timerText;
     private bool _hasSelectedThisPhase = false;
+
+    Player _myPlayer;
 
     void Awake()
     {
@@ -95,7 +96,7 @@ public class CardUI : MonoBehaviour
     {
         _hasSelectedThisPhase = true;
         int randomButton = Random.Range(0, 3);
-        OnCardClicked(randomButton);
+        OnBuffClicked(randomButton);
     }
 
     public void OpenCardSelection(int rank)
@@ -108,6 +109,9 @@ public class CardUI : MonoBehaviour
 
     void SetupRandomCards(int rank)
     {
+        if (_myPlayer == null)
+            _myPlayer = GetMyPlayer();
+
         int count = BuffDB.Instance.GetBuffCount(rank);
         if (count == 0)
         {
@@ -115,7 +119,7 @@ public class CardUI : MonoBehaviour
         }
         if (count == 0) count = 1; // Absolute fallback
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++)
         {
             // Pick a random buff index (0 to count-1)
             currentIndices[i] = Random.Range(0, count);
@@ -136,20 +140,84 @@ public class CardUI : MonoBehaviour
             {
                 cardButtons[i].interactable = true;
                 cardButtons[i].onClick.RemoveAllListeners();
-                cardButtons[i].onClick.AddListener(() => OnCardClicked(buttonNumber));
+                cardButtons[i].onClick.AddListener(() => OnBuffClicked(currentIndices[i]));
+            }
+        }
+
+        if (_myPlayer.hasAbility)
+        {
+            // Pick a random buff index (0 to count-1)
+            currentIndices[2] = Random.Range(0, count);
+
+            // Fetch the actual buff to show user-friendly labels
+            Buff b = BuffDB.Instance.GetBuff(rank, currentIndices[2] + 1);
+            if (b != null)
+            {
+                cardTexts[2].text = $"{b.buffName}\n<size=14><color=grey>{b.discription}</color></size>";
+            }
+            else
+            {
+                cardTexts[2].text = $"Rank {rank}\nBuff {currentIndices[2]}";
+            }
+
+            if (cardButtons[2] != null)
+            {
+                cardButtons[2].interactable = true;
+                cardButtons[2].onClick.RemoveAllListeners();
+                cardButtons[2].onClick.AddListener(() => OnBuffClicked(currentIndices[2]));
+            }
+        }
+        else
+        {
+            count = AbilityDB.Instance.GetAbilityCount();
+            currentIndices[2] = Random.Range(1, count + 1);
+
+            Ability a = AbilityDB.Instance.SetAbility(currentIndices[2]);
+            if (a != null)
+            {
+                cardTexts[2].text = $"{a.skillName}\n<size=14><color=grey>{a.discription}</color></size>";
+            }
+            else
+            {
+                cardTexts[2].text = $"Rank {rank}\nBuff {currentIndices[2]}";
+            }
+
+            if (cardButtons[2] != null)
+            {
+                cardButtons[2].interactable = true;
+                cardButtons[2].onClick.RemoveAllListeners();
+                cardButtons[2].onClick.AddListener(() => OnAbilityClicked(a.skillNum));
             }
         }
     }
 
-    public void OnCardClicked(int buttonNumber)
+    public void OnBuffClicked(int buttonNumber)
     {
         _hasSelectedThisPhase = true;
         int selectedIndex = currentIndices[buttonNumber];
-        Player myPlayer = GetMyPlayer();
 
-        if(myPlayer != null)
+        if (_myPlayer != null)
         {
-            myPlayer.RPC_SelectCard(cardRank, selectedIndex + 1);
+            _myPlayer.RPC_SelectCard(cardRank, selectedIndex + 1);
+        }
+
+        // Disable all buttons to prevent clicking again
+        for (int i = 0; i < cardButtons.Length; i++)
+        {
+            if (cardButtons[i] != null)
+            {
+                cardButtons[i].interactable = false;
+            }
+        }
+    }
+
+    public void OnAbilityClicked(int abilNumber)
+    {
+        _hasSelectedThisPhase = true;
+
+        if (_myPlayer != null)
+        {
+            _myPlayer.Rpc_RequestSetAbility(abilNumber);
         }
 
         // Disable all buttons to prevent clicking again
@@ -166,8 +234,9 @@ public class CardUI : MonoBehaviour
     {
         foreach(var p in FindObjectsByType<Player>(FindObjectsSortMode.None))
         {
-            if(p.Object.HasInputAuthority) return p;
+            if (p.Object.HasInputAuthority) return p;
         }
+
         return null;
     }
 }
