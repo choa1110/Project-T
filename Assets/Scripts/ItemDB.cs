@@ -66,8 +66,8 @@ public class ItemDB : NetworkBehaviour
     {
         Player target = GameManager.Instance.GetClosesetOpponent(user);
 
-        user.Rpc_MagnetActivate(7f);
-        target.PulledToPoint(user, 7f);
+        user.Rpc_BroadcastMagnetActivate(5f);
+        target.PulledToPoint(user, 5f);
     }
 
     void OnUse_RepulseBarrier(Player user)
@@ -86,9 +86,18 @@ public class ItemDB : NetworkBehaviour
         Vector3 setPosition = user.transform.position;
         setPosition += user.transform.forward * 1.5f;
 
+        Vector3 rayOrigin = setPosition + Vector3.up * 3f;
+        Ray ray = new Ray(rayOrigin, Vector3.down);
+
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, 10, 1 << 0))
+            setPosition = hitInfo.point;
+
         Runner.Spawn(trap, setPosition, user.transform.rotation, Runner.LocalPlayer, (runner, obj) => {
             if (obj.TryGetBehaviour<SpikeTrap>(out var trap))
+            {
                 trap.SetTrap(user.team);
+                GameManager.Instance.SetDisposable(obj.gameObject);
+            }
         });
     }
 }

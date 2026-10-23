@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemId: 3
   itemName: Repulse Barrier
-  itemIcon: {fileID: 21300000, guid: d3f33adb909e26443914391fba875e4c, type: 3}
+  itemIcon: {fileID: 21300000, guid: e6345bc23b68db64394f56f010c198bd, type: 3}
   description: 

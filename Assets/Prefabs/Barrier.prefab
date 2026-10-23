@@ -91,7 +91,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Barrier
   owner: {fileID: 0}
-  _duration: 10
+  _duration: 5
 --- !u!199 &1797774893377800025
 ParticleSystemRenderer:
   serializedVersion: 7

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 public enum StatModType
 {
     Flat,       // 깡 스탯 (예: +10)
-    PercentAdd, // %합연산 (예: +10% -> +0.1 * base)
+    PercentAdd, // % 합연산 (예: +10% -> +0.1 * base)
     Multiplicative // 곱연산 (예: 2배 -> 2.0 * base)
 }
 
@@ -51,7 +51,7 @@ public class Stat
         CalculateFinalValue();
     }
 
-    // 연산 순서: 곱연산 -> %합연산(기본값 기반) -> 합연산
+    // 연산 순서: 곱연산 -> % 합연산(기본값 기반) -> 합연산
     void CalculateFinalValue()
     {
         float sumPercentAdd = 0;

@@ -7,6 +7,7 @@ public class Blast : NetworkBehaviour
     Player owner;
 
     [SerializeField] ParticleSystem blastEffect;
+    [SerializeField] AudioSource blastSound;
     [SerializeField] Collider col;
 
     float pow;
@@ -31,6 +32,7 @@ public class Blast : NetworkBehaviour
         col.enabled = true;
 
         blastEffect.Play();
+        blastSound.Play();
 
         StartCoroutine(BlastTime());
     }
@@ -48,7 +50,7 @@ public class Blast : NetworkBehaviour
             Vector3 knockPos = targetPos - transform.position;
 
             if (target.team != owner.team && !target.barrier.activeSelf)
-                target.ApplyHit(owner, transform.position, pow * 2f, knockPos, knock * 4f, 10);
+                target.ApplyHit(owner, transform.position, pow * 2f, knockPos, knock * 1.5f, 10);
             else
                 target.ApplyHit(transform.position, 0, knockPos, knock, 7);
         }

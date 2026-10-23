@@ -53,14 +53,11 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     [Header("Random Box Settings")]
     [SerializeField] NetworkObject randomBoxPrefab;
-    [SerializeField] float randomBoxSpawnInterval = 10f;
-    [SerializeField] Vector2 mapBoundsX = new Vector2(-15f, 15f);
-    [SerializeField] Vector2 mapBoundsZ = new Vector2(-15f, 15f);
-    [SerializeField] float spawnHeight = 1f;
-    [SerializeField] int maxRandomBoxes = 5;
-    [SerializeField] Vector2Int randomBoxItemRange = new Vector2Int(0, 2);
+    [SerializeField] float randomBoxSpawnInterval = 7.5f;
 
     [Networked] TickTimer randomBoxTimer { get; set; }
+
+    List<GameObject> ResetObjects = new List<GameObject>();
 
     [SerializeField] InputActionAsset inputActions;
 
@@ -197,6 +194,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                         RPC_HideCardUI();
                         if (CurrentRound < MaxRounds)
                         {
+                            BackGroundMusic.Instance.Rpc_BroadcastRaiseSound();
                             StartNextRound();
                         }
                         else
@@ -302,6 +300,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             Debug.Log($"[Round End] {rankedPlayers[i].NickName} ranked {i + 1} and got {points} points.");
         }
 
+        BackGroundMusic.Instance.Rpc_BroadcastDimSound();
         if (CurrentRound < MaxRounds)
         {
             // Show Interim Score UI
@@ -341,6 +340,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         if (tmp != curMap)
         {
+            DisposeObjects();
             curMap.Rpc_BroadcastToggleMap(false);
             tmp.Rpc_BroadcastToggleMap(true);
             curMap = tmp;
@@ -416,6 +416,19 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         return alivePlayers[(index + 1) % alivePlayers.Count];
     }
 
+    public void SetDisposable(GameObject go)
+    {
+        ResetObjects.Add(go);
+    }
+
+    void DisposeObjects()
+    {
+        foreach (GameObject go in ResetObjects)
+            if (go != null) Destroy(go);
+
+        ResetObjects.Clear();
+    }
+
     //bool CanSpawnRandomBox()
     //{
     //    int count = 0;
@@ -443,6 +456,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 boxBehaviour.SetSpawnPoint(tmp);
                 boxBehaviour.SetItemRange(itemRangeX, itemRangeY);
+                SetDisposable(obj.gameObject);
             }
         });
 
@@ -601,14 +615,14 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
                 }
                 else // Solo mode
                 {
-                    assignedTeam = assignedIndex % 3; // Cycle colors: 0 (Blue), 1 (Red), 2 (Green)
+                    assignedTeam = assignedIndex % 4; // Cycle colors: 0 (Blue), 1 (Red), 2 (Green)
                 }
 
                 SpawnGameCharacter(runner, player, assignedModel, assignedTeam);
                 spawnIndex++;
             }
 
-            BackGroundMusic.Instance.BattleOn();
+            BackGroundMusic.Instance.Rpc_BroadcastBattleOn();
         }
     }
 

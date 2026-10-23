@@ -5,7 +5,7 @@ public class Barrier : NetworkBehaviour
 {
     [SerializeField] Player owner;
 
-    [SerializeField] float _duration = 7f;
+    [SerializeField] float _duration = 5f;
 
     [Networked] float curDur { get; set; }
 
@@ -49,7 +49,7 @@ public class Barrier : NetworkBehaviour
             Debug.Log(other);
             Vector3 knockDir = target.transform.position - transform.position;
 
-            target.ApplyHit(transform.position, 0, knockDir, 10, 5);
+            target.ApplyHit(transform.position, 0, knockDir, 5, 5);
         }
     }
 }

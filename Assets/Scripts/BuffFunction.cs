@@ -1,5 +1,4 @@
-﻿using Fusion;
-using System;
+﻿using System;
 using UnityEngine;
 
 [Serializable]

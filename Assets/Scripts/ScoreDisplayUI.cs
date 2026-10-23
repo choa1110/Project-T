@@ -620,6 +620,8 @@ public class ScoreDisplayUI : MonoBehaviour
             runner.Shutdown();
         }
 
+        BackGroundMusic.Instance.BackToLobby();
+        BackGroundMusic.Instance.RaiseSound();
         SceneManager.LoadScene(0);
     }
 
@@ -628,6 +630,8 @@ public class ScoreDisplayUI : MonoBehaviour
         var runner = GameManager.Instance.Runner;
         if (runner != null && runner.IsServer)
         {
+            BackGroundMusic.Instance.Rpc_BroadcastBackToLobby();
+            BackGroundMusic.Instance.Rpc_BroadcastRaiseSound();
             runner.LoadScene(SceneRef.FromIndex(1));
         }
     }

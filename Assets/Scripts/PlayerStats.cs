@@ -7,10 +7,10 @@ public enum StatType
     PowDam,
     PowKnock,
     AtkSpeed,
-    AtkRange,
+    //AtkRange,
     SpeedMove,
-    SpeedSprint,
-    StaDrainRate,
+    //SpeedSprint,
+    //StaDrainRate,
     JumpHeight,
     Weight
 }
@@ -23,10 +23,10 @@ public class PlayerStats
     [SerializeField] float powDam;
     [SerializeField] float powKnock;
     [SerializeField] float atkSpeed;
-    [SerializeField] float atkRange;
+    //[SerializeField] float atkRange;
     [SerializeField] float speedMove;
-    [SerializeField] float speedSprint;
-    [SerializeField] float staDrainRate; // 스태미나 소모율
+    //[SerializeField] float speedSprint;
+    //[SerializeField] float staDrainRate;
     [SerializeField] float jumpHeight;
     [SerializeField] float weight; // 넉백 저항
 
@@ -34,10 +34,10 @@ public class PlayerStats
     private Stat _powDam;
     private Stat _powKnock;
     private Stat _atkSpeed;
-    private Stat _atkRange;
+    //private Stat _atkRange;
     private Stat _speedMove;
-    private Stat _speedSprint;
-    private Stat _staDrainRate;
+    //private Stat _speedSprint;
+    //private Stat _staDrainRate;
     private Stat _jumpHeight;
     private Stat _weight;
 
@@ -49,10 +49,10 @@ public class PlayerStats
         _powDam = new Stat(powDam);
         _powKnock = new Stat(powKnock);
         _atkSpeed = new Stat(atkSpeed);
-        _atkRange = new Stat(atkRange);
+        //_atkRange = new Stat(atkRange);
         _speedMove = new Stat(speedMove);
-        _speedSprint = new Stat(speedSprint);
-        _staDrainRate = new Stat(staDrainRate);
+        //_speedSprint = new Stat(speedSprint);
+        //_staDrainRate = new Stat(staDrainRate);
         _jumpHeight = new Stat(jumpHeight);
         _weight = new Stat(weight);
 
@@ -67,10 +67,10 @@ public class PlayerStats
             { StatType.PowDam, _powDam },
             { StatType.PowKnock, _powKnock },
             { StatType.AtkSpeed, _atkSpeed },
-            { StatType.AtkRange, _atkRange },
+            //{ StatType.AtkRange, _atkRange },
             { StatType.SpeedMove, _speedMove },
-            { StatType.SpeedSprint, _speedSprint },
-            { StatType.StaDrainRate, _staDrainRate },
+            //{ StatType.SpeedSprint, _speedSprint },
+            //{ StatType.StaDrainRate, _staDrainRate },
             { StatType.JumpHeight, _jumpHeight },
             { StatType.Weight, _weight }
         };

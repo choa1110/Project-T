@@ -36,19 +36,19 @@ public class BuffDB : MonoBehaviour
 
     public Buff GetBuff(int rank, int num)
     {
-        int count = GetBuffCount(rank);
-        if (count == 0)
-        {
-            if (rank != 1) return GetBuff(1, num);
-            return null;
-        }
-        int safeIndex = Mathf.Clamp(num - 1, 0, count - 1);
+        //int count = GetBuffCount(rank);
+        //if (count == 0)
+        //{
+        //    if (rank != 1) return GetBuff(1, num);
+        //    return null;
+        //}
+        //int safeIndex = Mathf.Clamp(num - 1, 0, count - 1);
         switch (rank)
         {
-            case 1: return rank1Buff[safeIndex];
-            case 2: return rank2Buff[safeIndex];
-            case 3: return rank3Buff[safeIndex];
-            case 4: return itemBuff[safeIndex];
+            case 1: return rank1Buff[num];
+            case 2: return rank2Buff[num];
+            case 3: return rank3Buff[num];
+            case 4: return itemBuff[num];
             default: return null;
         }
     }

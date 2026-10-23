@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemId: 2
   itemName: Magnet Tracker
-  itemIcon: {fileID: 21300000, guid: f486805c75445f4419c8e7e98c8cd41d, type: 3}
+  itemIcon: {fileID: 21300000, guid: dda9611ff9585804082b8b2d638f5f8e, type: 3}
   description: 

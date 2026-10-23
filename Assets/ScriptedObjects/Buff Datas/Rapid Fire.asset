@@ -16,7 +16,7 @@ MonoBehaviour:
   buffNum: 2
   rank: 3
   icon: {fileID: -114713434, guid: b6275bc665610114b85f375714dd2e21, type: 3}
-  discription: Doubles attack speed, but halves knockback power
+  discription: Increase attack speed by 50%, but halves knockback power
   isInfinite: 1
   isConditional: 0
   duration: 5

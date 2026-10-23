@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 
 public class BackGroundMusic : MonoBehaviour
@@ -16,31 +17,50 @@ public class BackGroundMusic : MonoBehaviour
     void Awake()
     {
         if (_instance == null)
+        {
             _instance = this;
-
-        DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+            Destroy(gameObject);
 
         bgmPlayer.generator = lobbyBGM;
         bgmPlayer.Play();
     }
 
-    public void BattleOn()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastBattleOn()
     {
         bgmPlayer.generator = battleBGM;
         bgmPlayer.volume = volNormal;
         bgmPlayer.Play();
     }
-    
-    public void BackToLobby()
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastBackToLobby()
     {
         bgmPlayer.generator = lobbyBGM;
         bgmPlayer.volume = 1f;
         bgmPlayer.Play();
     }
 
-    public void DimSound()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastDimSound()
     {
         bgmPlayer.volume = volDim;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastRaiseSound()
+    {
+        bgmPlayer.volume = volNormal;
+    }
+
+    public void BackToLobby()
+    {
+        bgmPlayer.generator = lobbyBGM;
+        bgmPlayer.volume = 1f;
+        bgmPlayer.Play();
     }
 
     public void RaiseSound()

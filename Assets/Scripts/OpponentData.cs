@@ -10,6 +10,9 @@ public class OpponentData : MonoBehaviour
     [SerializeField] TMP_Text _opponentId;
     public FillBar fillBar;
 
+    bool _teamGame;
+    bool _isTeam;
+
     void Awake()
     {
         _background = GetComponent<Image>();
@@ -20,8 +23,22 @@ public class OpponentData : MonoBehaviour
         _opponentIcon.sprite = icon;
     }
 
+    public void SetOppentState(bool isTeamGame, bool isFriendly)
+    {
+        _teamGame = isTeamGame;
+        _isTeam = isFriendly;
+    }
+
     public void SetOpponentId(string name)
     {
+        if (_teamGame)
+        {
+            if (_isTeam)
+                name = "[TEAM] " + name;
+            else
+                name = "[ENEMY] " + name;
+        }
+
         _opponentId.text = name;
     }
 
@@ -41,6 +58,10 @@ public class OpponentData : MonoBehaviour
                 break;
             case 2:
                 if (ColorUtility.TryParseHtmlString("#00D900", out newColor))
+                    _background.color = newColor;
+                break;
+            case 3:
+                if (ColorUtility.TryParseHtmlString("#FFEB04", out newColor))
                     _background.color = newColor;
                 break;
             default:

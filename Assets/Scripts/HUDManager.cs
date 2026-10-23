@@ -18,6 +18,8 @@ public class HUDManager : MonoBehaviour
 
     public List<OpponentData> opponentDatas;
 
+    bool _isTeamMatch;
+
     void Awake()
     {
         if (_instance == null)
@@ -31,50 +33,60 @@ public class HUDManager : MonoBehaviour
         List<Player> list = GameManager.Instance.playerList;
         int displayIndex = 0;
 
-        for (int i = 0; i < list.Count; i++)
+        // Check if GameMode is Team Match (1)
+        if (GameManager.Instance.Runner.SessionInfo != null &&
+            GameManager.Instance.Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
         {
-            if (list[i] == mainChar)
-                continue;
+            _isTeamMatch = (int)gmProp == 1;
+        }
 
-            if (displayIndex < opponentDatas.Count)
+        if (_isTeamMatch)
+        {
+            displayIndex = 1;
+            for (int i = 0; i < list.Count; i++)
             {
-                LinkOpponent(list[i], displayIndex);
-                displayIndex++;
+                if (list[i] == mainChar)
+                    continue;
+
+                if (list[i].team == mainChar.team)
+                {
+                    LinkOpponent(list[i], 0, true);
+                    continue;
+                }
+
+                if (displayIndex < opponentDatas.Count)
+                {
+                    LinkOpponent(list[i], displayIndex);
+                    displayIndex++;
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == mainChar)
+                    continue;
+
+                if (displayIndex < opponentDatas.Count)
+                {
+                    LinkOpponent(list[i], displayIndex);
+                    displayIndex++;
+                }
             }
         }
     }
 
-    void LinkOpponent(Player opponent, int num)
+    void LinkOpponent(Player opponent, int num, bool team = false)
     {
         opponentDatas[num].gameObject.SetActive(true);
         opponent.linkedOpponentData = opponentDatas[num];
-        
-        string displayName = opponent.NickName.ToString();
 
-        // Check if GameMode is Team Match (1)
-        bool isTeamMatch = false;
-        if (GameManager.Instance.Runner.SessionInfo != null && 
-            GameManager.Instance.Runner.SessionInfo.Properties.TryGetValue("GameMode", out var gmProp))
-        {
-            isTeamMatch = (int)gmProp == 1;
-        }
-
-        if (isTeamMatch)
-        {
-            var myPlayer = GameManager.Instance.playerList.Find(p => p.Object.HasInputAuthority);
-            if (myPlayer != null && myPlayer.team == opponent.team)
-            {
-                displayName = $"[TEAM] {displayName}";
-            }
-            else
-            {
-                displayName = $"[ENEMY] {displayName}";
-            }
-        }
-
-        opponentDatas[num].SetOpponentId(displayName);
+        opponentDatas[num].SetOppentState(_isTeamMatch ,team);
+        opponentDatas[num].SetOpponentId(opponent.NickName.ToString());
         opponentDatas[num].SetOppentIcon(opponent.charIcon);
         opponentDatas[num].SetTeamColor(opponent.team);
+
         if (opponentDatas[num].fillBar != null)
         {
             opponentDatas[num].fillBar.SetFillBarInstant(1.0f);

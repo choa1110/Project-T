@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ability
   skillName: Healing Hands
   skillNum: 1
-  icon: {fileID: 21300000, guid: 3089b027054b0bd42a0eb28fc2fa1551, type: 3}
-  coolTime: 10
+  icon: {fileID: 21300000, guid: a5223ee511f125a4598005508bf6d05f, type: 3}
+  coolTime: 15
   duration: 0
   discription: Restores 20% of Player's health

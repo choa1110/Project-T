@@ -10,6 +10,9 @@ public class AttackArea : NetworkBehaviour
     [SerializeField] LayerMask _attackLayer;
     [SerializeField] float _areaRadius;
 
+    [SerializeField] List<ParticleSystem> _trailParticles;
+    [SerializeField] List<AudioSource> _attackSound;
+
     [Networked] bool _inAttack {  get; set; }
 
     Vector3 _prevPoint;
@@ -66,15 +69,44 @@ public class AttackArea : NetworkBehaviour
 
     public void AttackStart()
     {
+        if (!Object.HasStateAuthority) return;
+
         _hit_objs.Clear();
 
         _inAttack = true;
         _prevPoint = transform.position;
+
+        Rpc_BroadcastToggleEffect(_inAttack);
     }
 
     public void AttackEnd()
     {
+        if (!Object.HasStateAuthority) return;
+
         _inAttack = false;
+
+        Rpc_BroadcastToggleEffect(_inAttack);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastToggleEffect(bool enabled)
+    {
+        if (enabled)
+        {
+            foreach (ParticleSystem ps in _trailParticles)
+                ps.Play();
+
+            foreach (AudioSource us in _attackSound)
+            {
+                us.pitch = Random.Range(0.5f, 0.8f);
+                us.Play();
+            }
+        }
+        else
+        {
+            foreach (ParticleSystem ps in _trailParticles)
+                ps.Stop();
+        }
     }
 
     void CheckCollides(Player target)

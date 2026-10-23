@@ -1,7 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
+using Random = System.Random;
 
 public class CardUI : MonoBehaviour
 {
@@ -18,11 +20,31 @@ public class CardUI : MonoBehaviour
     public Button[] cardButtons;
     public TextMeshProUGUI[] cardTexts;
 
-    private int[] currentIndices = new int[3];
+    //private int[] currentIndices = new int[3];
     private TextMeshProUGUI _timerText;
     private bool _hasSelectedThisPhase = false;
 
     Player _myPlayer;
+
+    static List<int> GetUniqueRandomNumbers(int min, int max, int count)
+    {
+        // 1. 범위 내의 모든 숫자 리스트 생성
+        List<int> numbers = Enumerable.Range(min, max - min + 1).ToList();
+        Random rand = new Random();
+
+        // 2. Fisher-Yates Shuffle 적용
+        for (int i = numbers.Count - 1; i > 0; i--)
+        {
+            int j = rand.Next(i + 1);
+            // 값 맞교환 (Swap)
+            int temp = numbers[i];
+            numbers[i] = numbers[j];
+            numbers[j] = temp;
+        }
+
+        // 3. 앞에서부터 필요한 개수만큼 추출
+        return numbers.Take(count).ToList();
+    }
 
     void Awake()
     {
@@ -95,119 +117,112 @@ public class CardUI : MonoBehaviour
     void SelectRandomCard()
     {
         _hasSelectedThisPhase = true;
-        int randomButton = Random.Range(0, 3);
+        int randomButton = UnityEngine.Random.Range(0, 3);
         OnBuffClicked(randomButton);
     }
 
     public void OpenCardSelection(int rank)
     {
         cardPanel.SetActive(true);
-        cardRank = rank;
+        cardRank = rank < 3 ? rank : 3; 
         _hasSelectedThisPhase = false; // Reset selection flag for the new phase
-        SetupRandomCards(rank);
+        SetupRandomCards();
     }
 
-    void SetupRandomCards(int rank)
+    void SetupRandomCards()
     {
         if (_myPlayer == null)
             _myPlayer = GetMyPlayer();
 
-        int count = BuffDB.Instance.GetBuffCount(rank);
-        if (count == 0)
-        {
-            count = BuffDB.Instance.GetBuffCount(1); // Fallback to Rank 1 count
-        }
-        if (count == 0) count = 1; // Absolute fallback
+        int count = BuffDB.Instance.GetBuffCount(cardRank);
 
-        for (int i = 0; i < 2; i++)
+        if (!_myPlayer.hasAbility)
         {
-            // Pick a random buff index (0 to count-1)
-            currentIndices[i] = Random.Range(0, count);
+            List<int> randList = GetUniqueRandomNumbers(0, count - 1, 2);
 
-            // Fetch the actual buff to show user-friendly labels
-            Buff b = BuffDB.Instance.GetBuff(rank, currentIndices[i] + 1);
-            if (b != null)
+            for (int i = 0; i < 2; i++)
             {
-                cardTexts[i].text = $"{b.buffName}\n<size=14><color=grey>{b.discription}</color></size>";
+                int buffNum = randList[i];
+
+                // Fetch the actual buff to show user-friendly labels
+                Buff b = BuffDB.Instance.GetBuff(cardRank, buffNum);
+
+                if (b != null)
+                    cardTexts[i].text = $"{b.buffName}\n<size=24><color=grey>\n{b.discription}<size=20></color></size>";
+                else
+                {
+                    cardTexts[i].text = $"Rank {cardRank}\nBuff {buffNum}";
+                    break;
+                }
+
+                if (cardButtons[i] != null)
+                {
+                    cardButtons[i].interactable = true;
+                    cardButtons[i].onClick.RemoveAllListeners();
+                    cardButtons[i].onClick.AddListener(() => OnBuffClicked(buffNum));
+                }
             }
+
+            count = AbilityDB.Instance.GetAbilityCount();
+            int abilNum = UnityEngine.Random.Range(1, count + 1);
+
+            Ability a = AbilityDB.Instance.SetAbility(abilNum);
+            if (a != null)
+                cardTexts[2].text = $"{a.skillName}\n<size=24><color=grey>\n{a.discription}<size=20></color></size>";
             else
             {
-                cardTexts[i].text = $"Rank {rank}\nBuff {currentIndices[i]}";
-            }
-
-            int buttonNumber = i; 
-            if (cardButtons[i] != null)
-            {
-                cardButtons[i].interactable = true;
-                cardButtons[i].onClick.RemoveAllListeners();
-                cardButtons[i].onClick.AddListener(() => OnBuffClicked(currentIndices[i]));
-            }
-        }
-
-        if (_myPlayer.hasAbility)
-        {
-            // Pick a random buff index (0 to count-1)
-            currentIndices[2] = Random.Range(0, count);
-
-            // Fetch the actual buff to show user-friendly labels
-            Buff b = BuffDB.Instance.GetBuff(rank, currentIndices[2] + 1);
-            if (b != null)
-            {
-                cardTexts[2].text = $"{b.buffName}\n<size=14><color=grey>{b.discription}</color></size>";
-            }
-            else
-            {
-                cardTexts[2].text = $"Rank {rank}\nBuff {currentIndices[2]}";
+                cardTexts[2].text = $"Ability {abilNum}";
+                return;
             }
 
             if (cardButtons[2] != null)
             {
                 cardButtons[2].interactable = true;
                 cardButtons[2].onClick.RemoveAllListeners();
-                cardButtons[2].onClick.AddListener(() => OnBuffClicked(currentIndices[2]));
+                cardButtons[2].onClick.AddListener(() => OnAbilityClicked(abilNum));
             }
         }
         else
         {
-            count = AbilityDB.Instance.GetAbilityCount();
-            currentIndices[2] = Random.Range(1, count + 1);
+            List<int> randList = GetUniqueRandomNumbers(0, count - 1, 3);
 
-            Ability a = AbilityDB.Instance.SetAbility(currentIndices[2]);
-            if (a != null)
+            for (int i = 0; i < 3; i++)
             {
-                cardTexts[2].text = $"{a.skillName}\n<size=14><color=grey>{a.discription}</color></size>";
-            }
-            else
-            {
-                cardTexts[2].text = $"Rank {rank}\nBuff {currentIndices[2]}";
-            }
+                int buffNum = randList[i];
 
-            if (cardButtons[2] != null)
-            {
-                cardButtons[2].interactable = true;
-                cardButtons[2].onClick.RemoveAllListeners();
-                cardButtons[2].onClick.AddListener(() => OnAbilityClicked(a.skillNum));
+                // Fetch the actual buff to show user-friendly labels
+                Buff b = BuffDB.Instance.GetBuff(cardRank, buffNum);
+
+                if (b != null)
+                    cardTexts[i].text = $"{b.buffName}\n<size=24><color=grey>\n{b.discription}<size=20></color></size>";
+                else
+                {
+                    cardTexts[i].text = $"Rank {cardRank}\nBuff {buffNum}";
+                    break;
+                }
+
+                if (cardButtons[i] != null)
+                {
+                    cardButtons[i].interactable = true;
+                    cardButtons[i].onClick.RemoveAllListeners();
+                    cardButtons[i].onClick.AddListener(() => OnBuffClicked(buffNum));
+                }
             }
         }
     }
 
-    public void OnBuffClicked(int buttonNumber)
+    public void OnBuffClicked(int buffNumber)
     {
         _hasSelectedThisPhase = true;
-        int selectedIndex = currentIndices[buttonNumber];
 
         if (_myPlayer != null)
-        {
-            _myPlayer.RPC_SelectCard(cardRank, selectedIndex + 1);
-        }
+            _myPlayer.RPC_SelectBuff(cardRank, buffNumber);
 
         // Disable all buttons to prevent clicking again
         for (int i = 0; i < cardButtons.Length; i++)
         {
             if (cardButtons[i] != null)
-            {
                 cardButtons[i].interactable = false;
-            }
         }
     }
 
@@ -216,17 +231,13 @@ public class CardUI : MonoBehaviour
         _hasSelectedThisPhase = true;
 
         if (_myPlayer != null)
-        {
-            _myPlayer.Rpc_RequestSetAbility(abilNumber);
-        }
+            _myPlayer.Rpc_SelectAbility(abilNumber);
 
         // Disable all buttons to prevent clicking again
         for (int i = 0; i < cardButtons.Length; i++)
         {
             if (cardButtons[i] != null)
-            {
                 cardButtons[i].interactable = false;
-            }
         }
     }
 

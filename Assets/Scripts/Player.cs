@@ -1,8 +1,8 @@
+using Fusion;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using Fusion;
-using System.Collections;
 
 public enum ExtraStatType
 {
@@ -85,6 +85,7 @@ public class Player : NetworkBehaviour
     [Networked] bool IsSuperarmour { get; set; }
     bool _isMoveable = true;
     float _jumpStartTimer;
+    float _changeSpecTimer;
     int _jumpCount;
     bool jumpedThisFrame;
 
@@ -146,7 +147,11 @@ public class Player : NetworkBehaviour
     const float GroundTurnLerp = 5f;
     const float AirTurnLerp = 1.5f;
 
+    public bool inAirAttack = false;
+
     public bool comboRegister;
+
+    bool _spectating = false;
 
     NetworkButtons _curButtons;
     NetworkButtons _prevButtons;
@@ -157,7 +162,9 @@ public class Player : NetworkBehaviour
     [SerializeField] ParticleSystem hitEffect;
     [SerializeField] AudioSource hitSound;
     [SerializeField] ParticleSystem healEffect;
+    [SerializeField] AudioSource healSound;
     [SerializeField] ParticleSystem blinkEffect;
+    [SerializeField] AudioSource blinkSound;
     [SerializeField] ParticleSystem magnetEffect;
     [SerializeField] Blast shockBlast;
 
@@ -216,9 +223,6 @@ public class Player : NetworkBehaviour
     {
         GameManager.Instance.RegisterPlayer(this);
 
-        if (Object.HasStateAuthority)
-            life = GameManager.Instance.InitialLives;
-
         if (Object.HasInputAuthority)
         {
             POV = FollowCamera.Instance;
@@ -237,7 +241,11 @@ public class Player : NetworkBehaviour
             GameManager.Instance.WaitForRegister(this);
         }
 
-        Rpc_BroadcastRoundStart();
+        if (Object.HasStateAuthority)
+        {
+            life = GameManager.Instance.InitialLives;
+            Rpc_BroadcastRoundStart();
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -250,6 +258,8 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void Rpc_BroadcastRoundStart()
     {
+        _spectating = false;
+
         _cc.enabled = true;
         _ncc.enabled = true;
         _col.enabled = true;
@@ -266,19 +276,19 @@ public class Player : NetworkBehaviour
         KnockbackTimer = 0f;
         PullTimer = 0f;
 
-        if (_ncc != null)
-        {
-            _ncc.enabled = true;
-            _ncc.Teleport(_spawnVec, _spawnRot);
-            Debug.Log("Visible");
-            Invoke("PlayerVisible", 0.1f);
-        }
-
         if (_item != null)
             _item.ResetItems();
 
         if (_ability != null)
             CurrentCoolDown = _ability.coolTime / 2;
+
+        if (POV)
+            POV.target = this;
+
+        _ncc.Teleport(_spawnVec, _spawnRot);
+        Invoke("PlayerVisible", 0.1f);
+
+        spawnEffect.Play();
 
         Debug.Log($"[RoundStart] {NickName} initialized with {CurrentLives} lives (from GameManager: {GameManager.Instance.InitialLives}), {CurrentHP} HP, and items reset.");
     }
@@ -302,22 +312,20 @@ public class Player : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_SelectCard(int rank, int buffIndex)
+    public void RPC_SelectBuff(int rank, int buffNum)
     {
         HasSelectedCard = true;
-        Buff selectedBuff = null;
 
-        switch (rank) {
-            case 1: selectedBuff = BuffDB.Instance.GetRank1Buff(buffIndex); break;
-            case 2: selectedBuff = BuffDB.Instance.GetRank2Buff(buffIndex); break;
-            case 3: selectedBuff = BuffDB.Instance.GetRank3Buff(buffIndex); break;
-        }
+        _buffSystem.Rpc_BroadcastApplyBuff(rank, buffNum);
+        //Debug.Log($"서버: {Object.InputAuthority} 플레이어에게 {selectedBuff.name} 버프 적용 완료");
+    }
 
-        if (selectedBuff != null)
-        {
-            _buffSystem.Rpc_BroadcastApplyBuff(selectedBuff.rank, selectedBuff.buffNum);
-            Debug.Log($"서버: {Object.InputAuthority} 플레이어에게 {selectedBuff.name} 버프 적용 완료");
-        }
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void Rpc_SelectAbility(int skillNum)
+    {
+        HasSelectedCard = true;
+
+        Rpc_RequestSetAbility(skillNum);
     }
 
     public override void FixedUpdateNetwork()
@@ -331,13 +339,16 @@ public class Player : NetworkBehaviour
 
         if (IsDead)
         {
-            if (GetInput(out data))
+            if (_changeSpecTimer > 0)
+                _changeSpecTimer -= Runner.DeltaTime;
+
+            if (_spectating && _changeSpecTimer <= 0 && GetInput(out data))
             {
                 _curButtons = data.buttons.GetPressed(_prevButtons);
                 if (_curButtons.IsSet(InputButton.Attack))
-                {
-                    //CycleSpectatorTarget();
-                }
+                    CycleSpectatorTarget();
+
+                _changeSpecTimer = 0.2f;
                 _prevButtons = data.buttons;
             }
 
@@ -380,7 +391,9 @@ public class Player : NetworkBehaviour
             if (isPulling)
             {
                 isPulling = false;
-                MagnetUsed();
+
+                if (Object.HasStateAuthority)
+                    Rpc_BroadcastMagnetUsed();
             }
         }
 
@@ -429,10 +442,15 @@ public class Player : NetworkBehaviour
     void ApplyGravity()
     {
         if (!_ncc.Grounded)
-            _verVelocity += Gravity * Runner.DeltaTime;
+        {
+            float mul = inAirAttack ? 3f : 1f;
+
+            _verVelocity += Gravity * mul * Runner.DeltaTime;
+        }
         else
         {
             _verVelocity = -2f;
+            inAirAttack = false;
             _jumpCount = jumpAbiliy;
         }
     }
@@ -627,31 +645,20 @@ public class Player : NetworkBehaviour
 
         ChangeHP(-stats.GetStat(StatType.MaxHP).Value);
 
-        Invoke("PlayerInvisible", 0.25f);
+        Rpc_BroadcastInvisible(0.25f);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     void RPC_SetSpectatorMode()
     {
         Debug.Log($"[SpectatorMode] Disabling visuals for {NickName}");
-        foreach (var model in modelList)
-        {
-            model.SetActive(false);
-        }
 
-        _ncc.enabled = false;
-
-        if (Object.HasInputAuthority)
-        {
-            // Initial spectator target
-            CycleSpectatorTarget();
-        }
+        if (Object.HasInputAuthority && !GameManager.Instance.IsTransitioning)
+            _spectating = true;
     }
 
     void CycleSpectatorTarget()
     {
-        if (!Object.HasInputAuthority) return;
-
         Player nextTarget = GameManager.Instance.GetAlivePlayer(POV.target as Player);
 
         if (nextTarget != null)
@@ -683,7 +690,14 @@ public class Player : NetworkBehaviour
     {
         ChangeHP(stats.GetStat(StatType.MaxHP).Value * ratio);
 
+        Rpc_BroadcastHealEffect();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastHealEffect()
+    {
         healEffect.Play();
+        healSound.Play();
     }
 
     void ChangeHP(float amount)
@@ -740,12 +754,6 @@ public class Player : NetworkBehaviour
             POV.target = this;
         }
 
-        //float randomX = UnityEngine.Random.Range(-10f, 10f);
-        //float randomZ = UnityEngine.Random.Range(-10f, 10f);
-        //Vector3 spawnPos = new Vector3(randomX, 0f, randomZ);
-        //
-        //_ncc.Teleport(spawnTrans.position, spawnTrans.rotation);
-
         _ncc.Teleport(_spawnVec, _spawnRot);
         Invoke("PlayerVisible", 0.1f);
 
@@ -774,15 +782,26 @@ public class Player : NetworkBehaviour
         if (CurrentLives <= 0)
         {
             Debug.Log($"{NickName} is out of lives. Entering spectator mode.");
-            //RPC_SetSpectatorMode();
+            RPC_SetSpectatorMode();
         }
         else
             RespawnTimer = 5f;
     }
 
+    //[Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    //public void Rpc_BroadcastVisible(float time)
+    //{
+    //    Invoke("PlayerVisible", time);
+    //}
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_BroadcastInvisible(float time)
+    {
+        Invoke("PlayerInvisible", time);
+    }
+
     void PlayerVisible()
     {
-        Debug.Log("Visible2");
         _info.mesh.enabled = true;
     }
 
@@ -792,15 +811,17 @@ public class Player : NetworkBehaviour
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void Rpc_MagnetActivate(float time)
+    public void Rpc_BroadcastMagnetActivate(float time)
     {
-        magnetEffect.Play();
+        if (!isPulling)
+            magnetEffect.Play();
 
         isPulling = true;
         PullingTimer = time;
     }
 
-    void MagnetUsed()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void Rpc_BroadcastMagnetUsed()
     {
         magnetEffect.Stop();
     }
@@ -813,12 +834,21 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void Rpc_BroadcastBlink()
     {
+        Vector3 movePoint = transform.position + transform.forward.normalized * 5f;
+
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.85f;
+        Ray ray = new Ray(rayOrigin, transform.forward);
+
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, 5, 1 << 0))
+            movePoint = transform.position + transform.forward.normalized * (hitInfo.distance - 0.15f);
+
         if (POV)
             POV.ToggleSoft();
 
-        _ncc.Teleport(transform.position + transform.forward.normalized * 5f);
+        _ncc.Teleport(movePoint);
 
         blinkEffect.Play();
+        blinkSound.Play();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -832,7 +862,7 @@ public class Player : NetworkBehaviour
     {
         if (SkillDurationTimer > 0)
             SkillDurationTimer -= Runner.DeltaTime;
-        else if (CurrentCoolDown > 0)
+        else if (CurrentCoolDown > 0 && !GameManager.Instance.IsTransitioning)
         {
             CurrentCoolDown = Mathf.Clamp(CurrentCoolDown - Runner.DeltaTime, 0, _ability.coolTime);
 
@@ -918,9 +948,9 @@ public class Player : NetworkBehaviour
                 dir.Normalize();
                 float distanceFactor = Mathf.Clamp01(distance / 2f);
 
-                Vector3 pullVel = dir * 30f * distanceFactor;
+                Vector3 pullVel = dir * 15f * distanceFactor;
                 PullVelocity += pullVel * Runner.DeltaTime;
-                PullVelocity = Vector3.ClampMagnitude(PullVelocity, 15f);
+                PullVelocity = Vector3.ClampMagnitude(PullVelocity, 10f);
             }
                 
             PullVelocity = Vector3.Lerp(PullVelocity, Vector3.zero, 3f * Runner.DeltaTime);
@@ -993,14 +1023,14 @@ public class Player : NetworkBehaviour
 
         if (Vector3.Angle(transform.forward, hitPoint - transform.position) > 90)
         {
-            if (knockDis > 20f)
+            if (knockDis >= 10f)
                 HitState = 4;
             else
                 HitState = 2;
         }
         else
         {
-            if (knockDis > 20f)
+            if (knockDis >= 10f)
                 HitState = 3;
             else
                 HitState = 1;
