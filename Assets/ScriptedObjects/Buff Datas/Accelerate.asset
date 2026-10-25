@@ -15,7 +15,7 @@ MonoBehaviour:
   buffName: Accelerate
   buffNum: 1
   rank: 2
-  icon: {fileID: 0}
+  icon: {fileID: -2035661988, guid: 448a3901e2e158d4eb11033421e4b0df, type: 3}
   discription: When not hit for 3 seconds, increases movement speed by 30%
   isInfinite: 1
   isConditional: 1

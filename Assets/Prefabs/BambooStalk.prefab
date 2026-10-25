@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6613707504360808460}
   - component: {fileID: 3366607490953052397}
   - component: {fileID: 345021267662681179}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: BambooStalk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -54,9 +54,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.00015
-  m_Height: 0.0015080007
+  m_Height: 0.003
   m_Direction: 1
-  m_Center: {x: 0.00013, y: 0.00073, z: 0.000010000001}
+  m_Center: {x: 0.00013, y: 0.0014, z: 0.000010000001}
 --- !u!114 &345021267662681179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86,7 +86,8 @@ GameObject:
   - component: {fileID: 4598969028372501633}
   - component: {fileID: 3169353341006229292}
   - component: {fileID: 8334914937226042513}
-  m_Layer: 0
+  - component: {fileID: 1655392642688426672}
+  m_Layer: 14
   m_Name: Mesh_BambooStalk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -165,3 +166,18 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1655392642688426672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3968583400903291376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a564abca50e2a51489c68c3dcf8829cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaterialTransparent
+  targetRenderer: {fileID: 8334914937226042513}
+  opaqueMaterial: {fileID: 2100000, guid: 2dc7425ace777bc4193267c6fc71a96a, type: 2}
+  transparentMaterial: {fileID: 2100000, guid: e398c397d99479b4e8deb5d080a0b9a0, type: 2}

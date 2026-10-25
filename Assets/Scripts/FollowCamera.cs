@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class FollowCamera : MonoBehaviour
@@ -7,6 +8,8 @@ public class FollowCamera : MonoBehaviour
     public static FollowCamera Instance { get => _instance; }
 
     public Player target;
+
+    public List<MaterialTransparent> transRenderers = new();
 
     [SerializeField] float camDis;
     [SerializeField] float angleX;
@@ -41,6 +44,15 @@ public class FollowCamera : MonoBehaviour
         // (이 한 줄이 없으면 무한 에러가 발생합니다)
         if (target == null) return;
 
+        // 이전 프레임의 장애물 복구
+        foreach (MaterialTransparent mt in transRenderers)
+        {
+            if (mt != null)
+                mt.ToggleTransparency(false);
+        }
+
+        transRenderers.Clear();
+
         // --- 아래는 기존 로직 그대로 ---
         Vector3 followPos = target.transform.position;
         followPos.y += 1.2f;
@@ -49,19 +61,24 @@ public class FollowCamera : MonoBehaviour
 
         // 장애물 감지 로직 (Raycast)
         // (필요하다면 플레이어 본인은 제외하도록 LayerMask 설정을 잘 해야 함)
-        RaycastHit[] hits = Physics.RaycastAll(followPos, _armDir, camDis, transLayer);
+        RaycastHit[] hits = Physics.SphereCastAll(followPos, 0.5f, _armDir, camDis, transLayer);
 
         foreach (RaycastHit hit in hits)
         {
-            // 투명화 로직 등이 들어갈 자리
-            // Debug.Log(hit.collider.name);
+            MaterialTransparent mt = hit.collider.GetComponentInChildren<MaterialTransparent>();
+
+            if (mt == null)
+                continue;
+
+            mt.ToggleTransparency(true);
+            
+            transRenderers.Add(mt);
         }
 
         if (inSoftLerp)
             _movePos = Vector3.Lerp(transform.position, target.transform.position + _armDir * camDis, 10 * Time.deltaTime);
         else
             _movePos = target.transform.position + _armDir * camDis;
-        //_movePos = Vector3.Lerp(transform.position, target.transform.position + dir * camDis, 50 * Time.deltaTime);
 
         transform.position = _movePos + _offset;
 

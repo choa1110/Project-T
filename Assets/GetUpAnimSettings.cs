@@ -23,6 +23,7 @@ public class GetUpAnimSettings : StateMachineBehaviour
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _player.EnableMovement();
+        _player.EnableRotation();
         _player.SetVulnerable();
     }
 

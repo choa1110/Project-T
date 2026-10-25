@@ -16,7 +16,7 @@ MonoBehaviour:
   buffNum: 2
   rank: 1
   icon: {fileID: 21300000, guid: 5853bc00e6bfda84ea9030e0486a1c44, type: 3}
-  discription: Increase damage by 35%, but decrease move speed by 20%
+  discription: Increase attack power by 35%, but decrease move speed by 20%
   isInfinite: 1
   isConditional: 0
   duration: 0

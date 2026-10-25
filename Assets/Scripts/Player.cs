@@ -84,6 +84,7 @@ public class Player : NetworkBehaviour
     [Networked] public bool IsDead { get; set; }
     [Networked] bool IsSuperarmour { get; set; }
     bool _isMoveable = true;
+    bool _isRotatable;
     float _jumpStartTimer;
     float _changeSpecTimer;
     int _jumpCount;
@@ -166,6 +167,7 @@ public class Player : NetworkBehaviour
     [SerializeField] ParticleSystem blinkEffect;
     [SerializeField] AudioSource blinkSound;
     [SerializeField] ParticleSystem magnetEffect;
+    [SerializeField] ParticleSystem magnetCaught;
     [SerializeField] Blast shockBlast;
 
     void Awake()
@@ -406,7 +408,6 @@ public class Player : NetworkBehaviour
             if (_isMoveable)
             {
                 Movement(data.move);
-                Rotation(data.move);
 
                 if (_curButtons.IsSet(InputButton.Jump))
                     Jump();
@@ -420,6 +421,9 @@ public class Player : NetworkBehaviour
                 _blendSpeedY = Mathf.Lerp(_blendSpeedY, 0, 5f * Runner.DeltaTime);
                 _blendSpeedX = Mathf.Lerp(_blendSpeedX, 0, 5f * Runner.DeltaTime);
             }
+
+            if (_isRotatable)
+                Rotation(data.move);
 
             if (_curButtons.IsSet(InputButton.Attack))
                 Combo();
@@ -929,6 +933,8 @@ public class Player : NetworkBehaviour
         Puller = puller;
         PullTimer = duration;
         PullVelocity = Vector3.zero;
+
+        magnetCaught.Play();
     }
 
     void ProcessPulling()
@@ -953,7 +959,7 @@ public class Player : NetworkBehaviour
                 PullVelocity = Vector3.ClampMagnitude(PullVelocity, 10f);
             }
                 
-            PullVelocity = Vector3.Lerp(PullVelocity, Vector3.zero, 3f * Runner.DeltaTime);
+            PullVelocity = Vector3.Lerp(PullVelocity, Vector3.zero, 3f * Runner.DeltaTime) / stats.GetStatRate(StatType.Weight);
 
             _externalVelocity += PullVelocity;
         }
@@ -961,6 +967,8 @@ public class Player : NetworkBehaviour
         {
             PullVelocity = Vector3.zero;
             Puller = null;
+
+            magnetCaught.Stop();
         }
     }
 
@@ -986,6 +994,8 @@ public class Player : NetworkBehaviour
     // Animation Events
     public void EnableMovement() { _isMoveable = true; }
     public void DisableMovement() { _isMoveable = false; }
+    public void EnableRotation() { _isRotatable = true; }
+    public void DisableRotation() { _isRotatable = false; }
 
     public void LandingFin() { LongAirborne  = false; }
     

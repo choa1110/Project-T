@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db46384528646364da42ca202fa6bf76, type: 3}
+  m_Name: All Rounder
+  m_EditorClassIdentifier: Assembly-CSharp::Buff
+  buffName: All Rounder
+  buffNum: 3
+  rank: 3
+  icon: {fileID: 21300000, guid: 604f27d227e3caa44a1d6626d599fbdb, type: 3}
+  discription: 'Increase all stats by 10%
+
+'
+  isInfinite: 1
+  isConditional: 0
+  duration: 0
+  conditions: []
+  effects:
+  - {fileID: 11400000, guid: e1af910210f92684fb8562fdae6e6550, type: 2}
+  - {fileID: 11400000, guid: 762a89eca8ba70543bf1969baed796de, type: 2}
+  - {fileID: 11400000, guid: 5d984ae47ea2cf4439c5c637447559f1, type: 2}
+  - {fileID: 11400000, guid: 30ca2b7ead2529048bbfc19cca31a0b5, type: 2}
+  - {fileID: 11400000, guid: 02649bd1890bef340a463a7d583288af, type: 2}
+  - {fileID: 11400000, guid: b5ec20870e806a54dbce3fb4ea278f54, type: 2}
+  - {fileID: 11400000, guid: 5f2c0a5c0feb14e47ac4f7ba772a3185, type: 2}

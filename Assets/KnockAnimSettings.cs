@@ -11,6 +11,7 @@ public class KnockAnimSettings : StateMachineBehaviour
             _player = animator.gameObject.GetComponent<Player>();
 
         _player.DisableMovement();
+        _player.DisableRotation();
         _player.ResetCombo();
         _player.OutAttackAll();
         _player.SetKnockedHit();
@@ -21,6 +22,7 @@ public class KnockAnimSettings : StateMachineBehaviour
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _player.DisableMovement();
+        _player.DisableRotation();
     }
 
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state

@@ -124,7 +124,22 @@ public class CardUI : MonoBehaviour
     public void OpenCardSelection(int rank)
     {
         cardPanel.SetActive(true);
-        cardRank = rank < 3 ? rank : 3; 
+
+        cardRank = 3;
+        switch (rank)
+        {
+            case 1: 
+                cardRank = 1;
+                break;
+            case 2:
+            case 3:
+                cardRank = 2;
+                break;
+            case 4:
+                cardRank = 3;
+                break;
+        }
+
         _hasSelectedThisPhase = false; // Reset selection flag for the new phase
         SetupRandomCards();
     }

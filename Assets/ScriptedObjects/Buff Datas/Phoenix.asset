@@ -16,10 +16,11 @@ MonoBehaviour:
   buffNum: 1
   rank: 3
   icon: {fileID: 21300000, guid: 5853bc00e6bfda84ea9030e0486a1c44, type: 3}
-  discription: Grants an extra life
+  discription: Grants an extra life, but lowers max HP by 25%
   isInfinite: 1
   isConditional: 0
   duration: 0
   conditions: []
   effects:
   - {fileID: 11400000, guid: c6b7247cf29fdd5418c5a5a25f8260ee, type: 2}
+  - {fileID: 11400000, guid: c8924044ece21df45ab8265817d5e6ba, type: 2}

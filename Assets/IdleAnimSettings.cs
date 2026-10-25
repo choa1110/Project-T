@@ -10,7 +10,6 @@ public class IdleAnimSettings : StateMachineBehaviour
         if (_player == null)
             _player = animator.gameObject.GetComponent<Player>();
 
-        _player.EnableMovement();
         _player.ResetCombo();
         _player.SetVulnerable();
         _player.comboRegister = false;
@@ -20,6 +19,7 @@ public class IdleAnimSettings : StateMachineBehaviour
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _player.EnableMovement();
+        _player.EnableRotation();
     }
 
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state

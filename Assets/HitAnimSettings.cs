@@ -11,6 +11,7 @@ public class HitAnimSettings : StateMachineBehaviour
             _player = animator.gameObject.GetComponent<Player>();
 
         _player.DisableMovement();
+        _player.DisableRotation();
         _player.ResetCombo();
         _player.OutAttackAll();
     }
@@ -25,6 +26,7 @@ public class HitAnimSettings : StateMachineBehaviour
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _player.EnableMovement();
+        _player.EnableRotation();
     }
 
     // OnStateMove is called right after Animator.OnAnimatorMove()

@@ -725,14 +725,22 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cc8aa182d73b6fd43be113eeeb6d2a74, type: 2}
   - {fileID: 11400000, guid: 1a24ed00ff2342945837e2a4adec33e6, type: 2}
   - {fileID: 11400000, guid: a1f99d4420794234891d8b40202c688b, type: 2}
+  - {fileID: 11400000, guid: fac16515aebd64848859bfd0ca30e8ac, type: 2}
+  - {fileID: 11400000, guid: 2a120d40221334848a2a6c9b289028b9, type: 2}
   rank2Buff:
   - {fileID: 11400000, guid: 81553d0feed243f43addb46f4f8ec78c, type: 2}
   - {fileID: 11400000, guid: 78866b5de9f3bb247a24c77c73e20d0e, type: 2}
   - {fileID: 11400000, guid: 967d3fda470b39140bec9334b4f2169e, type: 2}
+  - {fileID: 11400000, guid: 3bf6fb3a778f3534a8cdfec66a8f8df2, type: 2}
+  - {fileID: 11400000, guid: 275daa42425d5b14c9be4858fafd1960, type: 2}
+  - {fileID: 11400000, guid: fc13cbe96d5ab83468609130ebc7e42d, type: 2}
+  - {fileID: 11400000, guid: 53fee9ec5d6dc2149ac364cfa7f58ed9, type: 2}
   rank3Buff:
   - {fileID: 11400000, guid: bbfaa700e52368347a2dc20b8cdecbb1, type: 2}
   - {fileID: 11400000, guid: 9b767c3ab190d9041ab1be381de8917d, type: 2}
   - {fileID: 11400000, guid: 8f8688f5ef1d513469e19caa0a9df7a5, type: 2}
+  - {fileID: 11400000, guid: 47e33062b2baee94c92d22137ebff8b5, type: 2}
+  - {fileID: 11400000, guid: ef6cf83e21b5075428d3b36667ff15f0, type: 2}
   itemBuff: []
 --- !u!4 &325807742
 Transform:
@@ -2494,11 +2502,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FollowCamera
   target: {fileID: 0}
+  transRenderers: []
   camDis: 6
   angleX: -145
   transLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 16385
 --- !u!114 &1061602930
 MonoBehaviour:
   m_ObjectHideFlags: 0

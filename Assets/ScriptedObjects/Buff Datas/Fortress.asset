@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db46384528646364da42ca202fa6bf76, type: 3}
+  m_Name: Fortress
+  m_EditorClassIdentifier: Assembly-CSharp::Buff
+  buffName: Fortress
+  buffNum: 4
+  rank: 3
+  icon: {fileID: 1810017807, guid: bf87883477d089041815d052502d5877, type: 3}
+  discription: Doubles weight, but lowers attack power by 15%
+  isInfinite: 1
+  isConditional: 0
+  duration: 0
+  conditions: []
+  effects:
+  - {fileID: 11400000, guid: 76ad56fe24c04b347b441abd88d17b15, type: 2}
+  - {fileID: 11400000, guid: af364e48a6e43504e8e2e2f6e0039365, type: 2}

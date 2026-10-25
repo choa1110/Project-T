@@ -335,12 +335,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         CurrentRound++;
         RoundTimer = RoundDuration;
         _isCardUIOpened = false;
+        DisposeObjects();
 
         MapInfo tmp = mapList[UnityEngine.Random.Range(0, mapList.Count)];
 
         if (tmp != curMap)
         {
-            DisposeObjects();
             curMap.Rpc_BroadcastToggleMap(false);
             tmp.Rpc_BroadcastToggleMap(true);
             curMap = tmp;
